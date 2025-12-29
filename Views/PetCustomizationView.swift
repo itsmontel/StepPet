@@ -84,6 +84,7 @@ struct PetCustomizationView: View {
     @State private var selectedActivity: PetActivity?
     @State private var showHealthBoostAnimation = false
     @State private var healthBoostAmount = 0
+    @State private var showMinigames = false
     
     // Preview slider - continuous for smooth video transitions
     @State private var previewSliderValue: Double = 50
@@ -109,6 +110,7 @@ struct PetCustomizationView: View {
             VStack(spacing: 16) {
                 headerSection
                 petPreviewSection
+                minigamesSection // NEW: Minigames section
                 playActivitiesSection
                 petSelectionSection
                 Spacer(minLength: 100)
@@ -118,6 +120,9 @@ struct PetCustomizationView: View {
         .background(themeManager.backgroundColor.ignoresSafeArea())
         .sheet(isPresented: $showRenameSheet) { renameSheet }
         .sheet(isPresented: $showCreditsSheet) { creditsSheet }
+        .sheet(isPresented: $showMinigames) {
+            MinigamesView()
+        }
         .sheet(isPresented: $showActivitySheet) {
             if let activity = selectedActivity {
                 ActivityPlaySheet(
@@ -260,6 +265,147 @@ struct PetCustomizationView: View {
             RoundedRectangle(cornerRadius: 20)
                 .fill(themeManager.cardBackgroundColor)
                 .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.05), radius: 8, x: 0, y: 4)
+        )
+    }
+    
+    // MARK: - Minigames Section (NEW!)
+    private var minigamesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("🎮 Minigames")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    Text("Play games with \(userSettings.pet.name)")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                }
+                
+                Spacer()
+                
+                // Games count badge
+                Text("3 games")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.purple)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(Color.purple.opacity(0.12)))
+            }
+            
+            // Minigames preview row
+            Button(action: { showMinigames = true }) {
+                HStack(spacing: 12) {
+                    // Game icons preview
+                    HStack(spacing: -8) {
+                        ForEach(["🦴", "🃏", "🫧"], id: \.self) { emoji in
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [.purple.opacity(0.2), .blue.opacity(0.2)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 44, height: 44)
+                                
+                                Text(emoji)
+                                    .font(.system(size: 20))
+                            }
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Earn bonus health!")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                        
+                        HStack(spacing: 4) {
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.pink)
+                            
+                            Text("+10-30 per game")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.pink)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Play button
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.purple, .blue],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 40, height: 40)
+                        
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.purple.opacity(0.08),
+                                    Color.blue.opacity(0.08)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [.purple.opacity(0.3), .blue.opacity(0.3)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .opacity(userSettings.playCredits > 0 ? 1.0 : 0.5)
+            
+            if userSettings.playCredits == 0 {
+                HStack(spacing: 6) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.yellow)
+                    
+                    Text("Get credits to play minigames")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                    
+                    Spacer()
+                    
+                    Button(action: { showCreditsSheet = true }) {
+                        Text("Get Credits")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(themeManager.accentColor)
+                    }
+                }
+                .padding(.top, 4)
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.04), radius: 6, x: 0, y: 3)
         )
     }
     
@@ -526,7 +672,7 @@ struct PetCustomizationView: View {
                         .font(.system(size: 14))
                         .foregroundColor(.pink)
                     
-                    Text("Each activity gives +20 health!")
+                    Text("Each activity or minigame gives health!")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(themeManager.primaryTextColor)
                 }

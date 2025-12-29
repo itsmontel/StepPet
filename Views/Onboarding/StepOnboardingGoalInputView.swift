@@ -48,19 +48,20 @@ struct StepOnboardingGoalInputView: View {
                 )
                 
                 // Pet animation based on goal
-                VStack(spacing: 24) {
-                    AnimatedPetView(
+                VStack(spacing: 16) {
+                    AnimatedPetVideoView(
                         petType: petType,
                         moodState: petHealthState
                     )
-                    .frame(height: 120)
+                    .frame(width: 90, height: 90)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .scaleEffect(animateIllustration ? 1.0 : 0.8)
                     .opacity(animateIllustration ? 1.0 : 0.0)
                     .id(petHealthState)
                     
-                    VStack(spacing: 16) {
+                    VStack(spacing: 12) {
                         Text("Set your daily step goal")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
@@ -68,35 +69,35 @@ struct StepOnboardingGoalInputView: View {
                             .opacity(animateContent ? 1.0 : 0.0)
                         
                         Text("How many steps do you want to walk each day?")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 15, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                             .multilineTextAlignment(.center)
                             .opacity(animateContent ? 1.0 : 0.0)
                     }
                     .padding(.horizontal, 32)
                 }
-                .padding(.top, 40)
+                .padding(.top, 24)
                 
-                Spacer()
+                Spacer(minLength: 10)
                 
                 // Steps display
-                VStack(spacing: 32) {
+                VStack(spacing: 20) {
                     VStack(spacing: 4) {
                         Text("\(Int(selectedSteps).formatted())")
-                            .font(.system(size: 56, weight: .bold))
+                            .font(.system(size: 48, weight: .bold))
                             .foregroundColor(stepsColor)
                             .contentTransition(.numericText())
                             .animation(.snappy, value: selectedSteps)
                             .opacity(animateContent ? 1.0 : 0.0)
                         
                         Text("steps per day")
-                            .font(.system(size: 17, weight: .medium))
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                             .opacity(animateContent ? 1.0 : 0.0)
                     }
                     
                     // Slider
-                    VStack(spacing: 16) {
+                    VStack(spacing: 12) {
                         Slider(value: $selectedSteps, in: 3000...15000, step: 500)
                             .tint(themeManager.accentColor)
                             .frame(height: 40)

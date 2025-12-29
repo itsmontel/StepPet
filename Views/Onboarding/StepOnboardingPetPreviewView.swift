@@ -44,34 +44,34 @@ struct StepOnboardingPetPreviewView: View {
                     onBack: onBack
                 )
                 
-                Spacer()
-                
                 // Header text
-                VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     Text("See for yourself")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(themeManager.primaryTextColor)
                         .multilineTextAlignment(.center)
                         .opacity(animateTitle ? 1.0 : 0.0)
                     
                     Text("Your daily steps directly affect \(petName)'s health")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 15, weight: .medium))
                         .foregroundColor(themeManager.secondaryTextColor)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
                         .opacity(animateTitle ? 1.0 : 0.0)
                 }
                 .padding(.horizontal, 32)
+                .padding(.top, 20)
                 
-                Spacer()
+                Spacer(minLength: 10)
                 
                 // Pet Display with Health State
-                VStack(spacing: 24) {
-                    AnimatedPetView(
+                VStack(spacing: 20) {
+                    AnimatedPetVideoView(
                         petType: petType,
                         moodState: currentHealthState
                     )
-                    .frame(height: 200)
+                    .frame(width: 140, height: 140)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                     .id(currentHealthState)
                     .transition(.scale.combined(with: .opacity))
                     .scaleEffect(animatePet ? 1.0 : 0.8)
@@ -93,10 +93,10 @@ struct StepOnboardingPetPreviewView: View {
                     .opacity(animatePet ? 1.0 : 0.0)
                 }
                 
-                Spacer()
+                Spacer(minLength: 10)
                 
                 // Health Slider
-                VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     HStack {
                         Text("Sick")
                             .font(.system(size: 12, weight: .bold))
@@ -129,9 +129,9 @@ struct StepOnboardingPetPreviewView: View {
                     }
                     .opacity(animateSlider ? 1.0 : 0.0)
                 }
-                .padding(.vertical, 20)
+                .padding(.vertical, 16)
                 
-                Spacer()
+                Spacer(minLength: 10)
                 
                 // Continue Button
                 OnboardingPrimaryButton(

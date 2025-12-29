@@ -40,15 +40,16 @@ struct StepOnboardingNotificationView: View {
                     )
                     
                     // Pet animation at full health
-                    AnimatedPetView(
+                    AnimatedPetVideoView(
                         petType: petType,
                         moodState: .fullHealth
                     )
-                    .frame(height: 130)
+                    .frame(width: 100, height: 100)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .opacity(animateIcon ? 1.0 : 0.0)
                     .scaleEffect(animateIcon ? 1.0 : 0.8)
-                    .padding(.top, 32)
-                    .padding(.bottom, 32)
+                    .padding(.top, 24)
+                    .padding(.bottom, 24)
                     
                     // Title and subtitle
                     VStack(spacing: 12) {

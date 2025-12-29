@@ -34,32 +34,33 @@ struct StepOnboardingWelcomeView: View {
                 Spacer()
                 
                 // Pet animation and title
-                VStack(spacing: 32) {
+                VStack(spacing: 24) {
                     // Pet with subtle glow
                     ZStack {
                         Circle()
                             .fill(themeManager.accentColor.opacity(0.1))
-                            .frame(width: 280, height: 280)
-                            .blur(radius: 30)
+                            .frame(width: 200, height: 200)
+                            .blur(radius: 20)
                         
-                        AnimatedPetView(
+                        AnimatedPetVideoView(
                             petType: .dog,
                             moodState: .fullHealth
                         )
-                        .frame(width: 240, height: 240)
+                        .frame(width: 160, height: 160)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
                     }
                     .scaleEffect(petAnimation ? 1.0 : 0.8)
                     .opacity(petAnimation ? 1.0 : 0.0)
                     
-                    VStack(spacing: 16) {
+                    VStack(spacing: 12) {
                         Text("Welcome to StepPet")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                             .multilineTextAlignment(.center)
                             .opacity(textAnimation ? 1.0 : 0.0)
                         
                         Text("Your personal companion for healthier habits through walking")
-                            .font(.system(size: 17, weight: .medium))
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 32)
@@ -67,8 +68,9 @@ struct StepOnboardingWelcomeView: View {
                             .opacity(textAnimation ? 1.0 : 0.0)
                     }
                 }
+                .padding(.top, 20)
                 
-                Spacer()
+                Spacer(minLength: 10)
                 
                 // Name input section
                 VStack(spacing: 16) {

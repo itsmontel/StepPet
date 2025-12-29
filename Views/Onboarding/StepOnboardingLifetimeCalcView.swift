@@ -73,19 +73,17 @@ struct StepOnboardingLifetimeCalcView: View {
                     onBack: onBack
                 )
                 
-                Spacer()
-                
-                VStack(spacing: 32) {
+                VStack(spacing: 24) {
                     // Title
                     if showTitle {
-                        VStack(spacing: 8) {
+                        VStack(spacing: 6) {
                             Text("If you hit your goal every day")
-                                .font(.system(size: 20, weight: .medium, design: .rounded))
+                                .font(.system(size: 18, weight: .medium, design: .rounded))
                                 .foregroundColor(themeManager.secondaryTextColor)
                                 .multilineTextAlignment(.center)
                             
                             Text("In just ONE year you'll walk...")
-                                .font(.system(size: 20, weight: .medium, design: .rounded))
+                                .font(.system(size: 18, weight: .medium, design: .rounded))
                                 .foregroundColor(themeManager.secondaryTextColor)
                                 .multilineTextAlignment(.center)
                         }
@@ -95,15 +93,15 @@ struct StepOnboardingLifetimeCalcView: View {
                     
                     // Big distance number
                     if showCalculation {
-                        VStack(spacing: 12) {
+                        VStack(spacing: 8) {
                             Text("\(Int(animatedMiles).formatted())")
-                                .font(.system(size: 72, weight: .bold, design: .rounded))
+                                .font(.system(size: 64, weight: .bold, design: .rounded))
                                 .foregroundColor(themeManager.successColor)
                                 .scaleEffect(showCalculation ? 1.0 : 0.3)
                                 .opacity(showCalculation ? 1.0 : 0.0)
                             
                             Text("miles")
-                                .font(.system(size: 28, weight: .semibold, design: .rounded))
+                                .font(.system(size: 24, weight: .semibold, design: .rounded))
                                 .foregroundColor(themeManager.primaryTextColor)
                                 .opacity(showCalculation ? 1.0 : 0.0)
                         }
@@ -111,12 +109,12 @@ struct StepOnboardingLifetimeCalcView: View {
                     
                     // Fun comparison
                     if showComparison {
-                        VStack(spacing: 16) {
+                        VStack(spacing: 12) {
                             Text(distanceComparison.emoji)
-                                .font(.system(size: 56))
+                                .font(.system(size: 48))
                             
                             Text(distanceComparison.text)
-                                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
                                 .foregroundColor(themeManager.primaryTextColor)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 32)
@@ -128,25 +126,27 @@ struct StepOnboardingLifetimeCalcView: View {
                     
                     // Pet celebration
                     if showPet {
-                        VStack(spacing: 16) {
-                            AnimatedPetView(
+                        VStack(spacing: 10) {
+                            AnimatedPetVideoView(
                                 petType: petType,
                                 moodState: .fullHealth
                             )
-                            .frame(height: 140)
+                            .frame(width: 100, height: 100)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                             .scaleEffect(showPet ? 1.0 : 0.3)
                             .opacity(showPet ? 1.0 : 0.0)
                             
                             Text("Your pet is excited to start this journey with you!")
-                                .font(.system(size: 15, weight: .medium))
+                                .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(themeManager.secondaryTextColor)
                                 .multilineTextAlignment(.center)
                                 .opacity(showPet ? 1.0 : 0.0)
                         }
                     }
                 }
+                .padding(.top, 20)
                 
-                Spacer()
+                Spacer(minLength: 10)
                 
                 // Continue button
                 if showButton {

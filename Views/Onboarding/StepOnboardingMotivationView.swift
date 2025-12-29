@@ -43,35 +43,35 @@ struct StepOnboardingMotivationView: View {
                     onBack: onBack
                 )
                 
-                Spacer()
-                
                 // Header with pet animation
-                VStack(spacing: 24) {
-                    AnimatedPetView(
+                VStack(spacing: 16) {
+                    AnimatedPetVideoView(
                         petType: petType,
                         moodState: .content
                     )
-                    .frame(height: 120)
+                    .frame(width: 90, height: 90)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .opacity(animateTitle ? 1.0 : 0.0)
                     .scaleEffect(animateTitle ? 1.0 : 0.8)
                     
-                    VStack(spacing: 16) {
+                    VStack(spacing: 12) {
                         Text("You're here for a reason")
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                             .opacity(animateTitle ? 1.0 : 0.0)
                         
                         Text("What is that reason?")
-                            .font(.system(size: 17, weight: .medium))
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                             .opacity(animateTitle ? 1.0 : 0.0)
                     }
                 }
                 .padding(.horizontal, 32)
+                .padding(.top, 20)
                 
-                Spacer()
+                Spacer(minLength: 10)
                 
                 // Motivation options
                 ScrollView(showsIndicators: false) {
