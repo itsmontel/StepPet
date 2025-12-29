@@ -1,0 +1,529 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E81A00012D5E00000001 /* StepPetApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010001 /* StepPetApp.swift */; };
+		E81A00012D5E00000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010002 /* ContentView.swift */; };
+		E81A00012D5E00000003 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010003 /* TodayView.swift */; };
+		E81A00012D5E00000004 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010004 /* HistoryView.swift */; };
+		E81A00012D5E00000005 /* PetCustomizationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010005 /* PetCustomizationView.swift */; };
+		E81A00012D5E00000006 /* AchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010006 /* AchievementsView.swift */; };
+		E81A00012D5E00000007 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010007 /* SettingsView.swift */; };
+		E81A00012D5E00000008 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010008 /* OnboardingView.swift */; };
+		E81A00012D5E00000009 /* Pet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010009 /* Pet.swift */; };
+		E81A00012D5E0000000A /* Achievement.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001000A /* Achievement.swift */; };
+		E81A00012D5E0000000B /* StepData.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001000B /* StepData.swift */; };
+		E81A00012D5E0000000C /* UserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001000C /* UserSettings.swift */; };
+		E81A00012D5E0000000D /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001000D /* ThemeManager.swift */; };
+		E81A00012D5E0000000E /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001000E /* HealthKitManager.swift */; };
+		E81A00012D5E0000000F /* StepDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001000F /* StepDataManager.swift */; };
+		E81A00012D5E00000010 /* AchievementManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010010 /* AchievementManager.swift */; };
+		E81A00012D5E00000011 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010011 /* NotificationManager.swift */; };
+		E81A00012D5E00000012 /* GIFImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010012 /* GIFImage.swift */; };
+		E81A00012D5E00000013 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010013 /* VideoPlayerView.swift */; };
+		E81A00012D5E00000020 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010020 /* Assets.xcassets */; };
+		E81A00012D5E00000021 /* AnimationGIF in Resources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010021 /* AnimationGIF */; };
+		E81A00012D5E00000022 /* PlayGIF in Resources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010024 /* PlayGIF */; };
+		E81A00012D5E00000023 /* Animation in Resources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010025 /* Animation */; };
+		E81A00012D5E00000030 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010030 /* HealthKit.framework */; };
+		E81A00012D5E00000040 /* OnboardingComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010040 /* OnboardingComponents.swift */; };
+		E81A00012D5E00000041 /* StepOnboardingWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010041 /* StepOnboardingWelcomeView.swift */; };
+		E81A00012D5E00000042 /* StepOnboardingPetSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010042 /* StepOnboardingPetSelectionView.swift */; };
+		E81A00012D5E00000043 /* StepOnboardingPetPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010043 /* StepOnboardingPetPreviewView.swift */; };
+		E81A00012D5E00000044 /* StepOnboardingMotivationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010044 /* StepOnboardingMotivationView.swift */; };
+		E81A00012D5E00000045 /* StepOnboardingDidYouKnowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010045 /* StepOnboardingDidYouKnowView.swift */; };
+		E81A00012D5E00000046 /* StepOnboardingGoalInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010046 /* StepOnboardingGoalInputView.swift */; };
+		E81A00012D5E00000047 /* StepOnboardingLifetimeCalcView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010047 /* StepOnboardingLifetimeCalcView.swift */; };
+		E81A00012D5E00000048 /* StepOnboardingWhyChooseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010048 /* StepOnboardingWhyChooseView.swift */; };
+		E81A00012D5E00000049 /* StepOnboardingNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010049 /* StepOnboardingNotificationView.swift */; };
+		E81A00012D5E0000004A /* StepOnboardingHealthKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001004A /* StepOnboardingHealthKitView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		E81A00012D5E00010000 /* StepPet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StepPet.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E81A00012D5E00010001 /* StepPetApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepPetApp.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010003 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010004 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010005 /* PetCustomizationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetCustomizationView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010006 /* AchievementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementsView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010007 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010008 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010009 /* Pet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pet.swift; sourceTree = "<group>"; };
+		E81A00012D5E0001000A /* Achievement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Achievement.swift; sourceTree = "<group>"; };
+		E81A00012D5E0001000B /* StepData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepData.swift; sourceTree = "<group>"; };
+		E81A00012D5E0001000C /* UserSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSettings.swift; sourceTree = "<group>"; };
+		E81A00012D5E0001000D /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
+		E81A00012D5E0001000E /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
+		E81A00012D5E0001000F /* StepDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepDataManager.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010010 /* AchievementManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementManager.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010011 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010012 /* GIFImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIFImage.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010013 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010020 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E81A00012D5E00010021 /* AnimationGIF */ = {isa = PBXFileReference; lastKnownFileType = folder; path = AnimationGIF; sourceTree = "<group>"; };
+		E81A00012D5E00010024 /* PlayGIF */ = {isa = PBXFileReference; lastKnownFileType = folder; path = PlayGIF; sourceTree = "<group>"; };
+		E81A00012D5E00010025 /* Animation */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Animation; sourceTree = "<group>"; };
+		E81A00012D5E00010022 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E81A00012D5E00010023 /* StepPet.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StepPet.entitlements; sourceTree = "<group>"; };
+		E81A00012D5E00010030 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
+		E81A00012D5E00010040 /* OnboardingComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingComponents.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010041 /* StepOnboardingWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingWelcomeView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010042 /* StepOnboardingPetSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingPetSelectionView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010043 /* StepOnboardingPetPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingPetPreviewView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010044 /* StepOnboardingMotivationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingMotivationView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010045 /* StepOnboardingDidYouKnowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingDidYouKnowView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010046 /* StepOnboardingGoalInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingGoalInputView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010047 /* StepOnboardingLifetimeCalcView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingLifetimeCalcView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010048 /* StepOnboardingWhyChooseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingWhyChooseView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010049 /* StepOnboardingNotificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingNotificationView.swift; sourceTree = "<group>"; };
+		E81A00012D5E0001004A /* StepOnboardingHealthKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingHealthKitView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E81A00012D5E00020001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E81A00012D5E00000030 /* HealthKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E81A00012D5E00030000 = {
+			isa = PBXGroup;
+			children = (
+				E81A00012D5E00030001,
+				E81A00012D5E00030002 /* Products */,
+				E81A00012D5E00030010 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		E81A00012D5E00030001 = {
+			isa = PBXGroup;
+			children = (
+				E81A00012D5E00010001 /* StepPetApp.swift */,
+				E81A00012D5E00010002 /* ContentView.swift */,
+				E81A00012D5E00030003 /* Views */,
+				E81A00012D5E00030004 /* Models */,
+				E81A00012D5E00030005 /* Managers */,
+				E81A00012D5E00030006 /* Components */,
+				E81A00012D5E00010020 /* Assets.xcassets */,
+				E81A00012D5E00010021 /* AnimationGIF */,
+				E81A00012D5E00010024 /* PlayGIF */,
+				E81A00012D5E00010025 /* Animation */,
+				E81A00012D5E00010022 /* Info.plist */,
+				E81A00012D5E00010023 /* StepPet.entitlements */,
+			);
+			path = "";
+			sourceTree = "<group>";
+		};
+		E81A00012D5E00030002 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00012D5E00010000 /* StepPet.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E81A00012D5E00030003 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00012D5E00010003 /* TodayView.swift */,
+				E81A00012D5E00010004 /* HistoryView.swift */,
+				E81A00012D5E00010005 /* PetCustomizationView.swift */,
+				E81A00012D5E00010006 /* AchievementsView.swift */,
+				E81A00012D5E00010007 /* SettingsView.swift */,
+				E81A00012D5E00010008 /* OnboardingView.swift */,
+				E81A00012D5E00030007 /* Onboarding */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E81A00012D5E00030004 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00012D5E00010009 /* Pet.swift */,
+				E81A00012D5E0001000A /* Achievement.swift */,
+				E81A00012D5E0001000B /* StepData.swift */,
+				E81A00012D5E0001000C /* UserSettings.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		E81A00012D5E00030005 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00012D5E0001000D /* ThemeManager.swift */,
+				E81A00012D5E0001000E /* HealthKitManager.swift */,
+				E81A00012D5E0001000F /* StepDataManager.swift */,
+				E81A00012D5E00010010 /* AchievementManager.swift */,
+				E81A00012D5E00010011 /* NotificationManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		E81A00012D5E00030006 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00012D5E00010012 /* GIFImage.swift */,
+				E81A00012D5E00010013 /* VideoPlayerView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		E81A00012D5E00030007 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00012D5E00010040 /* OnboardingComponents.swift */,
+				E81A00012D5E00010041 /* StepOnboardingWelcomeView.swift */,
+				E81A00012D5E00010042 /* StepOnboardingPetSelectionView.swift */,
+				E81A00012D5E00010043 /* StepOnboardingPetPreviewView.swift */,
+				E81A00012D5E00010044 /* StepOnboardingMotivationView.swift */,
+				E81A00012D5E00010045 /* StepOnboardingDidYouKnowView.swift */,
+				E81A00012D5E00010046 /* StepOnboardingGoalInputView.swift */,
+				E81A00012D5E00010047 /* StepOnboardingLifetimeCalcView.swift */,
+				E81A00012D5E00010048 /* StepOnboardingWhyChooseView.swift */,
+				E81A00012D5E00010049 /* StepOnboardingNotificationView.swift */,
+				E81A00012D5E0001004A /* StepOnboardingHealthKitView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		E81A00012D5E00030010 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E81A00012D5E00010030 /* HealthKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E81A00012D5E00040001 /* StepPet */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E81A00012D5E00060001 /* Build configuration list for PBXNativeTarget "StepPet" */;
+			buildPhases = (
+				E81A00012D5E00050001 /* Sources */,
+				E81A00012D5E00020001 /* Frameworks */,
+				E81A00012D5E00050002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = StepPet;
+			productName = StepPet;
+			productReference = E81A00012D5E00010000 /* StepPet.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E81A00012D5E00070001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					E81A00012D5E00040001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = E81A00012D5E00060002 /* Build configuration list for PBXProject "StepPet" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E81A00012D5E00030000;
+			productRefGroup = E81A00012D5E00030002 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E81A00012D5E00040001 /* StepPet */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E81A00012D5E00050002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E81A00012D5E00000020 /* Assets.xcassets in Resources */,
+				E81A00012D5E00000021 /* AnimationGIF in Resources */,
+				E81A00012D5E00000022 /* PlayGIF in Resources */,
+				E81A00012D5E00000023 /* Animation in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E81A00012D5E00050001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E81A00012D5E00000001 /* StepPetApp.swift in Sources */,
+				E81A00012D5E00000002 /* ContentView.swift in Sources */,
+				E81A00012D5E00000003 /* TodayView.swift in Sources */,
+				E81A00012D5E00000004 /* HistoryView.swift in Sources */,
+				E81A00012D5E00000005 /* PetCustomizationView.swift in Sources */,
+				E81A00012D5E00000006 /* AchievementsView.swift in Sources */,
+				E81A00012D5E00000007 /* SettingsView.swift in Sources */,
+				E81A00012D5E00000008 /* OnboardingView.swift in Sources */,
+				E81A00012D5E00000009 /* Pet.swift in Sources */,
+				E81A00012D5E0000000A /* Achievement.swift in Sources */,
+				E81A00012D5E0000000B /* StepData.swift in Sources */,
+				E81A00012D5E0000000C /* UserSettings.swift in Sources */,
+				E81A00012D5E0000000D /* ThemeManager.swift in Sources */,
+				E81A00012D5E0000000E /* HealthKitManager.swift in Sources */,
+				E81A00012D5E0000000F /* StepDataManager.swift in Sources */,
+				E81A00012D5E00000010 /* AchievementManager.swift in Sources */,
+				E81A00012D5E00000011 /* NotificationManager.swift in Sources */,
+				E81A00012D5E00000012 /* GIFImage.swift in Sources */,
+				E81A00012D5E00000013 /* VideoPlayerView.swift in Sources */,
+				E81A00012D5E00000040 /* OnboardingComponents.swift in Sources */,
+				E81A00012D5E00000041 /* StepOnboardingWelcomeView.swift in Sources */,
+				E81A00012D5E00000042 /* StepOnboardingPetSelectionView.swift in Sources */,
+				E81A00012D5E00000043 /* StepOnboardingPetPreviewView.swift in Sources */,
+				E81A00012D5E00000044 /* StepOnboardingMotivationView.swift in Sources */,
+				E81A00012D5E00000045 /* StepOnboardingDidYouKnowView.swift in Sources */,
+				E81A00012D5E00000046 /* StepOnboardingGoalInputView.swift in Sources */,
+				E81A00012D5E00000047 /* StepOnboardingLifetimeCalcView.swift in Sources */,
+				E81A00012D5E00000048 /* StepOnboardingWhyChooseView.swift in Sources */,
+				E81A00012D5E00000049 /* StepOnboardingNotificationView.swift in Sources */,
+				E81A00012D5E0000004A /* StepOnboardingHealthKitView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		E81A00012D5E00080001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		E81A00012D5E00080002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E81A00012D5E00080003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = StepPet.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 3KCUWMGF4F;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StepPet;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.StepPet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E81A00012D5E00080004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = StepPet.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 3KCUWMGF4F;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StepPet;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.StepPet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E81A00012D5E00060001 /* Build configuration list for PBXNativeTarget "StepPet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E81A00012D5E00080003 /* Debug */,
+				E81A00012D5E00080004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E81A00012D5E00060002 /* Build configuration list for PBXProject "StepPet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E81A00012D5E00080001 /* Debug */,
+				E81A00012D5E00080002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E81A00012D5E00070001 /* Project object */;
+}
