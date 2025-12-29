@@ -46,6 +46,8 @@
 		E81A00012D5E00000048 /* StepOnboardingWhyChooseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010048 /* StepOnboardingWhyChooseView.swift */; };
 		E81A00012D5E00000049 /* StepOnboardingNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010049 /* StepOnboardingNotificationView.swift */; };
 		E81A00012D5E0000004A /* StepOnboardingHealthKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001004A /* StepOnboardingHealthKitView.swift */; };
+		E81A00012D5E0000005E /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001005E /* InsightsView.swift */; };
+		E81A00012D5E0000005F /* ChallengesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001005F /* ChallengesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -91,6 +93,8 @@
 		E81A00012D5E00010048 /* StepOnboardingWhyChooseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingWhyChooseView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010049 /* StepOnboardingNotificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingNotificationView.swift; sourceTree = "<group>"; };
 		E81A00012D5E0001004A /* StepOnboardingHealthKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingHealthKitView.swift; sourceTree = "<group>"; };
+		E81A00012D5E0001005E /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
+		E81A00012D5E0001005F /* ChallengesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengesView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,12 +150,14 @@
 			children = (
 				E81A00012D5E00010003 /* TodayView.swift */,
 				E81A00012D5E00010004 /* HistoryView.swift */,
+				E81A00012D5E0001005E /* InsightsView.swift */,
 				E81A00012D5E00010005 /* PetCustomizationView.swift */,
 				E81A00012D5E00010005A /* MinigamesView.swift */,
 				E81A00012D5E00010005B /* TreatCatchGameView.swift */,
 				E81A00012D5E00010005C /* MemoryMatchGameView.swift */,
 				E81A00012D5E00010005D /* BubblePopGameView.swift */,
 				E81A00012D5E00010006 /* AchievementsView.swift */,
+				E81A00012D5E0001005F /* ChallengesView.swift */,
 				E81A00012D5E00010007 /* SettingsView.swift */,
 				E81A00012D5E00010008 /* OnboardingView.swift */,
 				E81A00012D5E00030007 /* Onboarding */,
@@ -323,6 +329,8 @@
 				E81A00012D5E00000048 /* StepOnboardingWhyChooseView.swift in Sources */,
 				E81A00012D5E00000049 /* StepOnboardingNotificationView.swift in Sources */,
 				E81A00012D5E0000004A /* StepOnboardingHealthKitView.swift in Sources */,
+				E81A00012D5E0000005E /* InsightsView.swift in Sources */,
+				E81A00012D5E0000005F /* ChallengesView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

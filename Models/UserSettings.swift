@@ -83,7 +83,7 @@ class UserSettings: ObservableObject {
         } else {
             // Default values
             self.userName = "Friend"
-            self.pet = Pet(type: .bunny, name: "Buddy")
+            self.pet = Pet(type: .cat, name: "Whiskers") // Cat is the main free pet
             self.dailyStepGoal = 10000
             self.isPremium = false
             self.notificationsEnabled = true
@@ -92,7 +92,7 @@ class UserSettings: ObservableObject {
             self.goalCelebrations = true
             self.streakData = StreakData()
             self.firstLaunchDate = Date()
-            self.petsUsed = Set([PetType.bunny.rawValue])
+            self.petsUsed = Set([PetType.cat.rawValue]) // Cat is the main free pet
             self.hasCompletedOnboarding = false
             self.playCredits = 3 // Welcome bonus!
             self.todayPlayHealthBoost = 0

@@ -12,8 +12,9 @@ struct TodayView: View {
     @EnvironmentObject var stepDataManager: StepDataManager
     @EnvironmentObject var achievementManager: AchievementManager
     
-    @State private var isAnimating = true
-    @State private var showCalendar = false
+    @State private var animatedSteps: Int = 0
+    @State private var showCelebration = false
+    @State private var selectedDay: Date? = nil
     
     private var stepBasedHealth: Int {
         guard userSettings.dailyStepGoal > 0 else { return 0 }
@@ -21,244 +22,466 @@ struct TodayView: View {
     }
     
     private var currentHealth: Int {
-        // Step-based health + any play activity boosts (capped at 100)
-        return min(100, stepBasedHealth + userSettings.todayPlayHealthBoost)
+        min(100, stepBasedHealth + userSettings.todayPlayHealthBoost)
     }
     
     private var moodState: PetMoodState {
         PetMoodState.from(health: currentHealth)
     }
     
-    private var stepsRemaining: Int {
+    private var stepsToGoal: Int {
         max(0, userSettings.dailyStepGoal - healthKitManager.todaySteps)
+    }
+    
+    private var stepsToNextMood: (steps: Int, nextMood: PetMoodState)? {
+        let currentMood = moodState
+        let currentSteps = healthKitManager.todaySteps
+        let goal = userSettings.dailyStepGoal
+        
+        // Calculate thresholds based on goal
+        let moodThresholds: [(mood: PetMoodState, threshold: Int)] = [
+            (.sick, Int(Double(goal) * 0.2)),
+            (.sad, Int(Double(goal) * 0.4)),
+            (.content, Int(Double(goal) * 0.6)),
+            (.happy, Int(Double(goal) * 0.8)),
+            (.fullHealth, goal)
+        ]
+        
+        for (mood, threshold) in moodThresholds {
+            if currentSteps < threshold {
+                return (threshold - currentSteps, mood)
+            }
+        }
+        return nil
+    }
+    
+    private var goalProgress: Double {
+        guard userSettings.dailyStepGoal > 0 else { return 0 }
+        return min(1.0, Double(healthKitManager.todaySteps) / Double(userSettings.dailyStepGoal))
+    }
+    
+    // Selected day's data (for historical view)
+    private var selectedDaySteps: Int {
+        guard let day = selectedDay else { return healthKitManager.todaySteps }
+        let startOfDay = Calendar.current.startOfDay(for: day)
+        return healthKitManager.weeklySteps[startOfDay] ?? 0
+    }
+    
+    private var selectedDayHealth: Int {
+        guard userSettings.dailyStepGoal > 0 else { return 0 }
+        return min(100, Int((Double(selectedDaySteps) / Double(userSettings.dailyStepGoal)) * 100))
+    }
+    
+    private var selectedDayMood: PetMoodState {
+        PetMoodState.from(health: selectedDayHealth)
+    }
+    
+    private var isViewingToday: Bool {
+        selectedDay == nil || Calendar.current.isDateInToday(selectedDay!)
     }
     
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
-                // Header Section
                 headerSection
-                
-                // Pet Display Section
-                petDisplaySection
-                
-                // Today's Dashboard
+                heroCardSection
+                weeklyGraphSection
+                encouragementSection
                 dashboardSection
-                
-                Spacer(minLength: 100)
+                Spacer(minLength: 120)
             }
             .padding(.horizontal, 20)
         }
         .background(themeManager.backgroundColor.ignoresSafeArea())
         .onAppear {
             refreshData()
+            animateValues()
         }
         .onChange(of: healthKitManager.todaySteps) { _, newValue in
             updateData(steps: newValue)
+            animateValues()
         }
-    }
-    
-    // MARK: - Header Section
-    private var headerSection: some View {
-        VStack(spacing: 8) {
-            // Date Row
-            HStack {
-                Button(action: { showCalendar.toggle() }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "calendar")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(themeManager.isDarkMode ? .white : themeManager.accentColor)
-                        
-                        Text(formattedDate)
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(themeManager.primaryTextColor)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(themeManager.isDarkMode ? Color.white.opacity(0.1) : themeManager.cardBackgroundColor)
-                    )
+        .onChange(of: currentHealth) { oldValue, newValue in
+            if newValue >= 100 && oldValue < 100 {
+                triggerCelebration()
+            }
+        }
+        .overlay {
+            if showCelebration {
+                CelebrationOverlay(petName: userSettings.pet.name) {
+                    withAnimation { showCelebration = false }
                 }
-                
-                Spacer()
             }
-            .padding(.top, 8)
-            
-            // Greeting
-            Text("\(userSettings.greeting), \(userSettings.userName)")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(themeManager.primaryTextColor)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, 12)
-            
-            // Pet Name and Streak
-            HStack(alignment: .center) {
-                Text(userSettings.pet.name)
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(themeManager.primaryTextColor)
-                
-                Spacer()
-                
-                // Streak Badge
-                streakBadge
-            }
-            .padding(.top, 4)
         }
     }
     
-    // MARK: - Streak Badge
-    private var streakBadge: some View {
-        HStack(spacing: 8) {
-            ZStack {
-                Circle()
-                    .fill(Color.orange.opacity(0.2))
-                    .frame(width: 36, height: 36)
+    // MARK: - Header Section (Compact)
+    private var headerSection: some View {
+        HStack(alignment: .center) {
+            // Date (smaller)
+            HStack(spacing: 6) {
+                Image(systemName: "calendar")
+                    .font(.system(size: 14, weight: .semibold))
                 
+                Text(formattedDate)
+                    .font(.system(size: 14, weight: .semibold))
+            }
+            .foregroundColor(themeManager.primaryTextColor)
+            
+            Spacer()
+            
+            // Credits
+            HStack(spacing: 4) {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.yellow)
+                
+                Text("\(userSettings.playCredits)")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(themeManager.cardBackgroundColor)
+                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            )
+            
+            // Streak (small)
+            HStack(spacing: 4) {
                 Text("🔥")
-                    .font(.system(size: 18))
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(userSettings.streakData.currentStreak)")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(themeManager.primaryTextColor)
+                    .font(.system(size: 12))
                 
-                Text("Day Streak")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(themeManager.secondaryTextColor)
+                Text("\(userSettings.streakData.currentStreak)")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(themeManager.cardBackgroundColor)
+                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            )
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(themeManager.isDarkMode ? Color.white.opacity(0.1) : themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.05), radius: 5, x: 0, y: 2)
-        )
+        .padding(.top, 12)
     }
     
-    // MARK: - Pet Display Section
-    private var petDisplaySection: some View {
+    // MARK: - Hero Card Section
+    private var heroCardSection: some View {
         VStack(spacing: 16) {
-            // Pet Animation
-            ZStack {
-                AnimatedPetView(petType: userSettings.pet.type, moodState: moodState)
-                    .frame(height: 180)
-            }
-            .padding(.top, 16)
+            // Pet Name
+            Text(userSettings.pet.name)
+                .font(.system(size: 28, weight: .black, design: .rounded))
+                .foregroundColor(themeManager.primaryTextColor)
+                .padding(.top, 16)
             
-            // Health Score
-            VStack(spacing: 12) {
-                Text("\(currentHealth)")
-                    .font(.system(size: 64, weight: .bold))
-                    .foregroundColor(themeManager.primaryTextColor)
+            // Pet with Progress Ring
+            ZStack {
+                // Background ring
+                Circle()
+                    .stroke(Color.gray.opacity(0.15), lineWidth: 10)
+                    .frame(width: 200, height: 200)
                 
-                // Health Progress Bar
+                // Progress ring
+                Circle()
+                    .trim(from: 0, to: isViewingToday ? goalProgress : Double(selectedDayHealth) / 100)
+                    .stroke(
+                        AngularGradient(
+                            colors: [healthColor(for: isViewingToday ? currentHealth : selectedDayHealth), 
+                                    healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.6)],
+                            center: .center
+                        ),
+                        style: StrokeStyle(lineWidth: 10, lineCap: .round)
+                    )
+                    .frame(width: 200, height: 200)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.spring(response: 1.0, dampingFraction: 0.8), value: goalProgress)
+                
+                // Pet Animation
+                AnimatedPetVideoView(
+                    petType: userSettings.pet.type,
+                    moodState: isViewingToday ? moodState : selectedDayMood
+                )
+                .frame(width: 140, height: 140)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            }
+            
+            // Steps Display
+            VStack(spacing: 6) {
+                if isViewingToday {
+                    Text("\(healthKitManager.todaySteps)")
+                        .font(.system(size: 48, weight: .black, design: .rounded))
+                        .foregroundColor(themeManager.accentColor)
+                        .contentTransition(.numericText())
+                    
+                    Text("steps today")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                } else {
+                    Text("\(selectedDaySteps)")
+                        .font(.system(size: 48, weight: .black, design: .rounded))
+                        .foregroundColor(themeManager.accentColor)
+                    
+                    Text(selectedDayFormatted)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                }
+            }
+            
+            // Health Bar (no number)
+            VStack(spacing: 8) {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
-                        // Background
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(themeManager.isDarkMode ? Color.white.opacity(0.1) : Color.gray.opacity(0.15))
-                            .frame(height: 14)
+                        Capsule()
+                            .fill(Color.gray.opacity(0.15))
+                            .frame(height: 12)
                         
-                        // Progress
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(themeManager.healthColor(for: currentHealth))
-                            .frame(width: geometry.size.width * CGFloat(currentHealth) / 100, height: 14)
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [healthColor(for: isViewingToday ? currentHealth : selectedDayHealth), 
+                                            healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.7)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: geometry.size.width * CGFloat(isViewingToday ? currentHealth : selectedDayHealth) / 100, height: 12)
                             .animation(.spring(response: 0.5, dampingFraction: 0.7), value: currentHealth)
                     }
                 }
-                .frame(height: 14)
-                .padding(.horizontal, 40)
+                .frame(height: 12)
+                .padding(.horizontal, 30)
                 
-                Text("Health")
-                    .font(.system(size: 16, weight: .medium))
+                Text("Pet Health")
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(themeManager.secondaryTextColor)
             }
+            
+            // Steps to Goal / Next Mood (only for today)
+            if isViewingToday {
+                stepsToGoalSection
+            }
+        }
+        .padding(.vertical, 20)
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 28)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 8)
+        )
+        .padding(.top, 16)
+    }
+    
+    // MARK: - Steps to Goal Section
+    private var stepsToGoalSection: some View {
+        VStack(spacing: 12) {
+            // Steps to reach goal
+            if stepsToGoal > 0 {
+                HStack(spacing: 8) {
+                    Image(systemName: "flag.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(themeManager.accentColor)
+                    
+                    Text("\(stepsToGoal) steps to reach goal")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule()
+                        .fill(themeManager.accentColor.opacity(0.1))
+                )
+            } else {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.green)
+                    
+                    Text("Goal reached! 🎉")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundColor(.green)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule()
+                        .fill(Color.green.opacity(0.1))
+                )
+            }
+            
+            // Steps to next mood
+            if let nextMoodInfo = stepsToNextMood, stepsToGoal > 0 {
+                HStack(spacing: 8) {
+                    Text(nextMoodInfo.nextMood.emoji)
+                        .font(.system(size: 14))
+                    
+                    Text("\(nextMoodInfo.steps) more to \(nextMoodInfo.nextMood.displayName.lowercased())")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                }
+            }
+        }
+        .padding(.top, 8)
+    }
+    
+    // MARK: - Weekly Graph Section
+    private var weeklyGraphSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("This Week")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+                
+                Spacer()
+                
+                if selectedDay != nil && !Calendar.current.isDateInToday(selectedDay!) {
+                    Button(action: { 
+                        withAnimation(.spring(response: 0.3)) {
+                            selectedDay = nil 
+                        }
+                    }) {
+                        Text("Back to Today")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(themeManager.accentColor)
+                    }
+                }
+            }
+            
+            // Week Graph
+            WeeklyStepsGraph(
+                weeklySteps: healthKitManager.weeklySteps,
+                todaySteps: healthKitManager.todaySteps,
+                goalSteps: userSettings.dailyStepGoal,
+                selectedDay: $selectedDay
+            )
+            .frame(height: 140)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+        )
+        .padding(.top, 16)
+    }
+    
+    // MARK: - Encouragement Section
+    private var encouragementSection: some View {
+        HStack(spacing: 8) {
+            Text(encouragementMessage)
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .foregroundColor(themeManager.primaryTextColor)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(healthColor(for: currentHealth).opacity(0.1))
+        )
+        .padding(.top, 16)
+    }
+    
+    private var encouragementMessage: String {
+        switch currentHealth {
+        case 0...20:
+            return "Let's get moving! \(userSettings.pet.name) needs you! 🐾"
+        case 21...40:
+            return "Good start! Keep those steps coming! 💪"
+        case 41...60:
+            return "You're doing great! Halfway there! ⭐"
+        case 61...80:
+            return "Amazing progress! \(userSettings.pet.name) is getting happier! 🎉"
+        case 81...99:
+            return "Almost there! Just a little more! 🔥"
+        default:
+            return "Perfect! \(userSettings.pet.name) is thriving! 🌟"
         }
     }
     
     // MARK: - Dashboard Section
     private var dashboardSection: some View {
         VStack(spacing: 16) {
-            // Divider
-            Rectangle()
-                .fill(themeManager.isDarkMode ? Color.white.opacity(0.1) : Color.gray.opacity(0.15))
-                .frame(height: 1)
-                .padding(.vertical, 20)
-                .padding(.horizontal, 20)
-            
-            // Title
             HStack {
-                Text("Today's Dashboard")
-                    .font(.system(size: 18, weight: .bold))
+                Text("Quick Stats")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(themeManager.primaryTextColor)
-                
-                Circle()
-                    .fill(Color.green)
-                    .frame(width: 8, height: 8)
                 
                 Spacer()
             }
             
-            // Stats Grid
-            HStack(spacing: 16) {
-                // Steps Today
-                DashboardCard(
-                    title: "Today's Steps",
-                    value: formatSteps(healthKitManager.todaySteps),
-                    icon: "figure.walk",
-                    iconColor: themeManager.accentColor
+            // Stats Row
+            HStack(spacing: 12) {
+                QuickStatCard(
+                    title: "Calories",
+                    value: "\(Int(Double(healthKitManager.todaySteps) * 0.04))",
+                    icon: "flame.fill",
+                    color: .orange
                 )
                 
-                // Steps Remaining
-                DashboardCard(
-                    title: "Steps Left",
-                    value: formatSteps(stepsRemaining),
-                    icon: "flag.fill",
-                    iconColor: themeManager.warningColor
+                QuickStatCard(
+                    title: "Miles",
+                    value: String(format: "%.1f", Double(healthKitManager.todaySteps) * 2.5 / 5280),
+                    icon: "map.fill",
+                    color: .purple
                 )
-            }
-            
-            HStack(spacing: 16) {
-                // Goal Progress
-                DashboardCard(
-                    title: "Goal Progress",
-                    value: "\(min(100, Int((Double(healthKitManager.todaySteps) / Double(userSettings.dailyStepGoal)) * 100)))%",
+                
+                QuickStatCard(
+                    title: "Goal",
+                    value: "\(Int(goalProgress * 100))%",
                     icon: "target",
-                    iconColor: themeManager.successColor
-                )
-                
-                // Daily Goal
-                DashboardCard(
-                    title: "Daily Goal",
-                    value: formatSteps(userSettings.dailyStepGoal),
-                    icon: "star.fill",
-                    iconColor: Color.yellow
+                    color: .green
                 )
             }
         }
-        .padding(.top, 8)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+        )
+        .padding(.top, 16)
     }
     
     // MARK: - Helper Methods
+    
+    private func healthColor(for health: Int) -> Color {
+        switch health {
+        case 0...20: return .red
+        case 21...39: return .orange
+        case 40...59: return .yellow
+        default: return .green
+        }
+    }
+    
     private var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, yyyy"
         return formatter.string(from: Date())
     }
     
-    private func formatSteps(_ steps: Int) -> String {
-        if steps >= 1000 {
-            let thousands = Double(steps) / 1000.0
-            if thousands == Double(Int(thousands)) {
-                return "\(Int(thousands))k"
-            } else {
-                return String(format: "%.1fk", thousands)
-            }
+    private var selectedDayFormatted: String {
+        guard let day = selectedDay else { return "" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMM d"
+        return formatter.string(from: day)
+    }
+    
+    private func animateValues() {
+        withAnimation(.easeOut(duration: 1.0)) {
+            animatedSteps = healthKitManager.todaySteps
         }
-        return "\(steps)"
+    }
+    
+    private func triggerCelebration() {
+        HapticFeedback.success.trigger()
+        withAnimation(.spring(response: 0.5)) {
+            showCelebration = true
+        }
     }
     
     private func refreshData() {
@@ -270,11 +493,9 @@ struct TodayView: View {
         userSettings.updatePetHealth(steps: steps)
         stepDataManager.updateTodayRecord(steps: steps, goalSteps: userSettings.dailyStepGoal)
         
-        // Check if goal achieved
-        if steps >= userSettings.dailyStepGoal {
+        if currentHealth >= 100 {
             userSettings.streakData.updateStreak(goalAchieved: true, date: Date())
             
-            // Check achievements
             let daysUsed = Calendar.current.dateComponents([.day], from: userSettings.firstLaunchDate ?? Date(), to: Date()).day ?? 0
             achievementManager.checkAchievements(
                 todaySteps: steps,
@@ -290,41 +511,263 @@ struct TodayView: View {
     }
 }
 
-// MARK: - Dashboard Card
-struct DashboardCard: View {
+// MARK: - Weekly Steps Graph
+struct WeeklyStepsGraph: View {
+    let weeklySteps: [Date: Int]
+    let todaySteps: Int
+    let goalSteps: Int
+    @Binding var selectedDay: Date?
+    
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    private var weekDays: [Date] {
+        let calendar = Calendar.current
+        let today = Date()
+        return (0..<7).compactMap { offset in
+            calendar.date(byAdding: .day, value: -(6 - offset), to: today)
+        }.map { calendar.startOfDay(for: $0) }
+    }
+    
+    private var maxSteps: Int {
+        let allSteps = weekDays.map { stepsForDay($0) }
+        return max(allSteps.max() ?? goalSteps, goalSteps)
+    }
+    
+    private func stepsForDay(_ date: Date) -> Int {
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        if Calendar.current.isDateInToday(date) {
+            return todaySteps
+        }
+        return weeklySteps[startOfDay] ?? 0
+    }
+    
+    private func dayName(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter.string(from: date).uppercased()
+    }
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let width = geometry.size.width
+            let height = geometry.size.height - 30 // Leave space for labels
+            let spacing = width / CGFloat(weekDays.count)
+            
+            ZStack {
+                // Goal line
+                Path { path in
+                    let goalY = height - (CGFloat(goalSteps) / CGFloat(maxSteps) * height)
+                    path.move(to: CGPoint(x: 0, y: goalY))
+                    path.addLine(to: CGPoint(x: width, y: goalY))
+                }
+                .stroke(style: StrokeStyle(lineWidth: 1, dash: [5, 5]))
+                .foregroundColor(themeManager.secondaryTextColor.opacity(0.3))
+                
+                // Area fill
+                Path { path in
+                    path.move(to: CGPoint(x: spacing / 2, y: height))
+                    
+                    for (index, day) in weekDays.enumerated() {
+                        let x = spacing / 2 + CGFloat(index) * spacing
+                        let steps = stepsForDay(day)
+                        let y = height - (CGFloat(steps) / CGFloat(maxSteps) * height)
+                        
+                        if index == 0 {
+                            path.addLine(to: CGPoint(x: x, y: y))
+                        } else {
+                            path.addLine(to: CGPoint(x: x, y: y))
+                        }
+                    }
+                    
+                    path.addLine(to: CGPoint(x: spacing / 2 + CGFloat(weekDays.count - 1) * spacing, y: height))
+                    path.closeSubpath()
+                }
+                .fill(
+                    LinearGradient(
+                        colors: [themeManager.accentColor.opacity(0.3), themeManager.accentColor.opacity(0.05)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                
+                // Line
+                Path { path in
+                    for (index, day) in weekDays.enumerated() {
+                        let x = spacing / 2 + CGFloat(index) * spacing
+                        let steps = stepsForDay(day)
+                        let y = height - (CGFloat(steps) / CGFloat(maxSteps) * height)
+                        
+                        if index == 0 {
+                            path.move(to: CGPoint(x: x, y: y))
+                        } else {
+                            path.addLine(to: CGPoint(x: x, y: y))
+                        }
+                    }
+                }
+                .stroke(themeManager.accentColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+                
+                // Interactive dots
+                ForEach(Array(weekDays.enumerated()), id: \.offset) { index, day in
+                    let x = spacing / 2 + CGFloat(index) * spacing
+                    let steps = stepsForDay(day)
+                    let y = height - (CGFloat(steps) / CGFloat(maxSteps) * height)
+                    let isSelected = selectedDay != nil && Calendar.current.isDate(selectedDay!, inSameDayAs: day)
+                    let isToday = Calendar.current.isDateInToday(day)
+                    
+                    VStack(spacing: 4) {
+                        // Dot
+                        Button(action: {
+                            withAnimation(.spring(response: 0.3)) {
+                                if isToday {
+                                    selectedDay = nil
+                                } else {
+                                    selectedDay = day
+                                }
+                            }
+                            HapticFeedback.light.trigger()
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(isSelected || isToday ? themeManager.accentColor : themeManager.cardBackgroundColor)
+                                    .frame(width: isSelected ? 16 : 12, height: isSelected ? 16 : 12)
+                                    .shadow(color: themeManager.accentColor.opacity(0.3), radius: isSelected ? 6 : 0)
+                                
+                                if !isSelected && !isToday {
+                                    Circle()
+                                        .stroke(themeManager.accentColor, lineWidth: 2)
+                                        .frame(width: 12, height: 12)
+                                }
+                            }
+                        }
+                        .position(x: x, y: y)
+                    }
+                }
+                
+                // Day labels
+                HStack(spacing: 0) {
+                    ForEach(Array(weekDays.enumerated()), id: \.offset) { index, day in
+                        let isToday = Calendar.current.isDateInToday(day)
+                        let isSelected = selectedDay != nil && Calendar.current.isDate(selectedDay!, inSameDayAs: day)
+                        
+                        Text(dayName(day))
+                            .font(.system(size: 10, weight: isToday || isSelected ? .bold : .medium))
+                            .foregroundColor(isToday || isSelected ? themeManager.accentColor : themeManager.secondaryTextColor)
+                            .frame(width: spacing)
+                    }
+                }
+                .position(x: width / 2, y: height + 15)
+            }
+        }
+    }
+}
+
+// MARK: - Quick Stat Card
+struct QuickStatCard: View {
     let title: String
     let value: String
     let icon: String
-    let iconColor: Color
+    let color: Color
     
     @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(iconColor)
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.12))
+                    .frame(width: 36, height: 36)
                 
-                Spacer()
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(color)
             }
             
-            Text(title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(themeManager.secondaryTextColor)
-                .lineLimit(1)
-            
             Text(value)
-                .font(.system(size: 28, weight: .bold))
+                .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundColor(themeManager.primaryTextColor)
+            
+            Text(title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(themeManager.secondaryTextColor)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.05), radius: 8, x: 0, y: 4)
+                .fill(themeManager.backgroundColor)
         )
+    }
+}
+
+// MARK: - Celebration Overlay
+struct CelebrationOverlay: View {
+    let petName: String
+    let onDismiss: () -> Void
+    
+    @State private var showContent = false
+    @State private var confettiActive = true
+    
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
+                .onTapGesture { onDismiss() }
+            
+            VStack(spacing: 20) {
+                HStack(spacing: 20) {
+                    ForEach(0..<5) { i in
+                        Text(["🎉", "⭐", "🌟", "✨", "🎊"][i])
+                            .font(.system(size: 30))
+                            .offset(y: confettiActive ? -20 : 0)
+                            .animation(
+                                .easeInOut(duration: 0.5)
+                                .repeatForever(autoreverses: true)
+                                .delay(Double(i) * 0.1),
+                                value: confettiActive
+                            )
+                    }
+                }
+                
+                Text("🏆")
+                    .font(.system(size: 80))
+                    .scaleEffect(showContent ? 1.0 : 0.5)
+                
+                Text("Goal Achieved!")
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundColor(.white)
+                
+                Text("\(petName) is at full health!")
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundColor(.white.opacity(0.8))
+                
+                Text("Streak maintained! 🔥")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(.orange)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Capsule().fill(Color.orange.opacity(0.2)))
+                
+                Button(action: onDismiss) {
+                    Text("Continue")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 40)
+                        .padding(.vertical, 14)
+                        .background(
+                            Capsule()
+                                .fill(LinearGradient(colors: [.green, .green.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
+                        )
+                }
+                .padding(.top, 10)
+            }
+            .scaleEffect(showContent ? 1.0 : 0.8)
+            .opacity(showContent ? 1.0 : 0.0)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                showContent = true
+            }
+        }
     }
 }
 
@@ -337,4 +780,3 @@ struct DashboardCard: View {
         .environmentObject(StepDataManager())
         .environmentObject(AchievementManager())
 }
-

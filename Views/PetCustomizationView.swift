@@ -86,13 +86,13 @@ struct PetCustomizationView: View {
     @State private var healthBoostAmount = 0
     @State private var showMinigames = false
     
-    // Preview slider - continuous for smooth video transitions
-    @State private var previewSliderValue: Double = 50
+    // Preview slider - discrete steps for 5 moods
+    @State private var previewStep: Double = 2 // Start at Content (index 2)
     
     private let moodStates: [PetMoodState] = [.sick, .sad, .content, .happy, .fullHealth]
     
     private var previewMoodState: PetMoodState {
-        PetMoodState.from(health: Int(previewSliderValue))
+        moodStates[Int(previewStep)]
     }
     
     private var sliderColor: Color {
@@ -142,7 +142,14 @@ struct PetCustomizationView: View {
             selectedPetType = userSettings.pet.type
             newPetName = userSettings.pet.name
             userSettings.checkAndResetDailyBoost()
-            previewSliderValue = Double(userSettings.pet.health)
+            
+            // Set initial slider based on current health
+            let currentHealth = userSettings.pet.health
+            if currentHealth <= 20 { previewStep = 0 }
+            else if currentHealth <= 40 { previewStep = 1 }
+            else if currentHealth <= 60 { previewStep = 2 }
+            else if currentHealth <= 80 { previewStep = 3 }
+            else { previewStep = 4 }
         }
         .overlay {
             if showHealthBoostAnimation {
@@ -203,59 +210,37 @@ struct PetCustomizationView: View {
             
             // MP4 Video Preview (Square aspect ratio)
             AnimatedPetVideoView(petType: selectedPetType, moodState: previewMoodState)
-                .frame(width: UIScreen.main.bounds.width - 64, height: UIScreen.main.bounds.width - 64)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .frame(width: 200, height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .shadow(color: themeManager.accentColor.opacity(0.15), radius: 20, x: 0, y: 10)
                 .id("\(selectedPetType.rawValue)-\(previewMoodState.rawValue)")
             
-            // Health Percentage Display
-            VStack(spacing: 4) {
-                Text("\(Int(previewSliderValue))%")
-                    .font(.system(size: 48, weight: .bold))
-                    .foregroundColor(sliderColor)
-                    .contentTransition(.numericText())
-                    .animation(.snappy, value: Int(previewSliderValue))
-                
-                Text("health")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(themeManager.secondaryTextColor)
-            }
+            // Mood Display
+            Text(previewMoodState.displayName)
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundColor(sliderColor)
+                .padding(.top, 4)
             
-            // Mood Badge
-            HStack(spacing: 4) {
-                Text(previewMoodState.emoji)
-                    .font(.system(size: 14))
-                
-                Text(previewMoodState.displayName)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(sliderColor)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 5)
-            .background(
-                Capsule()
-                    .fill(sliderColor.opacity(0.12))
-            )
-            
-            // Native SwiftUI Slider (Onboarding Style)
-            VStack(spacing: 10) {
-                Slider(value: $previewSliderValue, in: 0...100, step: 1)
+            // Native SwiftUI Slider
+            VStack(spacing: 12) {
+                Slider(value: $previewStep, in: 0...4, step: 1)
                     .tint(sliderColor)
-                    .onChange(of: previewSliderValue) {
+                    .onChange(of: previewStep) {
                         if userSettings.hapticsEnabled {
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         }
                     }
                 
+                // Labels
                 HStack {
-                    Text("Sick")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.red)
-                    
-                    Spacer()
-                    
-                    Text("Full Health")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.green)
+                    ForEach(moodStates, id: \.self) { mood in
+                        Text(mood.displayName)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(previewMoodState == mood ? sliderColor : themeManager.secondaryTextColor)
+                            .frame(maxWidth: .infinity)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
                 }
             }
             .padding(.horizontal, 4)
@@ -272,320 +257,215 @@ struct PetCustomizationView: View {
     private var minigamesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("🎮 Minigames")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundColor(themeManager.primaryTextColor)
-                    
-                    Text("Play games with \(userSettings.pet.name)")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(themeManager.secondaryTextColor)
-                }
+                Label("Minigames", systemImage: "gamecontroller.fill")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
                 
                 Spacer()
                 
-                // Games count badge
-                Text("3 games")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.purple)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Capsule().fill(Color.purple.opacity(0.12)))
+                if userSettings.playCredits == 0 {
+                    Button(action: { showCreditsSheet = true }) {
+                        Text("Get Credits")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(themeManager.accentColor)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Capsule().fill(themeManager.accentColor.opacity(0.1)))
+                    }
+                }
             }
             
-            // Minigames preview row
+            // Minigames Entry Card
             Button(action: { showMinigames = true }) {
-                HStack(spacing: 12) {
+                HStack(spacing: 16) {
                     // Game icons preview
-                    HStack(spacing: -8) {
-                        ForEach(["🦴", "🃏", "🫧"], id: \.self) { emoji in
-                            ZStack {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [.purple.opacity(0.2), .blue.opacity(0.2)],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 44, height: 44)
-                                
-                                Text(emoji)
-                                    .font(.system(size: 20))
-                            }
-                        }
+                    ZStack {
+                        Circle()
+                            .fill(LinearGradient(colors: [.purple, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 56, height: 56)
+                            .opacity(0.1)
+                        
+                        Text("🎮")
+                            .font(.system(size: 28))
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Earn bonus health!")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                        Text("Play Games")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                         
-                        HStack(spacing: 4) {
-                            Image(systemName: "heart.fill")
-                                .font(.system(size: 10))
-                                .foregroundColor(.pink)
-                            
-                            Text("+10-30 per game")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(.pink)
-                        }
+                        Text("Earn health & have fun!")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(themeManager.secondaryTextColor)
                     }
                     
                     Spacer()
                     
-                    // Play button
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [.purple, .blue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 40, height: 40)
-                        
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                    }
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(themeManager.tertiaryTextColor)
                 }
-                .padding(14)
+                .padding(16)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.purple.opacity(0.08),
-                                    Color.blue.opacity(0.08)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [.purple.opacity(0.3), .blue.opacity(0.3)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    ),
-                                    lineWidth: 1
-                                )
-                        )
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(themeManager.cardBackgroundColor)
+                        .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.03), radius: 8, x: 0, y: 4)
                 )
             }
             .buttonStyle(PlainButtonStyle())
-            .opacity(userSettings.playCredits > 0 ? 1.0 : 0.5)
-            
-            if userSettings.playCredits == 0 {
-                HStack(spacing: 6) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(.yellow)
-                    
-                    Text("Get credits to play minigames")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(themeManager.secondaryTextColor)
-                    
-                    Spacer()
-                    
-                    Button(action: { showCreditsSheet = true }) {
-                        Text("Get Credits")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(themeManager.accentColor)
-                    }
-                }
-                .padding(.top, 4)
-            }
+            .opacity(userSettings.playCredits > 0 ? 1.0 : 0.8)
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.04), radius: 6, x: 0, y: 3)
-        )
+        .padding(.horizontal, 4)
     }
     
     // MARK: - Play Activities Section
     private var playActivitiesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Play with \(userSettings.pet.name)")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundColor(themeManager.primaryTextColor)
-                    
-                    Text("+20 health per activity")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(themeManager.secondaryTextColor)
-                }
+                Label("Activities", systemImage: "figure.play")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
                 
                 Spacer()
                 
                 if userSettings.todayPlayHealthBoost > 0 {
-                    Text("+\(userSettings.todayPlayHealthBoost)")
-                        .font(.system(size: 10, weight: .bold))
+                    Text("+\(userSettings.todayPlayHealthBoost) Health")
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.green)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                         .background(Capsule().fill(Color.green.opacity(0.12)))
                 }
             }
             
-            // Activity Buttons
-            HStack(spacing: 8) {
-                ForEach(PetActivity.allCases) { activity in
-                    Button(action: {
-                        selectedActivity = activity
-                        showActivitySheet = true
-                    }) {
-                        VStack(spacing: 6) {
-                            ZStack {
-                                Circle()
-                                    .fill(activity.color.opacity(0.12))
-                                    .frame(width: 40, height: 40)
+            // Activity Buttons Horizontal Scroll
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(PetActivity.allCases) { activity in
+                        Button(action: {
+                            selectedActivity = activity
+                            showActivitySheet = true
+                        }) {
+                            VStack(spacing: 10) {
+                                ZStack {
+                                    Circle()
+                                        .fill(activity.color.opacity(0.12))
+                                        .frame(width: 50, height: 50)
+                                    
+                                    Image(systemName: activity.icon)
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundColor(activity.color)
+                                }
                                 
-                                Image(systemName: activity.icon)
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(activity.color)
+                                Text(activity.rawValue)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(themeManager.primaryTextColor)
                             }
-                            
-                            Text(activity.rawValue)
-                                .font(.system(size: 9, weight: .semibold))
-                                .foregroundColor(themeManager.primaryTextColor)
+                            .frame(width: 90, height: 100)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(themeManager.cardBackgroundColor)
+                                    .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.03), radius: 6, x: 0, y: 3)
+                            )
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(themeManager.isDarkMode ? Color.white.opacity(0.03) : Color.gray.opacity(0.03))
-                        )
-                        .opacity(userSettings.playCredits > 0 ? 1 : 0.4)
-                    }
-                    .disabled(userSettings.playCredits <= 0)
-                }
-            }
-            
-            if userSettings.playCredits == 0 {
-                Button(action: { showCreditsSheet = true }) {
-                    HStack {
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(.yellow)
-                        
-                        Text("Get credits to play")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(themeManager.accentColor)
+                        .disabled(userSettings.playCredits <= 0)
+                        .opacity(userSettings.playCredits > 0 ? 1 : 0.6)
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 4)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 4)
             }
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.04), radius: 6, x: 0, y: 3)
-        )
+        .padding(.horizontal, 4)
     }
     
     // MARK: - Pet Selection Section
     private var petSelectionSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Choose Pet")
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundColor(themeManager.primaryTextColor)
                 
                 Spacer()
                 
                 if !userSettings.isPremium {
-                    HStack(spacing: 2) {
+                    HStack(spacing: 4) {
                         Image(systemName: "lock.fill")
-                            .font(.system(size: 8))
+                            .font(.system(size: 10))
                         Text("4 locked")
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(.system(size: 12, weight: .medium))
                     }
                     .foregroundColor(themeManager.tertiaryTextColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(themeManager.cardBackgroundColor))
                 }
             }
             
-            // Compact Pet Row
-            HStack(spacing: 6) {
-                ForEach(PetType.allCases, id: \.self) { petType in
-                    Button(action: { selectPet(petType) }) {
-                        VStack(spacing: 3) {
-                            ZStack {
-                                // Use actual pet image from assets
-                                let imageName = petType.imageName(for: .fullHealth)
-                                if let _ = UIImage(named: imageName) {
-                                    Image(imageName)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 32, height: 32)
-                                        .grayscale(petType.isPremium && !userSettings.isPremium ? 1.0 : 0)
-                                        .opacity(petType.isPremium && !userSettings.isPremium ? 0.4 : 1)
-                                } else {
-                                    // Fallback to emoji
-                                    Text(petType.emoji)
-                                        .font(.system(size: 22))
-                                        .grayscale(petType.isPremium && !userSettings.isPremium ? 1.0 : 0)
-                                        .opacity(petType.isPremium && !userSettings.isPremium ? 0.4 : 1)
+            // Horizontal Scrollable Selection
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(PetType.allCases, id: \.self) { petType in
+                        Button(action: { selectPet(petType) }) {
+                            VStack(spacing: 8) {
+                                ZStack {
+                                    Circle()
+                                        .fill(selectedPetType == petType ? themeManager.accentColor.opacity(0.15) : themeManager.cardBackgroundColor)
+                                        .frame(width: 70, height: 70)
+                                    
+                                    // Use actual pet image from assets
+                                    let imageName = petType.imageName(for: .fullHealth)
+                                    if let _ = UIImage(named: imageName) {
+                                        Image(imageName)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(width: 50, height: 50)
+                                            .grayscale(petType.isPremium && !userSettings.isPremium ? 1.0 : 0)
+                                            .opacity(petType.isPremium && !userSettings.isPremium ? 0.5 : 1)
+                                    } else {
+                                        Text(petType.emoji)
+                                            .font(.system(size: 36))
+                                            .grayscale(petType.isPremium && !userSettings.isPremium ? 1.0 : 0)
+                                            .opacity(petType.isPremium && !userSettings.isPremium ? 0.5 : 1)
+                                    }
+                                    
+                                    if petType.isPremium && !userSettings.isPremium {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.black.opacity(0.6))
+                                                .frame(width: 20, height: 20)
+                                            Image(systemName: "lock.fill")
+                                                .font(.system(size: 10, weight: .bold))
+                                                .foregroundColor(.white)
+                                        }
+                                        .offset(x: 24, y: -24)
+                                    }
+                                    
+                                    if selectedPetType == petType {
+                                        Circle()
+                                            .stroke(themeManager.accentColor, lineWidth: 2)
+                                            .frame(width: 70, height: 70)
+                                    }
                                 }
                                 
-                                if petType.isPremium && !userSettings.isPremium {
-                                    Image(systemName: "lock.fill")
-                                        .font(.system(size: 7, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .padding(2)
-                                        .background(Circle().fill(Color.black.opacity(0.5)))
-                                        .offset(x: 10, y: 10)
-                                }
+                                Text(petType.displayName)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(selectedPetType == petType ? themeManager.primaryTextColor : themeManager.secondaryTextColor)
                             }
-                            
-                            Text(petType.displayName)
-                                .font(.system(size: 8, weight: .medium))
-                                .foregroundColor(themeManager.secondaryTextColor)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(selectedPetType == petType ?
-                                      themeManager.accentColor.opacity(0.1) :
-                                      Color.clear)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(selectedPetType == petType ? themeManager.accentColor : Color.clear, lineWidth: 1.5)
-                                )
-                        )
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    .buttonStyle(PlainButtonStyle())
                 }
+                .padding(.horizontal, 4)
+                .padding(.vertical, 4)
             }
-            
-            // Selected Pet Info
-            HStack(spacing: 10) {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 12))
-                    .foregroundColor(themeManager.accentColor)
-                
-                Text(selectedPetType.personality)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(themeManager.secondaryTextColor)
-                    .lineLimit(1)
-            }
-            .padding(.top, 4)
         }
-        .padding(14)
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.04), radius: 6, x: 0, y: 3)
+            RoundedRectangle(cornerRadius: 24)
+                .fill(themeManager.cardBackgroundColor) // Lighter background for the container
+                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.03), radius: 8, x: 0, y: 4)
         )
     }
     
@@ -849,11 +729,12 @@ struct ActivityPlaySheet: View {
                 
                 if showAnimation {
                     VStack(spacing: 14) {
-                        // GIF Animation for activity (Square and larger)
-                        let size = min(UIScreen.main.bounds.width - 48, 320)
+                        // GIF Animation for activity (Reduced size)
+                        let size: CGFloat = 220
                         GIFImage(activity.gifName(for: petType))
                             .frame(width: size, height: size)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .id("\(activity.id)-\(petType.rawValue)") // Force redraw on change
                         
                         if animationComplete {
                             VStack(spacing: 8) {

@@ -128,7 +128,7 @@ struct HistoryView: View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Weekly Discipline")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundColor(themeManager.primaryTextColor)
                 
                 Text("Track your step count and focus habits.")
@@ -145,17 +145,17 @@ struct HistoryView: View {
                 Image(imageName)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 85, height: 85)
+                    .frame(width: 60, height: 60)
             } else {
                 AnimatedPetView(petType: userSettings.pet.type, moodState: .content)
-                    .frame(width: 85, height: 85)
+                    .frame(width: 60, height: 60)
             }
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 24)
                 .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.05), radius: 10, x: 0, y: 4)
+                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.03), radius: 10, x: 0, y: 4)
         )
     }
     
@@ -516,48 +516,54 @@ struct WeekDayCard: View {
     }
 }
 
-// MARK: - Highlight Card
-struct HighlightCard: View {
-    let value: String
-    let title: String
-    let subtitle: String
-    let iconName: String
-    let iconColor: Color
-    
-    @EnvironmentObject var themeManager: ThemeManager
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(iconColor.opacity(0.2))
-                    .frame(width: 36, height: 36)
+    // MARK: - Highlight Card
+    struct HighlightCard: View {
+        let value: String
+        let title: String
+        let subtitle: String
+        let iconName: String
+        let iconColor: Color
+        
+        @EnvironmentObject var themeManager: ThemeManager
+        
+        var body: some View {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    ZStack {
+                        Circle()
+                            .fill(iconColor.opacity(0.1))
+                            .frame(width: 32, height: 32)
+                        
+                        Image(systemName: iconName)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(iconColor)
+                    }
+                    Spacer()
+                }
                 
-                Image(systemName: iconName)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(iconColor)
+                Text(value)
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    Text(subtitle)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                }
             }
-            
-            Text(value)
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(themeManager.primaryTextColor)
-            
-            Text(title)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(themeManager.primaryTextColor)
-            
-            Text(subtitle)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(themeManager.secondaryTextColor)
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(themeManager.cardBackgroundColor)
+                    .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.03), radius: 8, x: 0, y: 4)
+            )
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(iconColor.opacity(0.25), lineWidth: 1.5)
-        )
     }
-}
 
 // MARK: - Preview
 #Preview {

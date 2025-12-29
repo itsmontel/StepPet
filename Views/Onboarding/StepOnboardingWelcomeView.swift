@@ -43,7 +43,7 @@ struct StepOnboardingWelcomeView: View {
                             .blur(radius: 20)
                         
                         AnimatedPetVideoView(
-                            petType: .dog,
+                            petType: .cat,
                             moodState: .fullHealth
                         )
                         .frame(width: 160, height: 160)

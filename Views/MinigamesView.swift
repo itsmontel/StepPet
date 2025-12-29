@@ -80,20 +80,24 @@ struct MinigamesView: View {
             }
         }
         .fullScreenCover(isPresented: $showGame) {
-            if let game = selectedGame {
-                switch game {
-                case .treatCatch:
-                    TreatCatchGameView(onComplete: handleGameComplete)
-                        .environmentObject(themeManager)
-                        .environmentObject(userSettings)
-                case .memoryMatch:
-                    MemoryMatchGameView(onComplete: handleGameComplete)
-                        .environmentObject(themeManager)
-                        .environmentObject(userSettings)
-                case .bubblePop:
-                    BubblePopGameView(onComplete: handleGameComplete)
-                        .environmentObject(themeManager)
-                        .environmentObject(userSettings)
+            ZStack {
+                Color.black.ignoresSafeArea()
+                
+                if let game = selectedGame {
+                    switch game {
+                    case .treatCatch:
+                        TreatCatchGameView(onComplete: handleGameComplete)
+                            .environmentObject(themeManager)
+                            .environmentObject(userSettings)
+                    case .memoryMatch:
+                        MemoryMatchGameView(onComplete: handleGameComplete)
+                            .environmentObject(themeManager)
+                            .environmentObject(userSettings)
+                    case .bubblePop:
+                        BubblePopGameView(onComplete: handleGameComplete)
+                            .environmentObject(themeManager)
+                            .environmentObject(userSettings)
+                    }
                 }
             }
         }
@@ -102,12 +106,14 @@ struct MinigamesView: View {
     // MARK: - Header Section
     private var headerSection: some View {
         VStack(spacing: 16) {
-            // Pet preview
-            AnimatedPetView(petType: userSettings.pet.type, moodState: .happy)
-                .frame(height: 100)
+            // Pet preview (MP4)
+            AnimatedPetVideoView(petType: userSettings.pet.type, moodState: .happy)
+                .frame(width: 120, height: 120)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: themeManager.accentColor.opacity(0.15), radius: 10, x: 0, y: 5)
             
             Text("\(userSettings.pet.name) wants to play!")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundColor(themeManager.primaryTextColor)
             
             // Credits display

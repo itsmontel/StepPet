@@ -40,8 +40,8 @@ enum PetType: String, CaseIterable, Codable {
     
     var isPremium: Bool {
         switch self {
-        case .dog: return false // Dog is free
-        case .cat, .bunny, .hamster, .horse: return true
+        case .cat: return false // Cat is free (main pet)
+        case .dog, .bunny, .hamster, .horse: return true
         }
     }
     
@@ -141,7 +141,7 @@ struct Pet: Codable, Identifiable {
         PetMoodState.from(health: health)
     }
     
-    init(type: PetType = .dog, name: String = "Buddy") {
+    init(type: PetType = .cat, name: String = "Whiskers") {
         self.type = type
         self.name = name
     }

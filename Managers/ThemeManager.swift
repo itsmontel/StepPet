@@ -19,7 +19,7 @@ class ThemeManager: ObservableObject {
     
     // MARK: - Background Colors
     var backgroundColor: Color {
-        isDarkMode ? Color(hex: "1C1C1E") : Color(hex: "FFF9E6")
+        isDarkMode ? Color(hex: "2F2E31") : Color(hex: "FFFAE3")
     }
     
     var cardBackgroundColor: Color {

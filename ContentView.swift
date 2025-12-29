@@ -8,7 +8,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var achievementManager: AchievementManager
-    @State private var selectedTab = 0
+    @State private var selectedTab = 2 // Start on Today (center)
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -18,16 +18,16 @@ struct ContentView: View {
             
             // Tab Content
             TabView(selection: $selectedTab) {
-                TodayView()
+                PetCustomizationView()
                     .tag(0)
                 
-                HistoryView()
+                InsightsView()
                     .tag(1)
                 
-                PetCustomizationView()
+                TodayView()
                     .tag(2)
                 
-                AchievementsView()
+                ChallengesView()
                     .tag(3)
                 
                 SettingsView()
@@ -35,19 +35,14 @@ struct ContentView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             
-            // Custom Tab Bar
-            CustomTabBar(selectedTab: $selectedTab)
+            // Custom Tab Bar with Center Highlight
+            CenteredTabBar(selectedTab: $selectedTab)
         }
         .onChange(of: selectedTab) { _, newValue in
-            // Track visited sections for explorer achievement
             achievementManager.updateProgress(achievementId: "explorer", progress: min(newValue + 1, 5))
-            
-            // Trigger haptic
-            let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.impactOccurred()
+            HapticFeedback.light.trigger()
         }
         .overlay {
-            // Achievement Unlock Animation
             if achievementManager.showUnlockAnimation, let achievement = achievementManager.recentlyUnlocked {
                 AchievementUnlockOverlay(achievement: achievement)
                     .transition(.move(edge: .top).combined(with: .opacity))
@@ -58,29 +53,44 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Custom Tab Bar
-struct CustomTabBar: View {
+// MARK: - Centered Tab Bar (Today in middle, prominent)
+struct CenteredTabBar: View {
     @Binding var selectedTab: Int
     @EnvironmentObject var themeManager: ThemeManager
     
+    // New tab order: Pets, Insights, TODAY (center), Challenges, Settings
     let tabs: [(icon: String, selectedIcon: String, title: String)] = [
-        ("house", "house.fill", "Today"),
-        ("chart.bar", "chart.bar.fill", "History"),
         ("pawprint", "pawprint.fill", "Pets"),
-        ("trophy", "trophy.fill", "Achievements"),
+        ("chart.line.uptrend.xyaxis", "chart.line.uptrend.xyaxis", "Insights"),
+        ("figure.walk", "figure.walk", "Today"),
+        ("trophy", "trophy.fill", "Challenges"),
         ("gearshape", "gearshape.fill", "Settings")
     ]
     
     var body: some View {
         HStack(spacing: 0) {
             ForEach(0..<tabs.count, id: \.self) { index in
-                TabBarButton(
-                    icon: selectedTab == index ? tabs[index].selectedIcon : tabs[index].icon,
-                    title: tabs[index].title,
-                    isSelected: selectedTab == index
-                ) {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        selectedTab = index
+                if index == 2 {
+                    // Center tab (Today) - Prominent
+                    CenterTabButton(
+                        icon: tabs[index].selectedIcon,
+                        title: tabs[index].title,
+                        isSelected: selectedTab == index
+                    ) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            selectedTab = index
+                        }
+                    }
+                } else {
+                    // Regular tabs
+                    TabBarButton(
+                        icon: selectedTab == index ? tabs[index].selectedIcon : tabs[index].icon,
+                        title: tabs[index].title,
+                        isSelected: selectedTab == index
+                    ) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            selectedTab = index
+                        }
                     }
                 }
             }
@@ -96,7 +106,47 @@ struct CustomTabBar: View {
     }
 }
 
-// MARK: - Tab Bar Button
+// MARK: - Center Tab Button (Prominent)
+struct CenterTabButton: View {
+    let icon: String
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                ZStack {
+                    // Glowing background
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.7)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 56, height: 56)
+                        .shadow(color: themeManager.accentColor.opacity(isSelected ? 0.5 : 0.3), radius: isSelected ? 12 : 8, x: 0, y: 4)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                .offset(y: -10) // Raise it up
+                
+                Text(title)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(isSelected ? themeManager.accentColor : themeManager.secondaryTextColor)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Tab Bar Button (Regular)
 struct TabBarButton: View {
     let icon: String
     let title: String
@@ -108,7 +158,7 @@ struct TabBarButton: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 22, weight: isSelected ? .semibold : .regular))
+                    .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
                     .foregroundColor(isSelected ? themeManager.accentColor : themeManager.secondaryTextColor)
                     .scaleEffect(isSelected ? 1.1 : 1.0)
                     .animation(.spring(response: 0.3), value: isSelected)
@@ -131,7 +181,6 @@ struct AchievementUnlockOverlay: View {
     var body: some View {
         VStack {
             HStack(spacing: 14) {
-                // Icon
                 ZStack {
                     Circle()
                         .fill(themeManager.categoryColor(for: achievement.category).opacity(0.2))
@@ -143,7 +192,7 @@ struct AchievementUnlockOverlay: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Achievement Unlocked!")
+                    Text("Challenge Complete!")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(themeManager.successColor)
                     
