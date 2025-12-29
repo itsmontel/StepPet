@@ -553,7 +553,7 @@ struct BubblePopGameView: View {
         }
         
         // Add pop effect
-        var effect = PopEffect(x: bubble.x, y: bubble.y, points: points)
+        let effect = PopEffect(x: bubble.x, y: bubble.y, points: points)
         popEffects.append(effect)
         
         // Animate effect

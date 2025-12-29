@@ -51,11 +51,15 @@
     <string>StepPet needs access to your step count to track your daily walking activity and keep your virtual pet healthy.</string>
     <key>NSHealthUpdateUsageDescription</key>
     <string>StepPet would like to record your step data to help you achieve your fitness goals.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>StepPet needs your location to track your walks and show your pet accompanying you on the map.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>StepPet needs your location even when the app is in the background to accurately track your walks and runs with your pet.</string>
     <key>UIBackgroundModes</key>
     <array>
         <string>fetch</string>
         <string>processing</string>
+        <string>location</string>
     </array>
 </dict>
 </plist>
-

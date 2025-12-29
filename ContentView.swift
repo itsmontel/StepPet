@@ -18,7 +18,7 @@ struct ContentView: View {
             
             // Tab Content
             TabView(selection: $selectedTab) {
-                PetCustomizationView()
+                ActivityView()
                     .tag(0)
                 
                 InsightsView()
@@ -58,11 +58,11 @@ struct CenteredTabBar: View {
     @Binding var selectedTab: Int
     @EnvironmentObject var themeManager: ThemeManager
     
-    // New tab order: Pets, Insights, TODAY (center), Challenges, Settings
+    // Tab order: Activity, Insights, TODAY (center), Challenges, Settings
     let tabs: [(icon: String, selectedIcon: String, title: String)] = [
-        ("pawprint", "pawprint.fill", "Pets"),
+        ("figure.walk.motion", "figure.walk.motion", "Activity"),
         ("chart.line.uptrend.xyaxis", "chart.line.uptrend.xyaxis", "Insights"),
-        ("figure.walk", "figure.walk", "Today"),
+        ("house", "house.fill", "Today"),
         ("trophy", "trophy.fill", "Challenges"),
         ("gearshape", "gearshape.fill", "Settings")
     ]

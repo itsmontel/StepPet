@@ -106,15 +106,13 @@ struct InsightsView: View {
             
             Spacer()
             
-            // Pet mascot
-            ZStack {
-                Circle()
-                    .fill(themeManager.accentColor.opacity(0.1))
-                    .frame(width: 50, height: 50)
-                
-                Text(userSettings.pet.type.emoji)
-                    .font(.system(size: 24))
-            }
+            // Pet mascot - using actual pet animation
+            AnimatedPetVideoView(
+                petType: userSettings.pet.type,
+                moodState: .fullHealth
+            )
+            .frame(width: 50, height: 50)
+            .clipShape(Circle())
         }
         .padding(.top, 16)
     }
@@ -177,7 +175,7 @@ struct InsightsView: View {
     // MARK: - Weekly Bar Chart
     private var weeklyBarChart: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("This Week")
+            Text("Last 7 Days")
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundColor(themeManager.primaryTextColor)
             
@@ -191,8 +189,7 @@ struct InsightsView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+                .fill(themeManager.accentColor.opacity(0.08))
         )
     }
     
@@ -246,8 +243,7 @@ struct InsightsView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+                .fill(Color.orange.opacity(0.08))
         )
     }
     
@@ -261,8 +257,12 @@ struct InsightsView: View {
                 
                 Spacer()
                 
-                Text("🏆")
-                    .font(.system(size: 20))
+                AnimatedPetVideoView(
+                    petType: userSettings.pet.type,
+                    moodState: .fullHealth
+                )
+                .frame(width: 36, height: 36)
+                .clipShape(Circle())
             }
             
             HStack(spacing: 12) {
@@ -322,8 +322,7 @@ struct InsightsView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+                .fill(Color.purple.opacity(0.08))
         )
     }
     
@@ -436,8 +435,7 @@ struct InsightStatCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+                .fill(color.opacity(0.1))
         )
     }
 }

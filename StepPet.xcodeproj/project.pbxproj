@@ -48,6 +48,8 @@
 		E81A00012D5E0000004A /* StepOnboardingHealthKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001004A /* StepOnboardingHealthKitView.swift */; };
 		E81A00012D5E0000005E /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001005E /* InsightsView.swift */; };
 		E81A00012D5E0000005F /* ChallengesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001005F /* ChallengesView.swift */; };
+		E81A00012D5E00000060 /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010060 /* ActivityView.swift */; };
+		E81A00012D5E00000061 /* PetActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010061 /* PetActivity.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -95,6 +97,8 @@
 		E81A00012D5E0001004A /* StepOnboardingHealthKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingHealthKitView.swift; sourceTree = "<group>"; };
 		E81A00012D5E0001005E /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		E81A00012D5E0001005F /* ChallengesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengesView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010060 /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010061 /* PetActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetActivity.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -158,6 +162,7 @@
 				E81A00012D5E00010005D /* BubblePopGameView.swift */,
 				E81A00012D5E00010006 /* AchievementsView.swift */,
 				E81A00012D5E0001005F /* ChallengesView.swift */,
+				E81A00012D5E00010060 /* ActivityView.swift */,
 				E81A00012D5E00010007 /* SettingsView.swift */,
 				E81A00012D5E00010008 /* OnboardingView.swift */,
 				E81A00012D5E00030007 /* Onboarding */,
@@ -172,6 +177,7 @@
 				E81A00012D5E0001000A /* Achievement.swift */,
 				E81A00012D5E0001000B /* StepData.swift */,
 				E81A00012D5E0001000C /* UserSettings.swift */,
+				E81A00012D5E00010061 /* PetActivity.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -331,6 +337,8 @@
 				E81A00012D5E0000004A /* StepOnboardingHealthKitView.swift in Sources */,
 				E81A00012D5E0000005E /* InsightsView.swift in Sources */,
 				E81A00012D5E0000005F /* ChallengesView.swift in Sources */,
+				E81A00012D5E00000060 /* ActivityView.swift in Sources */,
+				E81A00012D5E00000061 /* PetActivity.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

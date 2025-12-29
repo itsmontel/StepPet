@@ -14,9 +14,11 @@ struct SettingsView: View {
     @State private var showGoalSheet = false
     @State private var showPremiumSheet = false
     @State private var showFAQSheet = false
+    @State private var showChangePetSheet = false
     @State private var newUserName = ""
     @State private var newPetName = ""
     @State private var selectedGoal = 10000
+    @State private var selectedPetType: PetType = .cat
     
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -58,6 +60,12 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showFAQSheet) {
             FAQView()
+        }
+        .sheet(isPresented: $showChangePetSheet) {
+            changePetSheet
+        }
+        .onAppear {
+            selectedPetType = userSettings.pet.type
         }
     }
     
@@ -129,10 +137,10 @@ struct SettingsView: View {
                     iconColor: .blue,
                     iconBackground: Color.blue.opacity(0.15),
                     title: "Change Pet",
-                    subtitle: "Switch your companion",
+                    subtitle: "Current: \(userSettings.pet.type.displayName)",
                     showChevron: true,
                     action: {
-                        // Navigate to pet customization (handled by tab)
+                        showChangePetSheet = true
                     }
                 )
                 
@@ -363,11 +371,12 @@ struct SettingsView: View {
     // MARK: - Rename Sheet
     private var renameSheet: some View {
         NavigationView {
-            VStack(spacing: 24) {
-                // Pet Preview
-                AnimatedPetView(petType: userSettings.pet.type, moodState: .happy)
-                    .frame(height: 150)
-                    .padding(.top, 20)
+            VStack(spacing: 20) {
+                // Pet Preview - MP4 Video (smaller size)
+                AnimatedPetVideoView(petType: userSettings.pet.type, moodState: .happy)
+                    .frame(width: 80, height: 80)
+                    .clipShape(Circle())
+                    .padding(.top, 16)
                 
                 // Text Field
                 VStack(alignment: .leading, spacing: 8) {
@@ -420,6 +429,155 @@ struct SettingsView: View {
             }
         }
         .presentationDetents([.medium])
+    }
+    
+    // MARK: - Change Pet Sheet
+    private var changePetSheet: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                // Selected Pet Preview - MP4 Video
+                VStack(spacing: 12) {
+                    AnimatedPetVideoView(petType: selectedPetType, moodState: .fullHealth)
+                        .frame(width: 120, height: 120)
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
+                        .shadow(color: themeManager.accentColor.opacity(0.2), radius: 15, x: 0, y: 8)
+                    
+                    Text(selectedPetType.displayName)
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    if selectedPetType.isPremium && !userSettings.isPremium {
+                        HStack(spacing: 4) {
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 10))
+                            Text("Premium")
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(Color.orange.opacity(0.15)))
+                    }
+                }
+                .padding(.top, 16)
+                
+                // Pet Selection Grid
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Choose Your Companion")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                        .padding(.horizontal, 20)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 14) {
+                            ForEach(PetType.allCases, id: \.self) { petType in
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.3)) {
+                                        selectedPetType = petType
+                                    }
+                                    HapticFeedback.light.trigger()
+                                }) {
+                                    VStack(spacing: 8) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(selectedPetType == petType ? themeManager.accentColor.opacity(0.2) : themeManager.cardBackgroundColor)
+                                                .frame(width: 70, height: 70)
+                                            
+                                            // Pet image
+                                            let imageName = petType.imageName(for: .fullHealth)
+                                            if let _ = UIImage(named: imageName) {
+                                                Image(imageName)
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fit)
+                                                    .frame(width: 50, height: 50)
+                                                    .grayscale(petType.isPremium && !userSettings.isPremium ? 0.8 : 0)
+                                                    .opacity(petType.isPremium && !userSettings.isPremium ? 0.6 : 1)
+                                            } else {
+                                                Text(petType.emoji)
+                                                    .font(.system(size: 32))
+                                            }
+                                            
+                                            // Lock icon for premium
+                                            if petType.isPremium && !userSettings.isPremium {
+                                                Circle()
+                                                    .fill(Color.black.opacity(0.5))
+                                                    .frame(width: 20, height: 20)
+                                                    .overlay(
+                                                        Image(systemName: "lock.fill")
+                                                            .font(.system(size: 10, weight: .bold))
+                                                            .foregroundColor(.white)
+                                                    )
+                                                    .offset(x: 24, y: -24)
+                                            }
+                                            
+                                            // Selection indicator
+                                            if selectedPetType == petType {
+                                                Circle()
+                                                    .stroke(themeManager.accentColor, lineWidth: 3)
+                                                    .frame(width: 70, height: 70)
+                                            }
+                                        }
+                                        
+                                        Text(petType.displayName)
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundColor(selectedPetType == petType ? themeManager.accentColor : themeManager.secondaryTextColor)
+                                    }
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                }
+                
+                Spacer()
+                
+                // Select Button
+                Button(action: {
+                    if selectedPetType.isPremium && !userSettings.isPremium {
+                        showPremiumSheet = true
+                    } else {
+                        userSettings.changePet(to: selectedPetType)
+                        achievementManager.updateProgress(achievementId: "customizer", progress: 1)
+                        achievementManager.updateProgress(achievementId: "pet_lover", progress: userSettings.petsUsed.count)
+                        showChangePetSheet = false
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        if selectedPetType.isPremium && !userSettings.isPremium {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 14))
+                        }
+                        Text(selectedPetType.isPremium && !userSettings.isPremium ? "Unlock Premium" : "Select \(selectedPetType.displayName)")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(
+                                selectedPetType.isPremium && !userSettings.isPremium
+                                    ? LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing)
+                                    : LinearGradient(colors: [themeManager.accentColor, themeManager.accentColor], startPoint: .leading, endPoint: .trailing)
+                            )
+                    )
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 30)
+            }
+            .background(themeManager.backgroundColor.ignoresSafeArea())
+            .navigationTitle("Change Pet")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        selectedPetType = userSettings.pet.type
+                        showChangePetSheet = false
+                    }
+                }
+            }
+        }
     }
     
     // MARK: - Goal Setting Sheet

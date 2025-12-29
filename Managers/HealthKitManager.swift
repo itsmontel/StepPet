@@ -85,18 +85,15 @@ class HealthKitManager: ObservableObject {
         healthStore.execute(query)
     }
     
-    // MARK: - Fetch Weekly Steps
+    // MARK: - Fetch Last 7 Days Steps
     func fetchWeeklySteps() {
         isLoading = true
         let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount)!
         let calendar = Calendar.current
         
-        // Get start of week (Monday)
-        var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())
-        components.weekday = 2 // Monday
-        guard let startOfWeek = calendar.date(from: components) else { return }
-        
-        let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek)!
+        // Get the last 7 days (including today)
+        let today = calendar.startOfDay(for: Date())
+        guard let sevenDaysAgo = calendar.date(byAdding: .day, value: -6, to: today) else { return }
         
         var interval = DateComponents()
         interval.day = 1
@@ -105,7 +102,7 @@ class HealthKitManager: ObservableObject {
             quantityType: stepType,
             quantitySamplePredicate: nil,
             options: .cumulativeSum,
-            anchorDate: startOfWeek,
+            anchorDate: sevenDaysAgo,
             intervalComponents: interval
         )
         
@@ -115,10 +112,12 @@ class HealthKitManager: ObservableObject {
                 guard let results = results else { return }
                 
                 var weeklyData: [Date: Int] = [:]
+                let now = Date()
                 
-                results.enumerateStatistics(from: startOfWeek, to: endOfWeek) { statistics, _ in
+                results.enumerateStatistics(from: sevenDaysAgo, to: now) { statistics, _ in
                     let steps = statistics.sumQuantity()?.doubleValue(for: HKUnit.count()) ?? 0
-                    weeklyData[statistics.startDate] = Int(steps)
+                    let startOfDay = calendar.startOfDay(for: statistics.startDate)
+                    weeklyData[startOfDay] = Int(steps)
                 }
                 
                 self?.weeklySteps = weeklyData

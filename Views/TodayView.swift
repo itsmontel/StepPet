@@ -144,8 +144,7 @@ struct TodayView: View {
             .padding(.vertical, 6)
             .background(
                 Capsule()
-                    .fill(themeManager.cardBackgroundColor)
-                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                    .fill(Color.yellow.opacity(0.15))
             )
             
             // Streak (small)
@@ -161,8 +160,7 @@ struct TodayView: View {
             .padding(.vertical, 6)
             .background(
                 Capsule()
-                    .fill(themeManager.cardBackgroundColor)
-                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                    .fill(Color.orange.opacity(0.15))
             )
         }
         .padding(.top, 12)
@@ -268,8 +266,16 @@ struct TodayView: View {
         .padding(.horizontal, 16)
         .background(
             RoundedRectangle(cornerRadius: 28)
-                .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 8)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            themeManager.accentColor.opacity(0.12),
+                            themeManager.accentColor.opacity(0.05)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
         )
         .padding(.top, 16)
     }
@@ -331,7 +337,7 @@ struct TodayView: View {
     private var weeklyGraphSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("This Week")
+                Text("Last 7 Days")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(themeManager.primaryTextColor)
                 
@@ -362,8 +368,7 @@ struct TodayView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+                .fill(themeManager.accentColor.opacity(0.08))
         )
         .padding(.top, 16)
     }
@@ -441,8 +446,7 @@ struct TodayView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(themeManager.cardBackgroundColor)
-                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
+                .fill(Color.purple.opacity(0.08))
         )
         .padding(.top, 16)
     }
@@ -674,7 +678,7 @@ struct QuickStatCard: View {
         VStack(spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(color.opacity(0.12))
+                    .fill(color.opacity(0.15))
                     .frame(width: 36, height: 36)
                 
                 Image(systemName: icon)
@@ -694,7 +698,7 @@ struct QuickStatCard: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(themeManager.backgroundColor)
+                .fill(color.opacity(0.08))
         )
     }
 }
