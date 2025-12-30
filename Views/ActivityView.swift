@@ -646,7 +646,7 @@ struct ActivityView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 .padding(.horizontal, 20)
-                .padding(.bottom, 120) // Increased to be above tab bar (tab bar is ~100px + safe area)
+                .padding(.bottom, 90) // Positioned above tab bar (tab bar is now ~70px + safe area)
             }
         }
         .onAppear {

@@ -95,9 +95,9 @@ struct CenteredTabBar: View {
                 }
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.top, 12)
-        .padding(.bottom, 40)
+        .padding(.horizontal, 4)
+        .padding(.top, 6)
+        .padding(.bottom, 20)
         .background(
             themeManager.cardBackgroundColor
                 .shadow(color: Color.black.opacity(0.08), radius: 20, x: 0, y: -5)
@@ -116,7 +116,7 @@ struct CenterTabButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 ZStack {
                     // Glowing background
                     Circle()
@@ -127,17 +127,17 @@ struct CenterTabButton: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 56, height: 56)
-                        .shadow(color: themeManager.accentColor.opacity(isSelected ? 0.5 : 0.3), radius: isSelected ? 12 : 8, x: 0, y: 4)
+                        .frame(width: 48, height: 48)
+                        .shadow(color: themeManager.accentColor.opacity(isSelected ? 0.5 : 0.3), radius: isSelected ? 10 : 6, x: 0, y: 3)
                     
                     Image(systemName: icon)
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
                 }
-                .offset(y: -10) // Raise it up
+                .offset(y: -6) // Reduced offset
                 
                 Text(title)
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: 9, weight: .bold))
                     .foregroundColor(isSelected ? themeManager.accentColor : themeManager.secondaryTextColor)
             }
             .frame(maxWidth: .infinity)
@@ -156,15 +156,15 @@ struct TabBarButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Image(systemName: icon)
-                    .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
+                    .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
                     .foregroundColor(isSelected ? themeManager.accentColor : themeManager.secondaryTextColor)
-                    .scaleEffect(isSelected ? 1.1 : 1.0)
+                    .scaleEffect(isSelected ? 1.05 : 1.0)
                     .animation(.spring(response: 0.3), value: isSelected)
                 
                 Text(title)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 9, weight: .medium))
                     .foregroundColor(isSelected ? themeManager.accentColor : themeManager.secondaryTextColor)
             }
             .frame(maxWidth: .infinity)
