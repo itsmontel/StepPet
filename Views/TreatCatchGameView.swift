@@ -5,49 +5,161 @@
 
 import SwiftUI
 
-// MARK: - Falling Item
-struct FallingItem: Identifiable {
+// MARK: - Game Item Types
+enum GameItemType: CaseIterable {
+    // Good moods - catch these!
+    case fullHealth
+    case happy
+    
+    // Bad moods - avoid these!
+    case sick
+    case sad
+    
+    // Time bonuses
+    case timePlus3
+    case timePlus5
+    
+    // Time penalties
+    case timeMinus3
+    case timeMinus5
+    
+    var moodState: PetMoodState? {
+        switch self {
+        case .fullHealth: return .fullHealth
+        case .happy: return .happy
+        case .sick: return .sick
+        case .sad: return .sad
+        default: return nil
+        }
+    }
+    
+    var isTimeItem: Bool {
+        switch self {
+        case .timePlus3, .timePlus5, .timeMinus3, .timeMinus5: return true
+        default: return false
+        }
+    }
+    
+    var points: Int {
+        switch self {
+        case .fullHealth: return 20
+        case .happy: return 15
+        case .sick: return -20
+        case .sad: return -15
+        default: return 0
+        }
+    }
+    
+    var timeEffect: Int {
+        switch self {
+        case .timePlus3: return 3
+        case .timePlus5: return 5
+        case .timeMinus3: return -3
+        case .timeMinus5: return -5
+        case .sick: return -2
+        case .sad: return -1
+        default: return 0
+        }
+    }
+    
+    var category: ItemCategory {
+        switch self {
+        case .fullHealth, .happy:
+            return .goodMood
+        case .sick, .sad:
+            return .badMood
+        case .timePlus3, .timePlus5:
+            return .timeBonus
+        case .timeMinus3, .timeMinus5:
+            return .timePenalty
+        }
+    }
+    
+    var displayText: String {
+        switch self {
+        case .timePlus3: return "+3"
+        case .timePlus5: return "+5"
+        case .timeMinus3: return "-3"
+        case .timeMinus5: return "-5"
+        default: return ""
+        }
+    }
+    
+    var itemColor: Color {
+        switch category {
+        case .goodMood: return .green
+        case .badMood: return .red
+        case .timeBonus: return .cyan
+        case .timePenalty: return .purple
+        }
+    }
+    
+    var size: CGFloat {
+        isTimeItem ? 52 : 55
+    }
+    
+    enum ItemCategory {
+        case goodMood, badMood, timeBonus, timePenalty
+    }
+    
+    static func randomItem() -> GameItemType {
+        let rand = Double.random(in: 0...1)
+        
+        if rand < 0.45 {
+            // 45% good moods
+            return [.fullHealth, .happy].randomElement()!
+        } else if rand < 0.70 {
+            // 25% bad moods
+            return [.sick, .sad].randomElement()!
+        } else if rand < 0.85 {
+            // 15% time bonus
+            return Double.random(in: 0...1) < 0.6 ? .timePlus3 : .timePlus5
+        } else {
+            // 15% time penalty
+            return Double.random(in: 0...1) < 0.6 ? .timeMinus3 : .timeMinus5
+        }
+    }
+}
+
+// MARK: - Falling Game Item
+struct GameItem: Identifiable {
     let id = UUID()
     var x: CGFloat
     var y: CGFloat
-    let type: TreatType
+    let type: GameItemType
     let speed: CGFloat
+    var wobble: CGFloat = 0
     var isCollected: Bool = false
+}
+
+// MARK: - Catch Effect
+struct CatchEffect: Identifiable {
+    let id = UUID()
+    let x: CGFloat
+    let y: CGFloat
+    let text: String
+    let color: Color
+    var opacity: Double = 1.0
+    var offsetY: CGFloat = 0
+    var scale: CGFloat = 1.0
+}
+
+// MARK: - High Score Manager
+class TreatCatchHighScoreManager {
+    static let shared = TreatCatchHighScoreManager()
+    private let highScoreKey = "treatCatchHighScore"
     
-    enum TreatType: CaseIterable {
-        case bone
-        case meat
-        case cookie
-        case carrot
-        case broccoli // Bad item
-        
-        var emoji: String {
-            switch self {
-            case .bone: return "🦴"
-            case .meat: return "🥩"
-            case .cookie: return "🍪"
-            case .carrot: return "🥕"
-            case .broccoli: return "🥦"
-            }
+    var highScore: Int {
+        get { UserDefaults.standard.integer(forKey: highScoreKey) }
+        set { UserDefaults.standard.set(newValue, forKey: highScoreKey) }
+    }
+    
+    func checkAndUpdateHighScore(_ score: Int) -> Bool {
+        if score > highScore {
+            highScore = score
+            return true
         }
-        
-        var points: Int {
-            switch self {
-            case .bone: return 10
-            case .meat: return 15
-            case .cookie: return 20
-            case .carrot: return 5
-            case .broccoli: return -10
-            }
-        }
-        
-        var isBad: Bool {
-            self == .broccoli
-        }
-        
-        static var goodItems: [TreatType] {
-            [.bone, .meat, .cookie, .carrot]
-        }
+        return false
     }
 }
 
@@ -62,24 +174,43 @@ struct TreatCatchGameView: View {
     // Game state
     @State private var gameState: GameState = .ready
     @State private var score: Int = 0
-    @State private var timeRemaining: Int = 30
-    @State private var petPosition: CGFloat = 0.5 // 0-1 range
-    @State private var fallingItems: [FallingItem] = []
+    @State private var timeRemaining: Double = 30.0
+    @State private var petPosition: CGFloat = 0.5
+    @State private var targetPosition: CGFloat = 0.5
+    @State private var items: [GameItem] = []
+    @State private var effects: [CatchEffect] = []
     @State private var combo: Int = 0
-    @State private var showCombo: Bool = false
+    @State private var maxCombo: Int = 0
     @State private var lastCatchWasGood: Bool = true
+    @State private var isNewHighScore: Bool = false
+    @State private var catchCount: Int = 0
+    @State private var missCount: Int = 0
+    @State private var badMoodsCaught: Int = 0 // 3 strikes and you're out!
+    @State private var gameOverReason: GameOverReason = .timeUp
+    
+    enum GameOverReason {
+        case timeUp
+        case threeStrikes
+    }
+    
+    // Visual effects
+    @State private var screenShake: CGFloat = 0
+    @State private var timeFlash: Bool = false
+    @State private var scoreFlash: Bool = false
+    @State private var petScale: CGFloat = 1.0
+    @State private var wobblePhase: Double = 0
     
     // Timers
     @State private var gameTimer: Timer?
-    @State private var spawnTimer: Timer?
     @State private var updateTimer: Timer?
     
-    // Screen size
+    // Screen
     @State private var screenSize: CGSize = .zero
     
-    private let petWidth: CGFloat = 80
-    private let itemSize: CGFloat = 40
-    private let catchZoneHeight: CGFloat = 100
+    // Constants
+    private let petWidth: CGFloat = 90
+    private let catchRadius: CGFloat = 55
+    private let maxTime: Double = 30.0
     
     enum GameState {
         case ready, playing, finished
@@ -88,438 +219,881 @@ struct TreatCatchGameView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background
-                LinearGradient(
-                    colors: [
-                        Color(hex: "87CEEB"),
-                        Color(hex: "98FB98")
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                // Beautiful gradient background
+                gameBackground
                 
-                // Game content
                 VStack(spacing: 0) {
-                    // Header
                     gameHeader
                     
-                    // Game area
                     ZStack {
                         // Falling items
-                        ForEach(fallingItems) { item in
+                        ForEach(items) { item in
                             if !item.isCollected {
-                                Text(item.type.emoji)
-                                    .font(.system(size: 36))
-                                    .position(x: item.x, y: item.y)
+                                FallingItemView(
+                                    item: item,
+                                    petType: userSettings.pet.type,
+                                    accentColor: themeManager.accentColor
+                                )
                             }
                         }
                         
-                        // Pet (catcher)
-                        VStack(spacing: 0) {
-                            Spacer()
-                            
-                            petCatcher
-                                .position(
-                                    x: petPosition * (geometry.size.width - petWidth) + petWidth / 2,
-                                    y: geometry.size.height - 200
-                                )
+                        // Catch effects
+                        ForEach(effects) { effect in
+                            CatchEffectView(effect: effect)
                         }
                         
-                        // Combo popup
-                        if showCombo && combo > 1 {
-                            comboPopup
-                                .transition(.scale.combined(with: .opacity))
+                        // Pet catcher
+                        petCatcher
+                            .position(
+                                x: petPosition * (geometry.size.width - petWidth) + petWidth / 2,
+                                y: geometry.size.height - 200
+                            )
+                            .scaleEffect(petScale)
+                        
+                        // Combo display
+                        if combo > 1 && gameState == .playing {
+                            comboDisplay
                         }
                         
-                        // Game state overlays
+                        // Overlays
                         if gameState == .ready {
                             readyOverlay
                         } else if gameState == .finished {
                             finishedOverlay
                         }
                     }
+                    .contentShape(Rectangle())
                     .gesture(
-                        DragGesture()
+                        DragGesture(minimumDistance: 0)
                             .onChanged { value in
                                 if gameState == .playing {
-                                    let newPosition = value.location.x / geometry.size.width
-                                    petPosition = max(0, min(1, newPosition))
+                                    let newPos = value.location.x / geometry.size.width
+                                    targetPosition = max(0.08, min(0.92, newPos))
                                 }
                             }
                     )
-                    .onTapGesture { location in
-                        if gameState == .playing {
-                            let newPosition = location.x / geometry.size.width
-                            withAnimation(.easeOut(duration: 0.1)) {
-                                petPosition = max(0, min(1, newPosition))
-                            }
-                        }
-                    }
                 }
             }
+            .offset(x: screenShake, y: 0)
             .onAppear {
                 screenSize = geometry.size
             }
         }
     }
     
-    // MARK: - Game Header
+    // MARK: - Background
+    private var gameBackground: some View {
+        ZStack {
+            // Main gradient
+            LinearGradient(
+                colors: [
+                    themeManager.accentColor.opacity(0.3),
+                    Color(hex: "87CEEB").opacity(0.6),
+                    Color(hex: "98FB98").opacity(0.4)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            // Decorative circles
+            Circle()
+                .fill(themeManager.accentColor.opacity(0.1))
+                .frame(width: 300, height: 300)
+                .offset(x: -100, y: -200)
+                .blur(radius: 50)
+            
+            Circle()
+                .fill(Color.green.opacity(0.1))
+                .frame(width: 250, height: 250)
+                .offset(x: 150, y: 300)
+                .blur(radius: 40)
+            
+            // Ground
+            VStack {
+                Spacer()
+                LinearGradient(
+                    colors: [Color.clear, Color(hex: "228B22").opacity(0.3)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 180)
+            }
+            .ignoresSafeArea()
+        }
+    }
+    
+    // MARK: - Header
     private var gameHeader: some View {
-        HStack {
+        HStack(spacing: 8) {
             // Close button
             Button(action: {
                 stopGame()
                 dismiss()
             }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 28))
-                    .foregroundColor(.white.opacity(0.8))
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.9))
+                        .frame(width: 36, height: 36)
+                        .shadow(color: .black.opacity(0.1), radius: 4)
+                    
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.gray)
+                }
             }
             
-            Spacer()
-            
-            // Score
-            HStack(spacing: 8) {
+            // Score - fixed to one line
+            HStack(spacing: 4) {
                 Image(systemName: "star.fill")
                     .foregroundColor(.yellow)
+                    .font(.system(size: 14))
                 
                 Text("\(score)")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                    .font(.system(size: 18, weight: .black, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .contentTransition(.numericText())
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .frame(minWidth: 60)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(
                 Capsule()
-                    .fill(Color.black.opacity(0.3))
+                    .fill(Color.white.opacity(0.95))
+                    .shadow(color: scoreFlash ? themeManager.accentColor.opacity(0.5) : .clear, radius: 10)
+                    .shadow(color: .black.opacity(0.1), radius: 4)
+            )
+            .scaleEffect(scoreFlash ? 1.05 : 1.0)
+            
+            // Lives (3 strikes indicator)
+            HStack(spacing: 3) {
+                ForEach(0..<3, id: \.self) { index in
+                    Image(systemName: index < (3 - badMoodsCaught) ? "heart.fill" : "heart.slash.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(index < (3 - badMoodsCaught) ? .red : .gray.opacity(0.4))
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.95))
+                    .shadow(color: .black.opacity(0.1), radius: 4)
             )
             
             Spacer()
             
-            // Timer
-            HStack(spacing: 6) {
+            // Timer - more compact
+            HStack(spacing: 4) {
                 Image(systemName: "clock.fill")
-                    .foregroundColor(.white)
+                    .foregroundColor(timeRemaining <= 10 ? .red : themeManager.accentColor)
+                    .font(.system(size: 13))
                 
-                Text("\(timeRemaining)s")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                Text(String(format: "%.0fs", max(0, timeRemaining)))
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(timeRemaining <= 10 ? .red : themeManager.primaryTextColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
             .background(
                 Capsule()
-                    .fill(timeRemaining <= 10 ? Color.red.opacity(0.6) : Color.black.opacity(0.3))
+                    .fill(
+                        timeFlash ? Color.green.opacity(0.3) :
+                        (timeRemaining <= 10 ? Color.red.opacity(0.15) : Color.white.opacity(0.95))
+                    )
+                    .shadow(color: .black.opacity(0.1), radius: 4)
             )
+            .scaleEffect(timeFlash ? 1.08 : 1.0)
+            .animation(.spring(response: 0.2), value: timeFlash)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 60)
-        .padding(.bottom, 20)
+        .padding(.horizontal, 12)
+        .padding(.top, 55)
+        .padding(.bottom, 12)
     }
     
     // MARK: - Pet Catcher
     private var petCatcher: some View {
-        VStack(spacing: 4) {
-            // Basket/bowl
+        VStack(spacing: -8) {
+            // Pet image
+            let imageName = userSettings.pet.type.imageName(for: lastCatchWasGood ? .happy : .sad)
             ZStack {
-                Ellipse()
-                    .fill(Color.brown)
-                    .frame(width: petWidth + 20, height: 30)
+                // Glow effect
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                (lastCatchWasGood ? themeManager.accentColor : Color.red).opacity(0.4),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 20,
+                            endRadius: 60
+                        )
+                    )
+                    .frame(width: 120, height: 120)
                 
-                Ellipse()
-                    .fill(Color.brown.opacity(0.7))
-                    .frame(width: petWidth + 10, height: 20)
-                    .offset(y: -5)
+                // Pet
+                if let uiImage = UIImage(named: imageName) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: petWidth, height: petWidth)
+                        .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
+                } else {
+                    // Fallback
+                    Text(userSettings.pet.type.emoji)
+                        .font(.system(size: 60))
+                }
             }
             
-            // Pet
-            let imageName = userSettings.pet.type.imageName(for: lastCatchWasGood ? .happy : .sad)
-            if let _ = UIImage(named: imageName) {
-                Image(imageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: petWidth, height: petWidth)
-            } else {
-                Text(userSettings.pet.type.emoji)
-                    .font(.system(size: 50))
-            }
+            // Platform/shadow
+            Ellipse()
+                .fill(
+                    LinearGradient(
+                        colors: [Color.black.opacity(0.3), Color.black.opacity(0.1)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: petWidth + 20, height: 20)
+                .blur(radius: 4)
         }
     }
     
-    // MARK: - Combo Popup
-    private var comboPopup: some View {
-        VStack(spacing: 4) {
-            Text("COMBO x\(combo)!")
-                .font(.system(size: 32, weight: .black, design: .rounded))
+    // MARK: - Combo Display (positioned at top-left, below header)
+    private var comboDisplay: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "flame.fill")
+                .font(.system(size: 18))
                 .foregroundColor(.orange)
-                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
             
-            Text("+\(combo * 5) bonus")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.yellow)
+            Text("x\(combo)")
+                .font(.system(size: 24, weight: .black, design: .rounded))
+                .foregroundColor(.orange)
         }
-        .position(x: UIScreen.main.bounds.width / 2, y: 200)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(
+            Capsule()
+                .fill(Color.white.opacity(0.95))
+                .shadow(color: .orange.opacity(0.4), radius: 8)
+        )
+        .position(x: 70, y: 130)
+        .transition(.scale.combined(with: .opacity))
     }
     
     // MARK: - Ready Overlay
     private var readyOverlay: some View {
-        VStack(spacing: 24) {
-            Text("🦴 Treat Catch 🦴")
-                .font(.system(size: 36, weight: .black, design: .rounded))
-                .foregroundColor(.white)
-                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+        ZStack {
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
             
-            VStack(spacing: 12) {
-                Text("Drag or tap to move \(userSettings.pet.name)")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
-                
-                Text("Catch treats, avoid 🥦!")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-            }
-            
-            Button(action: startGame) {
-                HStack(spacing: 10) {
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 20, weight: .bold))
+            VStack(spacing: 28) {
+                // Title with pet
+                VStack(spacing: 16) {
+                    let imageName = userSettings.pet.type.imageName(for: .fullHealth)
+                    if let uiImage = UIImage(named: imageName) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 80, height: 80)
+                            .clipShape(Circle())
+                            .shadow(color: themeManager.accentColor.opacity(0.3), radius: 10)
+                    }
                     
-                    Text("START")
-                        .font(.system(size: 22, weight: .black, design: .rounded))
+                    Text("Mood Catch!")
+                        .font(.system(size: 34, weight: .black, design: .rounded))
+                        .foregroundColor(.white)
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 40)
-                .padding(.vertical, 16)
+                
+                // High score badge
+                HStack(spacing: 8) {
+                    Image(systemName: "trophy.fill")
+                        .foregroundColor(.yellow)
+                    Text("Best: \(TreatCatchHighScoreManager.shared.highScore)")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .background(Capsule().fill(Color.white.opacity(0.2)))
+                
+                // Instructions
+                VStack(spacing: 14) {
+                    instructionCard(
+                        title: "CATCH",
+                        subtitle: "Happy & Full Health",
+                        icon: "heart.fill",
+                        color: .green,
+                        petMoods: [.fullHealth, .happy]
+                    )
+                    
+                    instructionCard(
+                        title: "AVOID",
+                        subtitle: "Sick & Sad",
+                        icon: "xmark.circle.fill",
+                        color: .red,
+                        petMoods: [.sick, .sad]
+                    )
+                    
+                    HStack(spacing: 12) {
+                        timeInstructionBadge(text: "+3 +5", subtitle: "Bonus Time", color: .cyan)
+                        timeInstructionBadge(text: "-3 -5", subtitle: "Lose Time", color: .purple)
+                    }
+                    
+                    // Game Over Rule
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.orange)
+                        Text("Catch 3 sad or sick moods = Game Over!")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(Color.orange.opacity(0.2))
+                    )
+                }
+                .padding(20)
                 .background(
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [.orange, .red],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .shadow(color: .orange.opacity(0.5), radius: 10, x: 0, y: 5)
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.white.opacity(0.1))
                 )
+                
+                // Tip
+                Text("Drag anywhere to move \(userSettings.pet.name)")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+                
+                // Start button
+                Button(action: startGame) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 22))
+                        Text("START")
+                            .font(.system(size: 24, weight: .black, design: .rounded))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 50)
+                    .padding(.vertical, 18)
+                    .background(
+                        Capsule()
+                            .fill(themeManager.accentColor)
+                            .shadow(color: themeManager.accentColor.opacity(0.5), radius: 15, y: 8)
+                    )
+                }
             }
+            .padding(28)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.opacity(0.4))
+    }
+    
+    private func instructionCard(title: String, subtitle: String, icon: String, color: Color, petMoods: [PetMoodState]) -> some View {
+        HStack(spacing: 16) {
+            // Pet previews
+            HStack(spacing: -10) {
+                ForEach(petMoods, id: \.self) { mood in
+                    let imageName = userSettings.pet.type.imageName(for: mood)
+                    if let uiImage = UIImage(named: imageName) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 40, height: 40)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                    }
+                }
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 16, weight: .black, design: .rounded))
+                    .foregroundColor(color)
+                Text(subtitle)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            
+            Spacer()
+            
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundColor(color)
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(color.opacity(0.15))
+        )
+    }
+    
+    private func timeInstructionBadge(text: String, subtitle: String, color: Color) -> some View {
+        VStack(spacing: 4) {
+            Text(text)
+                .font(.system(size: 18, weight: .black, design: .rounded))
+                .foregroundColor(color)
+            Text(subtitle)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.white.opacity(0.7))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(color.opacity(0.15))
+        )
     }
     
     // MARK: - Finished Overlay
     private var finishedOverlay: some View {
-        VStack(spacing: 24) {
-            Text("🎉 Time's Up! 🎉")
-                .font(.system(size: 32, weight: .black, design: .rounded))
-                .foregroundColor(.white)
+        ZStack {
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
             
-            VStack(spacing: 8) {
-                Text("Final Score")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-                
-                Text("\(score)")
-                    .font(.system(size: 64, weight: .black, design: .rounded))
-                    .foregroundColor(.yellow)
-                    .shadow(color: .orange, radius: 10)
-            }
-            
-            // Health reward
-            let healthReward = calculateHealthReward()
-            VStack(spacing: 4) {
-                Text("+\(healthReward) Health")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(.green)
-                
-                Text("for \(userSettings.pet.name)!")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-            }
-            .padding(.vertical, 16)
-            .padding(.horizontal, 32)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.green.opacity(0.2))
-            )
-            
-            Button(action: {
-                onComplete(healthReward)
-            }) {
-                Text("Claim Reward!")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 40)
-                    .padding(.vertical, 16)
+            VStack(spacing: 20) {
+                // Game over reason
+                if gameOverReason == .threeStrikes {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "heart.slash.fill")
+                            Text("3 STRIKES!")
+                            Image(systemName: "heart.slash.fill")
+                        }
+                        .font(.system(size: 20, weight: .black, design: .rounded))
+                        .foregroundColor(.red)
+                        
+                        Text("Caught too many sad moods")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
                     .background(
-                        Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [.green, .mint],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.red.opacity(0.2))
                     )
+                } else if isNewHighScore {
+                    HStack(spacing: 8) {
+                        Image(systemName: "crown.fill")
+                        Text("NEW BEST!")
+                        Image(systemName: "crown.fill")
+                    }
+                    .font(.system(size: 18, weight: .black, design: .rounded))
+                    .foregroundColor(.yellow)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(Color.yellow.opacity(0.2)))
+                } else {
+                    Text("⏰ TIME'S UP!")
+                        .font(.system(size: 20, weight: .black, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                
+                // Pet reaction - sad if 3 strikes
+                let petMood: PetMoodState = gameOverReason == .threeStrikes ? .sad : (score > 100 ? .fullHealth : .happy)
+                let imageName = userSettings.pet.type.imageName(for: petMood)
+                if let uiImage = UIImage(named: imageName) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 85, height: 85)
+                        .clipShape(Circle())
+                        .shadow(color: gameOverReason == .threeStrikes ? Color.red.opacity(0.3) : themeManager.accentColor.opacity(0.3), radius: 15)
+                }
+                
+                // Score
+                VStack(spacing: 6) {
+                    Text("SCORE")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    Text("\(score)")
+                        .font(.system(size: 56, weight: .black, design: .rounded))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .shadow(color: themeManager.accentColor.opacity(0.5), radius: 20)
+                }
+                
+                // Stats
+                HStack(spacing: 16) {
+                    resultStat(title: "Combo", value: "\(maxCombo)x", color: .orange)
+                    resultStat(title: "Caught", value: "\(catchCount)", color: .green)
+                    resultStat(title: "Strikes", value: "\(badMoodsCaught)/3", color: .red)
+                }
+                
+                // High score
+                HStack(spacing: 6) {
+                    Image(systemName: "trophy.fill")
+                        .foregroundColor(.yellow)
+                    Text("Best: \(TreatCatchHighScoreManager.shared.highScore)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                
+                // Buttons
+                VStack(spacing: 10) {
+                    Button(action: resetAndStart) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "arrow.counterclockwise")
+                            Text("Play Again")
+                        }
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Capsule().fill(themeManager.accentColor))
+                    }
+                    
+                    Button(action: { onComplete(0) }) {
+                        Text("Done")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                }
+                .padding(.horizontal, 40)
             }
+            .padding(28)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.opacity(0.6))
+    }
+    
+    private func resultStat(title: String, value: String, color: Color) -> some View {
+        VStack(spacing: 6) {
+            Text(value)
+                .font(.system(size: 24, weight: .black, design: .rounded))
+                .foregroundColor(color)
+            Text(title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.white.opacity(0.6))
+        }
+        .frame(width: 80)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.1))
+        )
     }
     
     // MARK: - Game Logic
     private func startGame() {
         gameState = .playing
         score = 0
-        timeRemaining = 30
-        fallingItems = []
+        timeRemaining = 30.0
+        items = []
+        effects = []
         combo = 0
+        maxCombo = 0
         petPosition = 0.5
+        targetPosition = 0.5
+        isNewHighScore = false
+        catchCount = 0
+        missCount = 0
+        badMoodsCaught = 0
+        gameOverReason = .timeUp
+        lastCatchWasGood = true
+        wobblePhase = 0
         
-        // Game timer (countdown)
-        gameTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+        // 60fps update
+        updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { _ in
+            updateGame()
+        }
+        
+        // Countdown timer
+        gameTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
             if timeRemaining > 0 {
-                timeRemaining -= 1
-            } else {
-                endGame()
+                timeRemaining -= 0.1
+                if timeRemaining <= 0 {
+                    timeRemaining = 0
+                    endGame()
+                }
             }
         }
         
-        // Spawn timer
-        spawnTimer = Timer.scheduledTimer(withTimeInterval: 0.8, repeats: true) { _ in
-            spawnItem()
-        }
-        
-        // Update timer (item movement)
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { _ in
-            updateItems()
-        }
-        
+        scheduleNextSpawn()
         HapticFeedback.medium.trigger()
+    }
+    
+    private func scheduleNextSpawn() {
+        guard gameState == .playing else { return }
+        
+        let baseInterval = 1.0
+        let speedBonus = (30.0 - timeRemaining) * 0.015
+        let interval = max(0.45, baseInterval - speedBonus)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + interval) {
+            if gameState == .playing {
+                spawnItem()
+                scheduleNextSpawn()
+            }
+        }
     }
     
     private func spawnItem() {
         guard screenSize.width > 0 else { return }
         
-        // Random item type (80% good, 20% bad)
-        let type: FallingItem.TreatType
-        if Double.random(in: 0...1) < 0.2 {
-            type = .broccoli
-        } else {
-            type = FallingItem.TreatType.goodItems.randomElement() ?? .bone
-        }
-        
-        // Random x position
-        let padding: CGFloat = 40
+        let type = GameItemType.randomItem()
+        let padding: CGFloat = 60
         let x = CGFloat.random(in: padding...(screenSize.width - padding))
         
-        // Random speed (increases over time)
-        let baseSpeed: CGFloat = 3
-        let timeBonus = CGFloat(30 - timeRemaining) * 0.1
-        let speed = baseSpeed + CGFloat.random(in: 0...2) + timeBonus
+        let baseSpeed: CGFloat = 2.8
+        let timeBonus = CGFloat(30.0 - timeRemaining) * 0.08
+        let speed = baseSpeed + CGFloat.random(in: 0...1.2) + timeBonus
         
-        let item = FallingItem(x: x, y: -itemSize, type: type, speed: speed)
-        fallingItems.append(item)
+        let item = GameItem(x: x, y: -60, type: type, speed: speed)
+        items.append(item)
     }
     
-    private func updateItems() {
+    private func updateGame() {
         guard gameState == .playing else { return }
         
-        let catchY = screenSize.height - 250
-        let petX = petPosition * (screenSize.width - petWidth) + petWidth / 2
-        let catchRadius: CGFloat = 50
+        // Smooth pet movement - higher value = more responsive
+        petPosition += (targetPosition - petPosition) * 0.35
         
-        for i in fallingItems.indices.reversed() {
-            guard i < fallingItems.count else { continue }
+        // Wobble animation
+        wobblePhase += 0.1
+        
+        let catchY = screenSize.height - 230
+        let petX = petPosition * (screenSize.width - petWidth) + petWidth / 2
+        
+        for i in items.indices.reversed() {
+            guard i < items.count else { continue }
             
-            // Move item down
-            fallingItems[i].y += fallingItems[i].speed
+            items[i].y += items[i].speed
+            items[i].wobble = sin(wobblePhase + Double(i)) * 3
             
-            // Check if caught
-            if !fallingItems[i].isCollected {
-                let itemX = fallingItems[i].x
-                let itemY = fallingItems[i].y
+            if !items[i].isCollected {
+                let itemX = items[i].x + items[i].wobble
+                let itemY = items[i].y
                 
-                // Check catch collision
-                if itemY >= catchY - 20 && itemY <= catchY + 40 {
-                    let distance = abs(itemX - petX)
-                    
-                    if distance < catchRadius {
-                        // Caught!
-                        fallingItems[i].isCollected = true
-                        
-                        let item = fallingItems[i]
-                        
-                        if item.type.isBad {
-                            // Bad catch
-                            score = max(0, score + item.type.points)
-                            combo = 0
-                            lastCatchWasGood = false
-                            HapticFeedback.error.trigger()
-                        } else {
-                            // Good catch
-                            combo += 1
-                            let comboBonus = combo > 1 ? combo * 5 : 0
-                            score += item.type.points + comboBonus
-                            lastCatchWasGood = true
-                            
-                            if combo > 1 {
-                                withAnimation(.spring(response: 0.3)) {
-                                    showCombo = true
-                                }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                    withAnimation {
-                                        showCombo = false
-                                    }
-                                }
-                            }
-                            
-                            HapticFeedback.light.trigger()
-                        }
+                if itemY >= catchY - 30 && itemY <= catchY + 50 {
+                    if abs(itemX - petX) < catchRadius {
+                        catchItem(at: i)
                     }
                 }
                 
-                // Remove if off screen
-                if itemY > screenSize.height + itemSize {
-                    // Missed a good item - break combo
-                    if !fallingItems[i].type.isBad {
+                if itemY > screenSize.height + 50 {
+                    if items[i].type.category == .goodMood {
                         combo = 0
+                        missCount += 1
                     }
                 }
             }
         }
         
-        // Clean up off-screen and collected items
-        fallingItems.removeAll { $0.y > screenSize.height + itemSize || $0.isCollected }
+        items.removeAll { $0.y > screenSize.height + 50 || $0.isCollected }
+        effects.removeAll { $0.opacity <= 0 }
+    }
+    
+    private func catchItem(at index: Int) {
+        guard index < items.count else { return }
+        
+        items[index].isCollected = true
+        let item = items[index]
+        
+        var effectText = ""
+        var effectColor: Color = .white
+        
+        switch item.type.category {
+        case .goodMood:
+            combo += 1
+            maxCombo = max(maxCombo, combo)
+            let comboBonus = combo > 1 ? combo * 5 : 0
+            let points = item.type.points + comboBonus
+            score += points
+            catchCount += 1
+            
+            effectText = "+\(points)"
+            effectColor = .green
+            lastCatchWasGood = true
+            
+            // Gentle scale animation, no shake
+            withAnimation(.spring(response: 0.15, dampingFraction: 0.7)) {
+                petScale = 1.08
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.spring()) { petScale = 1.0 }
+            }
+            
+            withAnimation(.easeInOut(duration: 0.15)) { scoreFlash = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                withAnimation { scoreFlash = false }
+            }
+            
+            // No haptic feedback for catching good items
+            
+        case .badMood:
+            score = max(0, score + item.type.points)
+            timeRemaining = max(0, timeRemaining + Double(item.type.timeEffect))
+            combo = 0
+            missCount += 1
+            badMoodsCaught += 1 // Strike!
+            
+            effectText = badMoodsCaught >= 3 ? "💀" : "Strike \(badMoodsCaught)!"
+            effectColor = .red
+            lastCatchWasGood = false
+            
+            withAnimation(.easeInOut(duration: 0.04).repeatCount(5)) {
+                screenShake = 10
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                screenShake = 0
+            }
+            
+            HapticFeedback.error.trigger()
+            
+            // Check for 3 strikes game over
+            if badMoodsCaught >= 3 {
+                gameOverReason = .threeStrikes
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    endGame()
+                }
+                return
+            }
+            
+        case .timeBonus:
+            // Cap at max time
+            timeRemaining = min(maxTime, timeRemaining + Double(item.type.timeEffect))
+            
+            effectText = "+\(item.type.timeEffect)s"
+            effectColor = .cyan
+            
+            withAnimation(.easeInOut(duration: 0.2)) { timeFlash = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation { timeFlash = false }
+            }
+            
+            // No haptic for time bonus
+            
+        case .timePenalty:
+            timeRemaining = max(0, timeRemaining + Double(item.type.timeEffect))
+            combo = 0
+            
+            effectText = "\(item.type.timeEffect)s"
+            effectColor = .purple
+            
+            withAnimation(.easeInOut(duration: 0.04).repeatCount(4)) {
+                screenShake = 5
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+                screenShake = 0
+            }
+            
+            HapticFeedback.error.trigger()
+        }
+        
+        addCatchEffect(at: item.x, y: item.y, text: effectText, color: effectColor)
+        
+        if timeRemaining <= 0 {
+            endGame()
+        }
+    }
+    
+    private func addCatchEffect(at x: CGFloat, y: CGFloat, text: String, color: Color) {
+        let effect = CatchEffect(x: x, y: y, text: text, color: color)
+        effects.append(effect)
+        
+        let effectId = effect.id
+        withAnimation(.easeOut(duration: 0.6)) {
+            if let index = effects.firstIndex(where: { $0.id == effectId }) {
+                effects[index].offsetY = -45
+                effects[index].opacity = 0
+                effects[index].scale = 1.3
+            }
+        }
     }
     
     private func endGame() {
         gameState = .finished
         stopGame()
-        HapticFeedback.success.trigger()
+        isNewHighScore = TreatCatchHighScoreManager.shared.checkAndUpdateHighScore(score)
+        if isNewHighScore { HapticFeedback.success.trigger() }
     }
     
     private func stopGame() {
         gameTimer?.invalidate()
-        spawnTimer?.invalidate()
         updateTimer?.invalidate()
         gameTimer = nil
-        spawnTimer = nil
         updateTimer = nil
     }
     
-    private func calculateHealthReward() -> Int {
-        // Base: 10-25 based on score
-        if score >= 300 {
-            return 25
-        } else if score >= 200 {
-            return 20
-        } else if score >= 100 {
-            return 15
-        } else {
-            return 10
+    private func resetAndStart() {
+        items = []
+        effects = []
+        startGame()
+    }
+}
+
+// MARK: - Falling Item View
+struct FallingItemView: View {
+    let item: GameItem
+    let petType: PetType
+    let accentColor: Color
+    
+    var body: some View {
+        ZStack {
+            if item.type.isTimeItem {
+                // Time item
+                Circle()
+                    .fill(item.type.itemColor.opacity(0.2))
+                    .frame(width: item.type.size, height: item.type.size)
+                
+                Circle()
+                    .stroke(item.type.itemColor, lineWidth: 3)
+                    .frame(width: item.type.size, height: item.type.size)
+                
+                Text(item.type.displayText)
+                    .font(.system(size: 18, weight: .black, design: .rounded))
+                    .foregroundColor(item.type.itemColor)
+            } else {
+                // Pet mood item
+                if let mood = item.type.moodState {
+                    let imageName = petType.imageName(for: mood)
+                    if let uiImage = UIImage(named: imageName) {
+                        ZStack {
+                            // Glow
+                            Circle()
+                                .fill(item.type.itemColor.opacity(0.3))
+                                .frame(width: item.type.size + 10, height: item.type.size + 10)
+                            
+                            // Pet image
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: item.type.size, height: item.type.size)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(item.type.itemColor, lineWidth: 3)
+                                )
+                        }
+                    }
+                }
+            }
         }
+        .position(x: item.x + item.wobble, y: item.y)
+    }
+}
+
+// MARK: - Catch Effect View
+struct CatchEffectView: View {
+    let effect: CatchEffect
+    
+    var body: some View {
+        Text(effect.text)
+            .font(.system(size: 24, weight: .black, design: .rounded))
+            .foregroundColor(effect.color)
+            .shadow(color: effect.color.opacity(0.5), radius: 6)
+            .scaleEffect(effect.scale)
+            .opacity(effect.opacity)
+            .offset(y: effect.offsetY)
+            .position(x: effect.x, y: effect.y)
     }
 }
 

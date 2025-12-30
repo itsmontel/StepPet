@@ -59,35 +59,65 @@ class WeatherManager: ObservableObject {
     @Published var isLoading = false
     
     func fetchWeather(for location: CLLocationCoordinate2D) {
-        // Simulated weather - in production, use WeatherKit or OpenWeather API
         isLoading = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            // Generate realistic weather based on time of day
-            let hour = Calendar.current.component(.hour, from: Date())
-            let isNight = hour < 6 || hour > 20
-            
-            let conditions: [(String, String, Double)] = isNight ? [
-                ("Clear Night", "moon.stars.fill", 65),
-                ("Partly Cloudy", "cloud.moon.fill", 62),
-                ("Cloudy", "cloud.fill", 60)
-            ] : [
-                ("Sunny", "sun.max.fill", 72),
-                ("Partly Cloudy", "cloud.sun.fill", 68),
-                ("Cloudy", "cloud.fill", 65),
-                ("Light Rain", "cloud.drizzle.fill", 58)
-            ]
-            
-            let selected = conditions.randomElement() ?? conditions[0]
-            
-            self.currentWeather = WeatherData(
-                temperature: selected.2 + Double.random(in: -5...5),
-                condition: selected.0,
-                icon: selected.1,
-                humidity: Int.random(in: 35...75)
-            )
-            self.isLoading = false
+        // Use Open-Meteo API (free, no API key required)
+        let urlString = "https://api.open-meteo.com/v1/forecast?latitude=\(location.latitude)&longitude=\(location.longitude)&current=temperature_2m,relative_humidity_2m,weather_code&temperature_unit=fahrenheit"
+        
+        guard let url = URL(string: urlString) else {
+            isLoading = false
+            return
         }
+        
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                
+                guard let data = data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let current = json["current"] as? [String: Any],
+                      let temp = current["temperature_2m"] as? Double,
+                      let humidity = current["relative_humidity_2m"] as? Int,
+                      let weatherCode = current["weather_code"] as? Int else {
+                    // Fallback to basic weather if API fails
+                    self?.setFallbackWeather()
+                    return
+                }
+                
+                let (condition, icon) = self?.weatherCondition(from: weatherCode) ?? ("Unknown", "cloud.fill")
+                
+                self?.currentWeather = WeatherData(
+                    temperature: temp,
+                    condition: condition,
+                    icon: icon,
+                    humidity: humidity
+                )
+            }
+        }.resume()
+    }
+    
+    private func weatherCondition(from code: Int) -> (String, String) {
+        // WMO Weather interpretation codes
+        switch code {
+        case 0: return ("Clear", "sun.max.fill")
+        case 1, 2, 3: return ("Partly Cloudy", "cloud.sun.fill")
+        case 45, 48: return ("Foggy", "cloud.fog.fill")
+        case 51, 53, 55: return ("Drizzle", "cloud.drizzle.fill")
+        case 61, 63, 65: return ("Rain", "cloud.rain.fill")
+        case 66, 67: return ("Freezing Rain", "cloud.sleet.fill")
+        case 71, 73, 75: return ("Snow", "cloud.snow.fill")
+        case 77: return ("Snow Grains", "cloud.snow.fill")
+        case 80, 81, 82: return ("Rain Showers", "cloud.heavyrain.fill")
+        case 85, 86: return ("Snow Showers", "cloud.snow.fill")
+        case 95: return ("Thunderstorm", "cloud.bolt.fill")
+        case 96, 99: return ("Thunderstorm", "cloud.bolt.rain.fill")
+        default: return ("Cloudy", "cloud.fill")
+        }
+    }
+    
+    private func setFallbackWeather() {
+        // If API fails, don't show weather
+        self.currentWeather = nil
     }
 }
 
@@ -138,7 +168,7 @@ class PhotoStorageManager {
     }
 }
 
-// MARK: - Weather Effects Overlay
+// MARK: - Premium Weather Effects Overlay
 struct WeatherEffectsOverlay: View {
     let weather: WeatherData?
     
@@ -148,13 +178,13 @@ struct WeatherEffectsOverlay: View {
                 if let weather = weather {
                     switch weather.condition.lowercased() {
                     case let condition where condition.contains("rain") || condition.contains("drizzle"):
-                        RainEffectView(geometry: geometry)
+                        PremiumRainEffect(intensity: condition.contains("light") ? 0.5 : 1.0)
                     case let condition where condition.contains("snow"):
-                        SnowEffectView(geometry: geometry)
+                        PremiumSnowEffect()
                     case let condition where condition.contains("sunny") || condition.contains("clear"):
-                        SunEffectView()
-                    case let condition where condition.contains("cloudy"):
-                        CloudOverlayView()
+                        PremiumSunEffect()
+                    case let condition where condition.contains("cloudy") || condition.contains("overcast"):
+                        PremiumCloudEffect()
                     default:
                         EmptyView()
                     }
@@ -165,295 +195,874 @@ struct WeatherEffectsOverlay: View {
     }
 }
 
-struct RainEffectView: View {
-    let geometry: GeometryProxy
-    @State private var raindrops: [RainDrop] = []
+// MARK: - Premium Rain Effect
+struct PremiumRainEffect: View {
+    let intensity: Double
+    @State private var drops: [PremiumRainDrop] = []
+    @State private var splashes: [RainSplash] = []
     
     var body: some View {
         ZStack {
-            // Slight dark overlay for rainy atmosphere
-            Color.blue.opacity(0.08)
+            // Atmospheric overlay - darker, moodier
+            LinearGradient(
+                colors: [
+                    Color(red: 0.2, green: 0.25, blue: 0.35).opacity(0.3),
+                    Color(red: 0.15, green: 0.2, blue: 0.3).opacity(0.2),
+                    Color.clear
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
             
-            ForEach(raindrops) { drop in
-                RainDropView(drop: drop)
+            // Mist effect at bottom
+            LinearGradient(
+                colors: [Color.clear, Color.white.opacity(0.08)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+            
+            // Rain drops - multiple layers for depth
+            Canvas { context, size in
+                for drop in drops {
+                    let path = Path { p in
+                        p.move(to: CGPoint(x: drop.x, y: drop.y))
+                        p.addLine(to: CGPoint(x: drop.x + drop.windOffset, y: drop.y + drop.length))
+                    }
+                    context.stroke(
+                        path,
+                        with: .linearGradient(
+                            Gradient(colors: [
+                                Color.white.opacity(drop.opacity * 0.8),
+                                Color(red: 0.7, green: 0.8, blue: 0.95).opacity(drop.opacity * 0.4)
+                            ]),
+                            startPoint: CGPoint(x: drop.x, y: drop.y),
+                            endPoint: CGPoint(x: drop.x, y: drop.y + drop.length)
+                        ),
+                        lineWidth: drop.thickness
+                    )
+                }
+            }
+            
+            // Splash effects at bottom
+            ForEach(splashes) { splash in
+                RainSplashView(splash: splash)
             }
         }
         .onAppear {
-            raindrops = (0..<60).map { _ in
-                RainDrop(
-                    x: CGFloat.random(in: 0...geometry.size.width),
-                    startY: CGFloat.random(in: -200...0),
-                    speed: CGFloat.random(in: 15...25),
-                    length: CGFloat.random(in: 15...30),
-                    opacity: Double.random(in: 0.3...0.7)
-                )
+            initializeRain()
+            startRainAnimation()
+        }
+    }
+    
+    private func initializeRain() {
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+        let dropCount = Int(150 * intensity)
+        
+        drops = (0..<dropCount).map { i in
+            PremiumRainDrop(
+                x: CGFloat.random(in: CGFloat(-20)...(screenWidth + CGFloat(20))),
+                y: CGFloat.random(in: (-screenHeight)...CGFloat(0)),
+                length: CGFloat.random(in: CGFloat(20)...CGFloat(45)),
+                thickness: CGFloat.random(in: CGFloat(1)...CGFloat(2.5)),
+                speed: CGFloat.random(in: CGFloat(18)...CGFloat(28)),
+                opacity: Double.random(in: 0.3...0.7),
+                windOffset: CGFloat.random(in: CGFloat(2)...CGFloat(8)),
+                layer: i % 3
+            )
+        }
+    }
+    
+    private func startRainAnimation() {
+        Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { _ in
+            let screenHeight = UIScreen.main.bounds.height
+            let screenWidth = UIScreen.main.bounds.width
+            
+            for i in drops.indices {
+                drops[i].y += drops[i].speed * (1 + CGFloat(drops[i].layer) * 0.3)
+                drops[i].x += drops[i].windOffset * 0.1
+                
+                if drops[i].y > screenHeight + CGFloat(50) {
+                    // Create splash
+                    if Bool.random() && splashes.count < 20 {
+                        splashes.append(RainSplash(x: drops[i].x, y: screenHeight - CGFloat(50)))
+                    }
+                    
+                    // Reset drop
+                    let minY: CGFloat = -100
+                    let maxY: CGFloat = -20
+                    drops[i].y = CGFloat.random(in: minY...maxY)
+                    drops[i].x = CGFloat.random(in: CGFloat(-20)...(screenWidth + CGFloat(20)))
+                }
+            }
+            
+            // Remove old splashes
+            splashes.removeAll { $0.createdAt.timeIntervalSinceNow < -0.5 }
+        }
+    }
+}
+
+struct PremiumRainDrop: Identifiable {
+    let id = UUID()
+    var x: CGFloat
+    var y: CGFloat
+    let length: CGFloat
+    let thickness: CGFloat
+    let speed: CGFloat
+    let opacity: Double
+    let windOffset: CGFloat
+    let layer: Int
+}
+
+struct RainSplash: Identifiable {
+    let id = UUID()
+    let x: CGFloat
+    let y: CGFloat
+    let createdAt = Date()
+}
+
+struct RainSplashView: View {
+    let splash: RainSplash
+    @State private var scale: CGFloat = 0.3
+    @State private var opacity: Double = 0.6
+    
+    var body: some View {
+        Circle()
+            .stroke(Color.white.opacity(opacity), lineWidth: 1)
+            .frame(width: 12, height: 12)
+            .scaleEffect(scale)
+            .position(x: splash.x, y: splash.y)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.4)) {
+                    scale = 2.0
+                    opacity = 0
+                }
+            }
+    }
+}
+
+// MARK: - Premium Snow Effect
+struct PremiumSnowEffect: View {
+    @State private var snowflakes: [PremiumSnowflake] = []
+    
+    var body: some View {
+        ZStack {
+            // Cold atmosphere overlay
+            LinearGradient(
+                colors: [
+                    Color(red: 0.85, green: 0.9, blue: 0.95).opacity(0.15),
+                    Color.white.opacity(0.05),
+                    Color.clear
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            
+            // Fog/mist at bottom
+            LinearGradient(
+                colors: [Color.clear, Color.white.opacity(0.12)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+            
+            // Snowflakes with Canvas for performance
+            Canvas { context, size in
+                for flake in snowflakes {
+                    let rect = CGRect(
+                        x: flake.x - flake.size/2,
+                        y: flake.y - flake.size/2,
+                        width: flake.size,
+                        height: flake.size
+                    )
+                    
+                    // Draw snowflake with glow
+                    context.opacity = flake.opacity
+                    context.fill(
+                        Circle().path(in: rect.insetBy(dx: -2, dy: -2)),
+                        with: .color(.white.opacity(0.3))
+                    )
+                    context.fill(
+                        Circle().path(in: rect),
+                        with: .color(.white)
+                    )
+                }
+            }
+            
+            // Large foreground flakes for depth
+            ForEach(snowflakes.prefix(15)) { flake in
+                if flake.layer == 0 {
+                    SnowflakeShape()
+                        .fill(Color.white.opacity(0.9))
+                        .frame(width: flake.size * 2, height: flake.size * 2)
+                        .rotationEffect(.degrees(flake.rotation))
+                        .position(x: flake.x, y: flake.y)
+                        .blur(radius: 0.5)
+                }
+            }
+        }
+        .onAppear {
+            initializeSnow()
+            startSnowAnimation()
+        }
+    }
+    
+    private func initializeSnow() {
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+        
+        snowflakes = (0..<80).map { i in
+            PremiumSnowflake(
+                x: CGFloat.random(in: CGFloat(0)...screenWidth),
+                y: CGFloat.random(in: (-screenHeight)...screenHeight),
+                size: CGFloat.random(in: CGFloat(3)...CGFloat(12)),
+                speed: CGFloat.random(in: CGFloat(1)...CGFloat(3)),
+                opacity: Double.random(in: 0.5...1.0),
+                wobbleAmount: CGFloat.random(in: CGFloat(20)...CGFloat(60)),
+                wobbleSpeed: Double.random(in: 2...5),
+                rotation: Double.random(in: 0...360),
+                layer: i < 15 ? 0 : 1
+            )
+        }
+    }
+    
+    private func startSnowAnimation() {
+        var time: Double = 0
+        Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { _ in
+            time += 0.033
+            let screenHeight = UIScreen.main.bounds.height
+            let screenWidth = UIScreen.main.bounds.width
+            
+            for i in snowflakes.indices {
+                snowflakes[i].y += snowflakes[i].speed
+                snowflakes[i].x += CGFloat(sin(time * snowflakes[i].wobbleSpeed) * 0.5)
+                snowflakes[i].rotation += 0.5
+                
+                if snowflakes[i].y > screenHeight + CGFloat(20) {
+                    snowflakes[i].y = CGFloat(-20)
+                    snowflakes[i].x = CGFloat.random(in: CGFloat(0)...screenWidth)
+                }
             }
         }
     }
 }
 
-struct RainDrop: Identifiable {
+struct PremiumSnowflake: Identifiable {
     let id = UUID()
-    let x: CGFloat
-    let startY: CGFloat
+    var x: CGFloat
+    var y: CGFloat
+    let size: CGFloat
     let speed: CGFloat
-    let length: CGFloat
     let opacity: Double
+    let wobbleAmount: CGFloat
+    let wobbleSpeed: Double
+    var rotation: Double
+    let layer: Int
 }
 
-struct RainDropView: View {
-    let drop: RainDrop
-    @State private var yOffset: CGFloat = 0
+struct SnowflakeShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = min(rect.width, rect.height) / 2
+        
+        for i in 0..<6 {
+            let angle = Double(i) * .pi / 3
+            let endX = center.x + cos(angle) * radius
+            let endY = center.y + sin(angle) * radius
+            path.move(to: center)
+            path.addLine(to: CGPoint(x: endX, y: endY))
+            
+            // Add branches
+            let branchLength = radius * 0.4
+            let branchStart = 0.6
+            let midX = center.x + cos(angle) * radius * branchStart
+            let midY = center.y + sin(angle) * radius * branchStart
+            
+            for offset in [-0.4, 0.4] {
+                let branchAngle = angle + offset
+                path.move(to: CGPoint(x: midX, y: midY))
+                path.addLine(to: CGPoint(
+                    x: midX + cos(branchAngle) * branchLength,
+                    y: midY + sin(branchAngle) * branchLength
+                ))
+            }
+        }
+        return path
+    }
+}
+
+// MARK: - Premium Sun Effect
+struct PremiumSunEffect: View {
+    @State private var rayRotation: Double = 0
+    @State private var pulseScale: CGFloat = 1.0
+    @State private var shimmerOffset: CGFloat = -200
+    @State private var lensFlares: [LensFlare] = []
+    
+    var body: some View {
+        let screenWidth = UIScreen.main.bounds.width
+        
+        ZStack {
+            // Warm atmospheric gradient
+            RadialGradient(
+                colors: [
+                    Color(red: 1, green: 0.95, blue: 0.8).opacity(0.25),
+                    Color(red: 1, green: 0.9, blue: 0.7).opacity(0.15),
+                    Color(red: 1, green: 0.85, blue: 0.6).opacity(0.08),
+                    Color.clear
+                ],
+                center: .topTrailing,
+                startRadius: 0,
+                endRadius: 500
+            )
+            
+            // Golden hour overlay
+            LinearGradient(
+                colors: [
+                    Color.orange.opacity(0.08),
+                    Color.yellow.opacity(0.04),
+                    Color.clear
+                ],
+                startPoint: .topTrailing,
+                endPoint: .bottomLeading
+            )
+            
+            // Sun core with multiple layers
+            ZStack {
+                // Outer glow
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.yellow.opacity(0.4),
+                                Color.orange.opacity(0.2),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 20,
+                            endRadius: 120
+                        )
+                    )
+                    .frame(width: 240, height: 240)
+                    .scaleEffect(pulseScale)
+                
+                // Inner bright core
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.white,
+                                Color.yellow,
+                                Color.orange.opacity(0.8)
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 40
+                        )
+                    )
+                    .frame(width: 70, height: 70)
+                    .blur(radius: 2)
+                
+                // Dynamic rays
+                ForEach(0..<12) { i in
+                    RayView(index: i, rotation: rayRotation)
+                }
+            }
+            .position(x: screenWidth - 50, y: 100)
+            
+            // Lens flares
+            ForEach(lensFlares) { flare in
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [flare.color.opacity(0.4), Color.clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: flare.size
+                        )
+                    )
+                    .frame(width: flare.size * 2, height: flare.size * 2)
+                    .position(x: flare.x, y: flare.y)
+            }
+            
+            // Light shimmer across screen
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [Color.clear, Color.white.opacity(0.1), Color.clear],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(width: 100)
+                .offset(x: shimmerOffset)
+                .blur(radius: 20)
+        }
+        .onAppear {
+            initializeLensFlares()
+            
+            withAnimation(.linear(duration: 60).repeatForever(autoreverses: false)) {
+                rayRotation = 360
+            }
+            withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
+                pulseScale = 1.15
+            }
+            withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+                shimmerOffset = UIScreen.main.bounds.width + 200
+            }
+        }
+    }
+    
+    private func initializeLensFlares() {
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+        
+        lensFlares = [
+            LensFlare(x: screenWidth * 0.7, y: screenHeight * 0.3, size: 30, color: .orange),
+            LensFlare(x: screenWidth * 0.5, y: screenHeight * 0.4, size: 20, color: .yellow),
+            LensFlare(x: screenWidth * 0.3, y: screenHeight * 0.5, size: 40, color: .orange.opacity(0.5)),
+            LensFlare(x: screenWidth * 0.2, y: screenHeight * 0.6, size: 15, color: .white)
+        ]
+    }
+}
+
+struct RayView: View {
+    let index: Int
+    let rotation: Double
     
     var body: some View {
         Rectangle()
             .fill(
                 LinearGradient(
-                    colors: [Color.blue.opacity(drop.opacity), Color.blue.opacity(0.1)],
+                    colors: [
+                        Color.yellow.opacity(0.6),
+                        Color.orange.opacity(0.3),
+                        Color.clear
+                    ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
             )
-            .frame(width: 2, height: drop.length)
-            .position(x: drop.x, y: drop.startY + yOffset)
-            .onAppear {
-                withAnimation(
-                    Animation.linear(duration: Double(drop.speed) / 10)
-                        .repeatForever(autoreverses: false)
-                ) {
-                    yOffset = UIScreen.main.bounds.height + 300
-                }
-            }
+            .frame(width: index % 2 == 0 ? 4 : 2, height: index % 2 == 0 ? 100 : 70)
+            .offset(y: index % 2 == 0 ? -85 : -70)
+            .rotationEffect(.degrees(Double(index) * 30 + rotation))
     }
 }
 
-struct SnowEffectView: View {
-    let geometry: GeometryProxy
-    @State private var snowflakes: [Snowflake] = []
+struct LensFlare: Identifiable {
+    let id = UUID()
+    let x: CGFloat
+    let y: CGFloat
+    let size: CGFloat
+    let color: Color
+}
+
+// MARK: - Premium Cloud Effect
+struct PremiumCloudEffect: View {
+    @State private var clouds: [PremiumCloud] = []
+    @State private var time: Double = 0
     
     var body: some View {
         ZStack {
-            Color.white.opacity(0.05)
+            // Overcast sky gradient
+            LinearGradient(
+                colors: [
+                    Color(red: 0.6, green: 0.65, blue: 0.7).opacity(0.3),
+                    Color(red: 0.7, green: 0.72, blue: 0.75).opacity(0.2),
+                    Color(red: 0.75, green: 0.77, blue: 0.8).opacity(0.1)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
             
-            ForEach(snowflakes) { flake in
-                SnowflakeView(flake: flake)
+            // Cloud layers
+            ForEach(clouds) { cloud in
+                PremiumCloudShape(cloud: cloud)
             }
         }
         .onAppear {
-            snowflakes = (0..<40).map { _ in
-                Snowflake(
-                    x: CGFloat.random(in: 0...geometry.size.width),
-                    startY: CGFloat.random(in: -100...0),
-                    speed: CGFloat.random(in: 20...40),
-                    size: CGFloat.random(in: 4...10),
-                    opacity: Double.random(in: 0.5...0.9)
-                )
+            initializeClouds()
+            startAnimation()
+        }
+    }
+    
+    private func initializeClouds() {
+        let screenWidth = UIScreen.main.bounds.width
+        
+        clouds = (0..<8).map { i in
+            let randomOffset = Int.random(in: -20...20)
+            return PremiumCloud(
+                x: CGFloat.random(in: CGFloat(-100)...screenWidth),
+                y: CGFloat(40 + i * 60 + randomOffset),
+                width: CGFloat.random(in: CGFloat(150)...CGFloat(300)),
+                height: CGFloat.random(in: CGFloat(60)...CGFloat(120)),
+                speed: CGFloat.random(in: CGFloat(0.2)...CGFloat(0.8)),
+                opacity: Double.random(in: 0.4...0.8),
+                layer: i % 3
+            )
+        }
+    }
+    
+    private func startAnimation() {
+        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
+            let screenWidth = UIScreen.main.bounds.width
+            
+            for i in clouds.indices {
+                clouds[i].x += clouds[i].speed
+                
+                if clouds[i].x > screenWidth + clouds[i].width {
+                    clouds[i].x = CGFloat(-1) * clouds[i].width
+                }
             }
         }
     }
 }
 
-struct Snowflake: Identifiable {
+struct PremiumCloud: Identifiable {
     let id = UUID()
-    let x: CGFloat
-    let startY: CGFloat
+    var x: CGFloat
+    var y: CGFloat
+    let width: CGFloat
+    let height: CGFloat
     let speed: CGFloat
-    let size: CGFloat
     let opacity: Double
+    let layer: Int
 }
 
-struct SnowflakeView: View {
-    let flake: Snowflake
-    @State private var yOffset: CGFloat = 0
-    @State private var xOffset: CGFloat = 0
-    
-    var body: some View {
-        Circle()
-            .fill(Color.white.opacity(flake.opacity))
-            .frame(width: flake.size, height: flake.size)
-            .position(x: flake.x + xOffset, y: flake.startY + yOffset)
-            .onAppear {
-                withAnimation(
-                    Animation.linear(duration: Double(flake.speed) / 5)
-                        .repeatForever(autoreverses: false)
-                ) {
-                    yOffset = UIScreen.main.bounds.height + 200
-                }
-                withAnimation(
-                    Animation.easeInOut(duration: 2)
-                        .repeatForever(autoreverses: true)
-                ) {
-                    xOffset = CGFloat.random(in: -30...30)
-                }
-            }
-    }
-}
-
-struct SunEffectView: View {
-    @State private var rayRotation: Double = 0
-    @State private var glowScale: CGFloat = 1.0
+struct PremiumCloudShape: View {
+    let cloud: PremiumCloud
     
     var body: some View {
         ZStack {
-            // Warm overlay
-            LinearGradient(
-                colors: [Color.orange.opacity(0.08), Color.yellow.opacity(0.05), Color.clear],
-                startPoint: .topTrailing,
-                endPoint: .bottomLeading
-            )
+            // Cloud shadow
+            CloudBlobShape()
+                .fill(Color.gray.opacity(cloud.opacity * 0.3))
+                .frame(width: cloud.width, height: cloud.height)
+                .offset(x: 5, y: 5)
+                .blur(radius: 10)
             
-            // Sun glow in corner
-            Circle()
+            // Main cloud
+            CloudBlobShape()
                 .fill(
-                    RadialGradient(
-                        colors: [Color.yellow.opacity(0.3), Color.orange.opacity(0.1), Color.clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 150
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(cloud.opacity),
+                            Color(red: 0.9, green: 0.92, blue: 0.95).opacity(cloud.opacity * 0.9)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
                 )
-                .frame(width: 200, height: 200)
-                .scaleEffect(glowScale)
-                .position(x: UIScreen.main.bounds.width - 30, y: 80)
-                .onAppear {
-                    withAnimation(Animation.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
-                        glowScale = 1.2
-                    }
-                }
+                .frame(width: cloud.width, height: cloud.height)
             
-            // Sun rays
-            ForEach(0..<8) { i in
-                Rectangle()
-                    .fill(LinearGradient(colors: [Color.yellow.opacity(0.2), Color.clear], startPoint: .top, endPoint: .bottom))
-                    .frame(width: 3, height: 60)
-                    .offset(y: -80)
-                    .rotationEffect(.degrees(Double(i) * 45 + rayRotation))
-                    .position(x: UIScreen.main.bounds.width - 30, y: 80)
-            }
-            .onAppear {
-                withAnimation(Animation.linear(duration: 30).repeatForever(autoreverses: false)) {
-                    rayRotation = 360
-                }
-            }
+            // Highlight
+            CloudBlobShape()
+                .fill(Color.white.opacity(cloud.opacity * 0.5))
+                .frame(width: cloud.width * 0.6, height: cloud.height * 0.4)
+                .offset(x: -cloud.width * 0.1, y: -cloud.height * 0.2)
+                .blur(radius: 5)
         }
+        .position(x: cloud.x, y: cloud.y)
     }
 }
 
-struct CloudOverlayView: View {
-    @State private var cloudOffset: CGFloat = 0
-    
-    var body: some View {
-        ZStack {
-            // Grey overlay
-            Color.gray.opacity(0.08)
-            
-            // Animated clouds
-            HStack(spacing: 100) {
-                ForEach(0..<4) { i in
-                    Image(systemName: "cloud.fill")
-                        .font(.system(size: 60))
-                        .foregroundColor(.white.opacity(0.4))
-                        .offset(y: CGFloat(i % 2 == 0 ? 20 : 60))
-                }
-            }
-            .offset(x: cloudOffset)
-            .onAppear {
-                withAnimation(Animation.linear(duration: 60).repeatForever(autoreverses: false)) {
-                    cloudOffset = -500
-                }
-            }
-        }
+struct CloudBlobShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        
+        let w = rect.width
+        let h = rect.height
+        
+        // Create fluffy cloud shape with multiple overlapping circles
+        path.addEllipse(in: CGRect(x: w * 0.1, y: h * 0.4, width: w * 0.3, height: h * 0.5))
+        path.addEllipse(in: CGRect(x: w * 0.25, y: h * 0.2, width: w * 0.35, height: h * 0.6))
+        path.addEllipse(in: CGRect(x: w * 0.5, y: h * 0.3, width: w * 0.3, height: h * 0.5))
+        path.addEllipse(in: CGRect(x: w * 0.35, y: h * 0.35, width: w * 0.4, height: h * 0.5))
+        path.addEllipse(in: CGRect(x: w * 0.6, y: h * 0.4, width: w * 0.3, height: h * 0.45))
+        
+        return path
     }
 }
 
-// MARK: - Countdown Overlay
+// MARK: - Premium Countdown Overlay
 struct CountdownOverlay: View {
     @Binding var isShowing: Bool
     @Binding var countdownValue: Int
     let onComplete: () -> Void
     
-    @State private var scale: CGFloat = 0.5
-    @State private var opacity: Double = 0
+    @State private var numberScale: CGFloat = 0.3
+    @State private var numberOpacity: Double = 0
+    @State private var ringScale: CGFloat = 0.8
+    @State private var ringOpacity: Double = 0
+    @State private var particles: [CountdownParticle] = []
+    @State private var backgroundBlur: CGFloat = 0
+    @State private var pulseRings: [PulseRing] = []
+    
+    private let accentColor = Color(red: 0.4, green: 0.8, blue: 0.6)
     
     var body: some View {
         ZStack {
-            Color.black.opacity(0.7)
+            // Blurred background
+            Rectangle()
+                .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
             
-            VStack(spacing: 20) {
-                Text(countdownText)
-                    .font(.system(size: countdownValue > 0 ? 120 : 60, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .scaleEffect(scale)
-                    .opacity(opacity)
-                
-                if countdownValue > 0 {
-                    Text("Get Ready!")
-                        .font(.system(size: 24, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.8))
+            // Dark overlay
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+            
+            // Particle effects
+            ForEach(particles) { particle in
+                Circle()
+                    .fill(particle.color)
+                    .frame(width: particle.size, height: particle.size)
+                    .position(x: particle.x, y: particle.y)
+                    .blur(radius: particle.blur)
+            }
+            
+            // Pulse rings
+            ForEach(pulseRings) { ring in
+                Circle()
+                    .stroke(accentColor.opacity(ring.opacity), lineWidth: 3)
+                    .frame(width: ring.size, height: ring.size)
+            }
+            
+            // Main countdown content
+            VStack(spacing: 30) {
+                // Circular progress ring
+                ZStack {
+                    // Background ring
+                    Circle()
+                        .stroke(Color.white.opacity(0.1), lineWidth: 8)
+                        .frame(width: 200, height: 200)
+                    
+                    // Progress ring
+                    Circle()
+                        .trim(from: 0, to: progressValue)
+                        .stroke(
+                            LinearGradient(
+                                colors: [accentColor, accentColor.opacity(0.6)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                        )
+                        .frame(width: 200, height: 200)
+                        .rotationEffect(.degrees(-90))
+                        .scaleEffect(ringScale)
+                        .opacity(ringOpacity)
+                    
+                    // Glowing orb at progress end
+                    Circle()
+                        .fill(accentColor)
+                        .frame(width: 16, height: 16)
+                        .shadow(color: accentColor, radius: 10)
+                        .offset(y: -100)
+                        .rotationEffect(.degrees(progressValue * CGFloat(360) - CGFloat(90)))
+                        .opacity(ringOpacity)
+                    
+                    // Number display
+                    Text(displayText)
+                        .font(.system(size: countdownValue > 0 ? 100 : 70, weight: .bold, design: .rounded))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.white, Color.white.opacity(0.9)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: accentColor.opacity(0.5), radius: 20)
+                        .scaleEffect(numberScale)
+                        .opacity(numberOpacity)
                 }
+                
+                // Status text
+                Text(statusText)
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.7))
+                    .tracking(4)
+                    .textCase(.uppercase)
+                    .opacity(numberOpacity)
             }
         }
         .onAppear {
-            startCountdown()
+            startPremiumCountdown()
         }
     }
     
-    private var countdownText: String {
-        if countdownValue > 0 {
-            return "\(countdownValue)"
-        } else {
-            return "GO!"
+    private var progressValue: CGFloat {
+        CGFloat(3 - countdownValue) / 3.0
+    }
+    
+    private var displayText: String {
+        countdownValue > 0 ? "\(countdownValue)" : "GO!"
+    }
+    
+    private var statusText: String {
+        switch countdownValue {
+        case 3: return "Get Ready"
+        case 2: return "Set"
+        case 1: return "Almost There"
+        default: return "Let's Go!"
         }
     }
     
-    private func startCountdown() {
-        // Initial animation
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-            scale = 1.0
-            opacity = 1.0
+    private func startPremiumCountdown() {
+        // Initial entrance
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            numberScale = 1.0
+            numberOpacity = 1.0
+            ringScale = 1.0
+            ringOpacity = 1.0
         }
         
-        // Countdown sequence
-        func animateNumber(remaining: Int) {
-            if remaining > 0 {
-                HapticFeedback.medium.trigger()
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                    withAnimation(.spring(response: 0.2)) {
-                        scale = 0.5
-                        opacity = 0
-                    }
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        countdownValue = remaining - 1
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                            scale = 1.0
-                            opacity = 1.0
-                        }
-                        animateNumber(remaining: remaining - 1)
-                    }
+        spawnParticles()
+        animateSequence(remaining: countdownValue)
+    }
+    
+    private func animateSequence(remaining: Int) {
+        if remaining > 0 {
+            // Haptic
+            HapticFeedback.medium.trigger()
+            
+            // Add pulse ring
+            addPulseRing()
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) {
+                // Shrink out
+                withAnimation(.easeIn(duration: 0.15)) {
+                    numberScale = 1.3
+                    numberOpacity = 0
                 }
-            } else {
-                // Show "GO!" then dismiss
-                HapticFeedback.success.trigger()
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        opacity = 0
-                        scale = 1.5
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    countdownValue = remaining - 1
+                    numberScale = 0.5
+                    
+                    // Pop in new number
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
+                        numberScale = 1.0
+                        numberOpacity = 1.0
                     }
                     
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        isShowing = false
-                        onComplete()
-                    }
+                    animateSequence(remaining: remaining - 1)
+                }
+            }
+        } else {
+            // GO! animation
+            HapticFeedback.success.trigger()
+            
+            // Burst of particles
+            for _ in 0..<30 {
+                spawnBurstParticle()
+            }
+            
+            // Multiple pulse rings
+            for i in 0..<3 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.1) {
+                    addPulseRing()
+                }
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                withAnimation(.easeOut(duration: 0.4)) {
+                    numberScale = 2.0
+                    numberOpacity = 0
+                    ringOpacity = 0
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    isShowing = false
+                    onComplete()
                 }
             }
         }
-        
-        animateNumber(remaining: countdownValue)
     }
+    
+    private func spawnParticles() {
+        let centerX = UIScreen.main.bounds.width / 2
+        let centerY = UIScreen.main.bounds.height / 2
+        
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+            if !isShowing {
+                timer.invalidate()
+                return
+            }
+            
+            let angle = Double.random(in: 0...360) * .pi / 180
+            let distance = CGFloat.random(in: 80...150)
+            
+            let particle = CountdownParticle(
+                x: centerX + cos(angle) * distance,
+                y: centerY + sin(angle) * distance,
+                size: CGFloat.random(in: 4...12),
+                color: [accentColor, .white, accentColor.opacity(0.5)].randomElement()!,
+                blur: CGFloat.random(in: 0...3)
+            )
+            
+            if particles.count < 40 {
+                particles.append(particle)
+            }
+            
+            // Remove old particles
+            if particles.count > 30 {
+                particles.removeFirst()
+            }
+        }
+    }
+    
+    private func spawnBurstParticle() {
+        let centerX = UIScreen.main.bounds.width / 2
+        let centerY = UIScreen.main.bounds.height / 2
+        let angle = Double.random(in: 0...360) * .pi / 180
+        
+        let particle = CountdownParticle(
+            x: centerX,
+            y: centerY,
+            size: CGFloat.random(in: 6...16),
+            color: [accentColor, .white, .yellow].randomElement()!,
+            blur: 0
+        )
+        
+        particles.append(particle)
+        
+        withAnimation(.easeOut(duration: 0.6)) {
+            if let index = particles.firstIndex(where: { $0.id == particle.id }) {
+                particles[index].x = centerX + CGFloat(cos(angle) * 200)
+                particles[index].y = centerY + CGFloat(sin(angle) * 200)
+            }
+        }
+    }
+    
+    private func addPulseRing() {
+        let ring = PulseRing(size: 200, opacity: 0.8)
+        pulseRings.append(ring)
+        
+        withAnimation(.easeOut(duration: 0.8)) {
+            if let index = pulseRings.firstIndex(where: { $0.id == ring.id }) {
+                pulseRings[index].size = 400
+                pulseRings[index].opacity = 0
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            pulseRings.removeAll { $0.id == ring.id }
+        }
+    }
+}
+
+struct CountdownParticle: Identifiable {
+    let id = UUID()
+    var x: CGFloat
+    var y: CGFloat
+    var size: CGFloat
+    let color: Color
+    let blur: CGFloat
+}
+
+struct PulseRing: Identifiable {
+    let id = UUID()
+    var size: CGFloat
+    var opacity: Double
 }
 
 // MARK: - Walk Record Model (Enhanced)
@@ -496,7 +1105,8 @@ struct WalkRecord: Identifiable, Codable {
         guard distanceInMiles > 0.01 else { return "--:--" }
         let paceMinutes = duration / 60 / distanceInMiles
         let mins = Int(paceMinutes)
-        let secs = Int((paceMinutes - Double(mins)) * 60)
+        let remainder = paceMinutes - Double(mins)
+        let secs = Int(remainder * 60)
         return String(format: "%d:%02d", mins, secs)
     }
     
@@ -697,33 +1307,20 @@ class ActivityLocationManager: NSObject, ObservableObject, CLLocationManagerDele
     }
 }
 
-// MARK: - Activity Type
-enum ActivityType: String, CaseIterable {
-    case walk = "Walk"
-    case run = "Run"
-    
-    var icon: String {
-        switch self {
-        case .walk: return "figure.walk"
-        case .run: return "figure.run"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .walk: return .green
-        case .run: return .orange
-        }
-    }
-    
-    var encouragements: [String] {
-        switch self {
-        case .walk:
-            return ["Great pace! 🐾", "Your pet loves this!", "Keep moving! 💪", "Fresh air feels good!", "You're doing amazing!"]
-        case .run:
-            return ["You're on fire! 🔥", "Crush it!", "Feel the speed! 💨", "Amazing energy!", "Keep going strong!"]
-        }
-    }
+// MARK: - Activity Color (for theming)
+struct ActivityStyle {
+    static let color: Color = Color(hex: "4CAF50") // Nice green
+    static let icon: String = "figure.outdoor.cycle"
+    static let encouragements: [String] = [
+        "Great pace! 🐾",
+        "Your pet loves this!",
+        "Keep moving! 💪",
+        "Fresh air feels good!",
+        "You're doing amazing!",
+        "One step at a time! 🚶",
+        "Stay strong! 💚",
+        "You've got this!"
+    ]
 }
 
 // MARK: - Main Activity View
@@ -735,7 +1332,6 @@ struct ActivityView: View {
     @StateObject private var walkHistory = WalkHistoryManager()
     @StateObject private var weatherManager = WeatherManager()
     
-    @State private var selectedActivity: ActivityType = .walk
     @State private var isWorkoutActive = false
     @State private var showHistory = false
     @State private var showPermissionAlert = false
@@ -954,60 +1550,68 @@ struct ActivityView: View {
     
     // MARK: - Start Activity Section
     private var startActivitySection: some View {
-        VStack(spacing: 14) {
-            HStack(spacing: 10) {
-                ForEach(ActivityType.allCases, id: \.self) { activity in
-                    CompactActivityButton(activity: activity, isSelected: selectedActivity == activity) {
-                        withAnimation(.spring(response: 0.3)) { selectedActivity = activity }
-                        HapticFeedback.light.trigger()
-                    }
-                }
-            }
-            
-            // Map Preview with Animated Pet
+        VStack(spacing: 16) {
+            // Large Map Preview with Animated Pet
             ZStack {
                 Map(initialPosition: .region(locationManager.region)) {
                     if let location = locationManager.location {
                         Annotation("", coordinate: location) {
-                            AnimatedPetMapMarker(petType: userSettings.pet.type, color: selectedActivity.color, isAnimating: false)
+                            AnimatedPetMapMarker(petType: userSettings.pet.type, color: ActivityStyle.color, isAnimating: false)
                         }
                     }
                 }
                 .mapStyle(.standard)
-                .frame(height: 280)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .frame(height: 340)
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+                .shadow(color: Color.black.opacity(0.1), radius: 10, y: 5)
                 
                 if locationManager.location == nil {
-                    VStack {
+                    VStack(spacing: 12) {
                         Image(systemName: "location.slash.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(themeManager.secondaryTextColor)
+                            .font(.system(size: 32))
+                            .foregroundColor(.white.opacity(0.8))
                         Text("Enable location to see your position")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(themeManager.secondaryTextColor)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
                     }
+                    .padding(24)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.black.opacity(0.5))
+                    )
                 }
             }
             
+            // Start Button
             Button(action: startWorkout) {
-                HStack(spacing: 12) {
-                    Image(systemName: selectedActivity.icon)
-                        .font(.system(size: 22, weight: .bold))
-                    Text("Start \(selectedActivity.rawValue)")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                HStack(spacing: 14) {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 24, weight: .bold))
+                    Text("Start Activity")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
+                .padding(.vertical, 18)
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(LinearGradient(colors: [selectedActivity.color, selectedActivity.color.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
+                    RoundedRectangle(cornerRadius: 22)
+                        .fill(
+                            LinearGradient(
+                                colors: [ActivityStyle.color, ActivityStyle.color.opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
                 )
-                .shadow(color: selectedActivity.color.opacity(0.4), radius: 12, x: 0, y: 6)
+                .shadow(color: ActivityStyle.color.opacity(0.4), radius: 15, x: 0, y: 8)
             }
         }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 24).fill(selectedActivity.color.opacity(0.06)))
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 28)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.06), radius: 12, y: 6)
+        )
     }
     
     // MARK: - Recent Activities Section
@@ -1062,13 +1666,13 @@ struct ActivityView: View {
             Map(initialPosition: .region(locationManager.region)) {
                 if let location = locationManager.location {
                     Annotation("", coordinate: location) {
-                        AnimatedPetMapMarker(petType: userSettings.pet.type, color: selectedActivity.color, isAnimating: true)
+                        AnimatedPetMapMarker(petType: userSettings.pet.type, color: ActivityStyle.color, isAnimating: true)
                     }
                 }
                 
                 if !locationManager.routeCoordinates.isEmpty {
                     MapPolyline(coordinates: locationManager.routeCoordinates)
-                        .stroke(selectedActivity.color, lineWidth: 5)
+                        .stroke(ActivityStyle.color, lineWidth: 5)
                 }
             }
             .mapStyle(.standard)
@@ -1100,7 +1704,7 @@ struct ActivityView: View {
                     }
                     
                     HStack(spacing: 12) {
-                        WorkoutStatPill(title: "Distance", value: String(format: "%.2f mi", locationManager.totalDistance * 0.000621371), color: selectedActivity.color)
+                        WorkoutStatPill(title: "Distance", value: String(format: "%.2f mi", locationManager.totalDistance * 0.000621371), color: ActivityStyle.color)
                         WorkoutStatPill(title: "Time", value: formatTime(locationManager.elapsedTime), color: .blue)
                         WorkoutStatPill(title: "Pace", value: calculatePace(), color: .purple)
                     }
@@ -1131,7 +1735,7 @@ struct ActivityView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "stop.fill")
                             .font(.system(size: 22, weight: .bold))
-                        Text("End \(selectedActivity.rawValue)")
+                        Text("End Activity")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                     }
                     .foregroundColor(.white)
@@ -1194,10 +1798,10 @@ struct ActivityView: View {
         encouragementTimer?.invalidate()
         encouragementTimer = nil
         
-        let calories = Int(result.distance * 0.000621371 * (selectedActivity == .run ? 120 : 80))
+        let calories = Int(result.distance * 0.000621371 * 80)
         
         let record = WalkRecord(
-            workoutType: selectedActivity.rawValue.lowercased(),
+            workoutType: "activity",
             distance: result.distance,
             duration: result.duration,
             routeCoordinates: result.route,
@@ -1228,7 +1832,8 @@ struct ActivityView: View {
         guard miles > 0.01 else { return "--:--" }
         let paceMinutes = locationManager.elapsedTime / 60 / miles
         let mins = Int(paceMinutes)
-        let secs = Int((paceMinutes - Double(mins)) * 60)
+        let remainder = paceMinutes - Double(mins)
+        let secs = Int(remainder * 60)
         return String(format: "%d:%02d", mins, secs)
     }
     
@@ -1236,7 +1841,7 @@ struct ActivityView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
             guard isWorkoutActive else { return }
             withAnimation(.spring(response: 0.5)) {
-                currentEncouragement = selectedActivity.encouragements.randomElement() ?? ""
+                currentEncouragement = ActivityStyle.encouragements.randomElement() ?? ""
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                 withAnimation { currentEncouragement = "" }
@@ -1247,7 +1852,7 @@ struct ActivityView: View {
             guard isWorkoutActive else { return }
             DispatchQueue.main.async {
                 withAnimation(.spring(response: 0.5)) {
-                    currentEncouragement = selectedActivity.encouragements.randomElement() ?? ""
+                    currentEncouragement = ActivityStyle.encouragements.randomElement() ?? ""
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                     withAnimation { currentEncouragement = "" }
@@ -1343,35 +1948,7 @@ struct CompactStatPill: View {
     }
 }
 
-struct CompactActivityButton: View {
-    let activity: ActivityType
-    let isSelected: Bool
-    let action: () -> Void
-    @EnvironmentObject var themeManager: ThemeManager
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: activity.icon)
-                    .font(.system(size: 18, weight: .semibold))
-                Text(activity.rawValue)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-            }
-            .foregroundColor(isSelected ? .white : activity.color)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(isSelected ? activity.color : activity.color.opacity(0.12))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(activity.color, lineWidth: isSelected ? 0 : 2)
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
+// CompactActivityButton removed - now using single Start Activity button
 
 struct WorkoutStatPill: View {
     let title: String
@@ -1878,12 +2455,15 @@ struct CompletionStatCard: View {
 }
 
 // MARK: - Activity History View
+// MARK: - Premium Activity History View
 struct ActivityHistoryView: View {
     @ObservedObject var walkHistory: WalkHistoryManager
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var themeManager: ThemeManager
     
     @State private var selectedPeriod = 0
+    @State private var selectedWalk: WalkRecord?
+    @State private var showDetailView = false
     
     private var filteredWalks: [WalkRecord] {
         switch selectedPeriod {
@@ -1893,42 +2473,198 @@ struct ActivityHistoryView: View {
         }
     }
     
+    private var totalDistance: Double {
+        filteredWalks.reduce(0) { $0 + $1.distanceInMiles }
+    }
+    
+    private var totalCalories: Int {
+        filteredWalks.reduce(0) { $0 + $1.calories }
+    }
+    
+    private var totalTime: TimeInterval {
+        filteredWalks.reduce(0) { $0 + $1.duration }
+    }
+    
     var body: some View {
         NavigationView {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 16) {
-                    Picker("Period", selection: $selectedPeriod) {
-                        Text("Week").tag(0)
-                        Text("Month").tag(1)
-                        Text("All").tag(2)
+                VStack(spacing: 20) {
+                    // Period Selector with modern design
+                    HStack(spacing: 0) {
+                        ForEach(["Week", "Month", "All Time"], id: \.self) { period in
+                            let index = ["Week", "Month", "All Time"].firstIndex(of: period) ?? 0
+                            Button {
+                                withAnimation(.spring(response: 0.3)) {
+                                    selectedPeriod = index
+                                }
+                            } label: {
+                                Text(period)
+                                    .font(.system(size: 14, weight: selectedPeriod == index ? .bold : .medium, design: .rounded))
+                                    .foregroundColor(selectedPeriod == index ? .white : themeManager.secondaryTextColor)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 16)
+                                    .background(
+                                        Group {
+                                            if selectedPeriod == index {
+                                                Capsule()
+                                                    .fill(
+                                                        LinearGradient(
+                                                            colors: [Color(red: 0.4, green: 0.8, blue: 0.6), Color(red: 0.3, green: 0.7, blue: 0.5)],
+                                                            startPoint: .topLeading,
+                                                            endPoint: .bottomTrailing
+                                                        )
+                                                    )
+                                            }
+                                        }
+                                    )
+                            }
+                        }
                     }
-                    .pickerStyle(SegmentedPickerStyle())
+                    .padding(4)
+                    .background(Capsule().fill(themeManager.cardBackgroundColor))
+                    .shadow(color: Color.black.opacity(0.05), radius: 10)
                     .padding(.horizontal, 20)
                     
+                    // Stats Overview with beautiful cards
                     if !filteredWalks.isEmpty {
-                        CombinedRoutesMap(walks: filteredWalks)
-                            .frame(height: 180)
-                            .clipShape(RoundedRectangle(cornerRadius: 18))
-                            .padding(.horizontal, 20)
+                        VStack(spacing: 12) {
+                            // Main stat - Distance with large display
+                            HStack(spacing: 16) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Total Distance")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(themeManager.secondaryTextColor)
+                                    HStack(alignment: .lastTextBaseline, spacing: 4) {
+                                        Text(String(format: "%.1f", totalDistance))
+                                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                                            .foregroundColor(.green)
+                                        Text("mi")
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(themeManager.secondaryTextColor)
+                                    }
+                                }
+                                
+                                Spacer()
+                                
+                                // Mini combined routes preview
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.green.opacity(0.1))
+                                        .frame(width: 70, height: 70)
+                                    
+                                    Image(systemName: "map.fill")
+                                        .font(.system(size: 28))
+                                        .foregroundColor(.green)
+                                }
+                            }
+                            .padding(16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(themeManager.cardBackgroundColor)
+                                    .shadow(color: Color.black.opacity(0.05), radius: 15)
+                            )
+                            
+                            // Secondary stats row
+                            HStack(spacing: 12) {
+                                PremiumStatCard(
+                                    icon: "figure.walk",
+                                    title: "Activities",
+                                    value: "\(filteredWalks.count)",
+                                    color: .blue
+                                )
+                                PremiumStatCard(
+                                    icon: "flame.fill",
+                                    title: "Calories",
+                                    value: "\(totalCalories)",
+                                    color: .orange
+                                )
+                                PremiumStatCard(
+                                    icon: "clock.fill",
+                                    title: "Time",
+                                    value: formatTotalTime(totalTime),
+                                    color: .purple
+                                )
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        // Combined Routes Map
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Text("Your Routes")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .foregroundColor(themeManager.primaryTextColor)
+                                
+                                Spacer()
+                                
+                                Text("\(filteredWalks.filter { !$0.coordinates.isEmpty }.count) tracked")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(themeManager.secondaryTextColor)
+                            }
+                            
+                            CombinedRoutesMap(walks: filteredWalks)
+                                .frame(height: 200)
+                                .clipShape(RoundedRectangle(cornerRadius: 20))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                )
+                                .shadow(color: Color.black.opacity(0.1), radius: 15)
+                        }
+                        .padding(.horizontal, 20)
                     }
                     
-                    HStack(spacing: 14) {
-                        HistoryStatCard(title: "Activities", value: "\(filteredWalks.count)", color: .blue)
-                        HistoryStatCard(title: "Distance", value: String(format: "%.1f mi", filteredWalks.reduce(0) { $0 + $1.distanceInMiles }), color: .green)
-                        HistoryStatCard(title: "Calories", value: "\(filteredWalks.reduce(0) { $0 + $1.calories })", color: .orange)
-                    }
-                    .padding(.horizontal, 20)
-                    
-                    VStack(spacing: 10) {
-                        ForEach(filteredWalks) { walk in
-                            HistoryActivityCard(walk: walk)
+                    // Activity List Header
+                    HStack {
+                        Text("Recent Activities")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                        
+                        Spacer()
+                        
+                        if !filteredWalks.isEmpty {
+                            Text("Tap to view details")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(themeManager.secondaryTextColor)
                         }
                     }
                     .padding(.horizontal, 20)
+                    .padding(.top, 8)
                     
-                    Spacer(minLength: 30)
+                    // Activity Cards
+                    if filteredWalks.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "figure.walk.circle")
+                                .font(.system(size: 60))
+                                .foregroundColor(themeManager.secondaryTextColor.opacity(0.5))
+                            
+                            Text("No activities yet")
+                                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                            
+                            Text("Start a walk or run to see your history here")
+                                .font(.system(size: 14))
+                                .foregroundColor(themeManager.secondaryTextColor.opacity(0.7))
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.vertical, 60)
+                    } else {
+                        LazyVStack(spacing: 12) {
+                            ForEach(filteredWalks) { walk in
+                                PremiumActivityCard(walk: walk)
+                                    .onTapGesture {
+                                        selectedWalk = walk
+                                        showDetailView = true
+                                        HapticFeedback.light.trigger()
+                                    }
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    
+                    Spacer(minLength: 40)
                 }
-                .padding(.top, 12)
+                .padding(.top, 16)
             }
             .background(themeManager.backgroundColor.ignoresSafeArea())
             .navigationTitle("Activity History")
@@ -1937,12 +2673,638 @@ struct ActivityHistoryView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
                         .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Color(red: 0.4, green: 0.8, blue: 0.6))
                 }
+            }
+        }
+        .sheet(isPresented: $showDetailView) {
+            if let walk = selectedWalk {
+                ActivityDetailView(walk: walk, walkHistory: walkHistory)
+            }
+        }
+    }
+    
+    private func formatTotalTime(_ interval: TimeInterval) -> String {
+        let hours = Int(interval) / 3600
+        let minutes = (Int(interval) % 3600) / 60
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        }
+        return "\(minutes)m"
+    }
+}
+
+// MARK: - Premium Stat Card
+struct PremiumStatCard: View {
+    let icon: String
+    let title: String
+    let value: String
+    let color: Color
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(color)
+            }
+            
+            Text(value)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundColor(themeManager.primaryTextColor)
+            
+            Text(title)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(themeManager.secondaryTextColor)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.03), radius: 8)
+        )
+    }
+}
+
+// MARK: - Premium Activity Card
+struct PremiumActivityCard: View {
+    let walk: WalkRecord
+    @EnvironmentObject var themeManager: ThemeManager
+    @State private var loadedPhotos: [UIImage] = []
+    
+    private var activityColor: Color { walk.workoutType == "run" ? .orange : .green }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header with gradient
+            HStack {
+                // Activity type icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [activityColor, activityColor.opacity(0.7)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: walk.workoutType == "run" ? "figure.run" : "figure.walk")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text(formatDate(walk.date))
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                        
+                        if let mood = walk.mood {
+                            Text(mood.emoji)
+                                .font(.system(size: 16))
+                        }
+                    }
+                    
+                    Text(formatTime(walk.date))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                }
+                
+                Spacer()
+                
+                // Weather & Photos indicator
+                VStack(alignment: .trailing, spacing: 4) {
+                    if let weather = walk.weather {
+                        HStack(spacing: 4) {
+                            Image(systemName: weather.icon)
+                                .font(.system(size: 12))
+                            Text(weather.temperatureString)
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundColor(themeManager.secondaryTextColor)
+                    }
+                    
+                    if let photoIds = walk.photoIdentifiers, !photoIds.isEmpty {
+                        HStack(spacing: 3) {
+                            Image(systemName: "photo.fill")
+                                .font(.system(size: 10))
+                            Text("\(photoIds.count)")
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(activityColor))
+                    }
+                }
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(themeManager.secondaryTextColor.opacity(0.5))
+                    .padding(.leading, 8)
+            }
+            .padding(14)
+            
+            Divider()
+                .background(themeManager.secondaryTextColor.opacity(0.1))
+            
+            // Stats row
+            HStack(spacing: 0) {
+                StatItem(icon: "location.fill", value: String(format: "%.2f mi", walk.distanceInMiles), color: activityColor)
+                
+                Divider()
+                    .frame(height: 30)
+                    .background(themeManager.secondaryTextColor.opacity(0.1))
+                
+                StatItem(icon: "clock.fill", value: walk.formattedDuration, color: .blue)
+                
+                Divider()
+                    .frame(height: 30)
+                    .background(themeManager.secondaryTextColor.opacity(0.1))
+                
+                StatItem(icon: "flame.fill", value: "\(walk.calories) cal", color: .orange)
+            }
+            .padding(.vertical, 10)
+            
+            // Mini route preview
+            if !walk.coordinates.isEmpty {
+                MiniRoutePreview(coordinates: walk.coordinates, color: activityColor)
+                    .frame(height: 60)
+                    .clipShape(RoundedRectangle(cornerRadius: 0))
+            }
+            
+            // Notes preview if exists
+            if let notes = walk.notes, !notes.isEmpty {
+                HStack {
+                    Image(systemName: "note.text")
+                        .font(.system(size: 12))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                    
+                    Text(notes)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                        .lineLimit(1)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(themeManager.secondaryTextColor.opacity(0.03))
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.06), radius: 12, y: 4)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(activityColor.opacity(0.15), lineWidth: 1)
+        )
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        let calendar = Calendar.current
+        
+        if calendar.isDateInToday(date) {
+            return "Today"
+        } else if calendar.isDateInYesterday(date) {
+            return "Yesterday"
+        } else {
+            formatter.dateFormat = "EEEE, MMM d"
+            return formatter.string(from: date)
+        }
+    }
+    
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter.string(from: date)
+    }
+}
+
+struct StatItem: View {
+    let icon: String
+    let value: String
+    let color: Color
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+                .foregroundColor(color)
+            
+            Text(value)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundColor(themeManager.primaryTextColor)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Activity Detail View (Full Journal)
+struct ActivityDetailView: View {
+    let walk: WalkRecord
+    @ObservedObject var walkHistory: WalkHistoryManager
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    @State private var loadedPhotos: [UIImage] = []
+    @State private var selectedPhotoIndex: Int?
+    @State private var showFullScreenPhoto = false
+    
+    private var activityColor: Color { walk.workoutType == "run" ? .orange : .green }
+    
+    var body: some View {
+        NavigationView {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    // Hero Map
+                    ZStack(alignment: .bottom) {
+                        if !walk.coordinates.isEmpty {
+                            Map {
+                                MapPolyline(coordinates: walk.coordinates)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [activityColor, activityColor.opacity(0.6)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        ),
+                                        lineWidth: 5
+                                    )
+                                
+                                if let first = walk.coordinates.first {
+                                    Annotation("Start", coordinate: first) {
+                                        ZStack {
+                                            Circle().fill(.white).frame(width: 24, height: 24)
+                                            Circle().fill(.green).frame(width: 16, height: 16)
+                                        }
+                                    }
+                                }
+                                
+                                if let last = walk.coordinates.last {
+                                    Annotation("End", coordinate: last) {
+                                        ZStack {
+                                            Circle().fill(.white).frame(width: 24, height: 24)
+                                            Circle().fill(.red).frame(width: 16, height: 16)
+                                        }
+                                    }
+                                }
+                            }
+                            .mapStyle(.standard(elevation: .realistic))
+                            .frame(height: 280)
+                        } else {
+                            Rectangle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [activityColor.opacity(0.3), activityColor.opacity(0.1)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .frame(height: 280)
+                                .overlay(
+                                    VStack {
+                                        Image(systemName: "map")
+                                            .font(.system(size: 50))
+                                            .foregroundColor(activityColor.opacity(0.5))
+                                        Text("No route recorded")
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundColor(themeManager.secondaryTextColor)
+                                    }
+                                )
+                        }
+                        
+                        // Gradient overlay at bottom
+                        LinearGradient(
+                            colors: [Color.clear, themeManager.backgroundColor],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(height: 60)
+                    }
+                    
+                    // Main Content
+                    VStack(spacing: 24) {
+                        // Activity Header
+                        VStack(spacing: 8) {
+                            HStack {
+                                ZStack {
+                                    Circle()
+                                        .fill(activityColor)
+                                        .frame(width: 50, height: 50)
+                                    
+                                    Image(systemName: walk.workoutType == "run" ? "figure.run" : "figure.walk")
+                                        .font(.system(size: 24, weight: .semibold))
+                                        .foregroundColor(.white)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("\(walk.workoutType.capitalized)")
+                                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                                        .foregroundColor(themeManager.primaryTextColor)
+                                    
+                                    Text(formatFullDate(walk.date))
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(themeManager.secondaryTextColor)
+                                }
+                                
+                                Spacer()
+                                
+                                if let mood = walk.mood {
+                                    VStack(spacing: 2) {
+                                        Text(mood.emoji)
+                                            .font(.system(size: 32))
+                                        Text(mood.rawValue)
+                                            .font(.system(size: 10, weight: .medium))
+                                            .foregroundColor(mood.color)
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        // Stats Grid
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 12) {
+                            DetailStatCard(title: "Distance", value: String(format: "%.2f", walk.distanceInMiles), unit: "mi", icon: "location.fill", color: .green)
+                            DetailStatCard(title: "Duration", value: walk.formattedDurationLong, unit: "", icon: "clock.fill", color: .blue)
+                            DetailStatCard(title: "Pace", value: walk.pace, unit: "/mi", icon: "speedometer", color: .purple)
+                            DetailStatCard(title: "Calories", value: "\(walk.calories)", unit: "cal", icon: "flame.fill", color: .orange)
+                            DetailStatCard(title: "Avg Speed", value: String(format: "%.1f", walk.averageSpeed), unit: "mph", icon: "gauge.with.dots.needle.bottom.50percent", color: .cyan)
+                            DetailStatCard(title: "Steps", value: "\(Int(walk.distance / 0.762))", unit: "est", icon: "figure.walk", color: .pink)
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        // Weather Card
+                        if let weather = walk.weather {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Weather Conditions")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .foregroundColor(themeManager.primaryTextColor)
+                                
+                                HStack(spacing: 16) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.blue.opacity(0.1))
+                                            .frame(width: 60, height: 60)
+                                        
+                                        Image(systemName: weather.icon)
+                                            .font(.system(size: 28))
+                                            .foregroundColor(.blue)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(weather.condition)
+                                            .font(.system(size: 18, weight: .semibold))
+                                            .foregroundColor(themeManager.primaryTextColor)
+                                        
+                                        HStack(spacing: 16) {
+                                            Label(weather.temperatureString, systemImage: "thermometer")
+                                            Label("\(weather.humidity)%", systemImage: "humidity.fill")
+                                        }
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundColor(themeManager.secondaryTextColor)
+                                    }
+                                    
+                                    Spacer()
+                                }
+                                .padding(16)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(themeManager.cardBackgroundColor)
+                                )
+                            }
+                            .padding(.horizontal, 20)
+                        }
+                        
+                        // Photos Section
+                        if !loadedPhotos.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Photos")
+                                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                                        .foregroundColor(themeManager.primaryTextColor)
+                                    
+                                    Spacer()
+                                    
+                                    Text("\(loadedPhotos.count) photos")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(themeManager.secondaryTextColor)
+                                }
+                                
+                                // Photo Grid
+                                LazyVGrid(columns: [
+                                    GridItem(.flexible(), spacing: 8),
+                                    GridItem(.flexible(), spacing: 8)
+                                ], spacing: 8) {
+                                    ForEach(loadedPhotos.indices, id: \.self) { index in
+                                        Image(uiImage: loadedPhotos[index])
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(height: 150)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                                            .onTapGesture {
+                                                selectedPhotoIndex = index
+                                                showFullScreenPhoto = true
+                                            }
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                        }
+                        
+                        // Notes/Journal Section
+                        if let notes = walk.notes, !notes.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Image(systemName: "note.text")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(activityColor)
+                                    
+                                    Text("Journal Entry")
+                                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                                        .foregroundColor(themeManager.primaryTextColor)
+                                }
+                                
+                                Text(notes)
+                                    .font(.system(size: 15, weight: .regular))
+                                    .foregroundColor(themeManager.primaryTextColor)
+                                    .lineSpacing(6)
+                                    .padding(16)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(activityColor.opacity(0.08))
+                                    )
+                            }
+                            .padding(.horizontal, 20)
+                        }
+                        
+                        Spacer(minLength: 40)
+                    }
+                    .padding(.top, -20)
+                }
+            }
+            .background(themeManager.backgroundColor.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(themeManager.secondaryTextColor.opacity(0.5))
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        // Share functionality
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(activityColor)
+                    }
+                }
+            }
+        }
+        .onAppear {
+            loadPhotos()
+        }
+        .fullScreenCover(isPresented: $showFullScreenPhoto) {
+            if let index = selectedPhotoIndex {
+                FullScreenPhotoView(photos: loadedPhotos, selectedIndex: index)
+            }
+        }
+    }
+    
+    private func loadPhotos() {
+        guard let photoIds = walk.photoIdentifiers else { return }
+        loadedPhotos = photoIds.compactMap { PhotoStorageManager.shared.loadPhoto(identifier: $0) }
+    }
+    
+    private func formatFullDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMMM d, yyyy 'at' h:mm a"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Detail Stat Card
+struct DetailStatCard: View {
+    let title: String
+    let value: String
+    let unit: String
+    let icon: String
+    let color: Color
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.12))
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(color)
+            }
+            
+            HStack(alignment: .lastTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+                
+                if !unit.isEmpty {
+                    Text(unit)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                }
+            }
+            
+            Text(title)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(themeManager.secondaryTextColor)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.03), radius: 6)
+        )
+    }
+}
+
+// MARK: - Full Screen Photo View
+struct FullScreenPhotoView: View {
+    let photos: [UIImage]
+    let selectedIndex: Int
+    @Environment(\.dismiss) var dismiss
+    @State private var currentIndex: Int
+    
+    init(photos: [UIImage], selectedIndex: Int) {
+        self.photos = photos
+        self.selectedIndex = selectedIndex
+        self._currentIndex = State(initialValue: selectedIndex)
+    }
+    
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            TabView(selection: $currentIndex) {
+                ForEach(photos.indices, id: \.self) { index in
+                    Image(uiImage: photos[index])
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .tag(index)
+                }
+            }
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+            
+            VStack {
+                HStack {
+                    Spacer()
+                    
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    .padding()
+                }
+                
+                Spacer()
+                
+                Text("\(currentIndex + 1) of \(photos.count)")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+                    .padding(.bottom, 30)
             }
         }
     }
 }
 
+// MARK: - Combined Routes Map
 struct CombinedRoutesMap: View {
     let walks: [WalkRecord]
     
@@ -1951,14 +3313,25 @@ struct CombinedRoutesMap: View {
             ForEach(walks) { walk in
                 if !walk.coordinates.isEmpty {
                     MapPolyline(coordinates: walk.coordinates)
-                        .stroke(walk.workoutType == "run" ? Color.orange : Color.green, lineWidth: 3)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    walk.workoutType == "run" ? Color.orange : Color.green,
+                                    (walk.workoutType == "run" ? Color.orange : Color.green).opacity(0.5)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ),
+                            lineWidth: 3
+                        )
                 }
             }
         }
-        .mapStyle(.standard)
+        .mapStyle(.standard(elevation: .realistic))
     }
 }
 
+// MARK: - History Stat Card (Legacy - kept for compatibility)
 struct HistoryStatCard: View {
     let title: String
     let value: String
@@ -1977,118 +3350,6 @@ struct HistoryStatCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(RoundedRectangle(cornerRadius: 12).fill(color.opacity(0.1)))
-    }
-}
-
-struct HistoryActivityCard: View {
-    let walk: WalkRecord
-    @EnvironmentObject var themeManager: ThemeManager
-    @State private var loadedPhotos: [UIImage] = []
-    
-    private var activityColor: Color { walk.workoutType == "run" ? .orange : .green }
-    
-    var body: some View {
-        VStack(spacing: 10) {
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text(formatDate(walk.date))
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundColor(themeManager.primaryTextColor)
-                        
-                        if let mood = walk.mood {
-                            Text(mood.emoji)
-                                .font(.system(size: 14))
-                        }
-                        
-                        // Photo indicator
-                        if let photoIds = walk.photoIdentifiers, !photoIds.isEmpty {
-                            HStack(spacing: 2) {
-                                Image(systemName: "photo.fill")
-                                    .font(.system(size: 10))
-                                Text("\(photoIds.count)")
-                                    .font(.system(size: 10, weight: .semibold))
-                            }
-                            .foregroundColor(themeManager.secondaryTextColor)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(themeManager.secondaryTextColor.opacity(0.1)))
-                        }
-                    }
-                    
-                    Text(walk.workoutType.capitalized)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(activityColor)
-                }
-                
-                Spacer()
-                
-                if let weather = walk.weather {
-                    HStack(spacing: 4) {
-                        Image(systemName: weather.icon)
-                            .font(.system(size: 12))
-                        Text(weather.temperatureString)
-                            .font(.system(size: 11, weight: .medium))
-                    }
-                    .foregroundColor(themeManager.secondaryTextColor)
-                }
-            }
-            
-            HStack(spacing: 16) {
-                Label(String(format: "%.2f mi", walk.distanceInMiles), systemImage: "location.fill")
-                Label(walk.formattedDuration, systemImage: "clock.fill")
-                Label("\(walk.calories) cal", systemImage: "flame.fill")
-            }
-            .font(.system(size: 12, weight: .medium))
-            .foregroundColor(themeManager.secondaryTextColor)
-            
-            if let notes = walk.notes, !notes.isEmpty {
-                Text(notes)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(themeManager.secondaryTextColor)
-                    .lineLimit(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(10)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(themeManager.secondaryTextColor.opacity(0.05)))
-            }
-            
-            // Photo Gallery
-            if !loadedPhotos.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(loadedPhotos.indices, id: \.self) { index in
-                            Image(uiImage: loadedPhotos[index])
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 70, height: 70)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        }
-                    }
-                }
-            }
-            
-            if !walk.coordinates.isEmpty {
-                MiniRoutePreview(coordinates: walk.coordinates, color: activityColor)
-                    .frame(height: 70)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(activityColor.opacity(0.08)))
-            }
-        }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 18).fill(activityColor.opacity(0.06)))
-        .onAppear {
-            loadPhotos()
-        }
-    }
-    
-    private func loadPhotos() {
-        guard let photoIds = walk.photoIdentifiers else { return }
-        loadedPhotos = photoIds.compactMap { PhotoStorageManager.shared.loadPhoto(identifier: $0) }
-    }
-    
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMM d 'at' h:mm a"
-        return formatter.string(from: date)
     }
 }
 

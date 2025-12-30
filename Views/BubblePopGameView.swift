@@ -416,14 +416,13 @@ struct BubblePopGameView: View {
             )
             .padding(.horizontal, 40)
             
-            // Health reward
-            let healthReward = calculateHealthReward()
+            // Fun game - no health reward
             VStack(spacing: 4) {
-                Text("+\(healthReward) Health")
+                Text("Great job!")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(.green)
+                    .foregroundColor(.white)
                 
-                Text("for \(userSettings.pet.name)!")
+                Text("\(userSettings.pet.name) had fun playing!")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white.opacity(0.8))
             }
@@ -431,13 +430,13 @@ struct BubblePopGameView: View {
             .padding(.horizontal, 32)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.green.opacity(0.2))
+                    .fill(Color.cyan.opacity(0.2))
             )
             
             Button(action: {
-                onComplete(healthReward)
+                onComplete(0) // No health reward
             }) {
-                Text("Claim Reward!")
+                Text("Done!")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .padding(.horizontal, 40)
@@ -446,7 +445,7 @@ struct BubblePopGameView: View {
                         Capsule()
                             .fill(
                                 LinearGradient(
-                                    colors: [.green, .mint],
+                                    colors: [.cyan, .blue],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )

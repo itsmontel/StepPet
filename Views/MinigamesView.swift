@@ -37,11 +37,11 @@ enum MinigameType: String, CaseIterable, Identifiable {
         }
     }
     
-    var healthReward: String {
+    var funDescription: String {
         switch self {
-        case .treatCatch: return "+10-25"
-        case .memoryMatch: return "+15-30"
-        case .bubblePop: return "+10-20"
+        case .treatCatch: return "Catch treats and avoid broccoli!"
+        case .memoryMatch: return "Match pairs to win!"
+        case .bubblePop: return "Pop bubbles for points!"
         }
     }
 }
@@ -53,7 +53,9 @@ struct MinigamesView: View {
     @Environment(\.dismiss) var dismiss
     
     @State private var selectedGame: MinigameType?
-    @State private var showGame = false
+    @State private var showTreatCatch = false
+    @State private var showMemoryMatch = false
+    @State private var showBubblePop = false
     
     var body: some View {
         NavigationView {
@@ -79,26 +81,35 @@ struct MinigamesView: View {
                 }
             }
         }
-        .fullScreenCover(isPresented: $showGame) {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                
-                if let game = selectedGame {
-                    switch game {
-                    case .treatCatch:
-                        TreatCatchGameView(onComplete: handleGameComplete)
-                            .environmentObject(themeManager)
-                            .environmentObject(userSettings)
-                    case .memoryMatch:
-                        MemoryMatchGameView(onComplete: handleGameComplete)
-                            .environmentObject(themeManager)
-                            .environmentObject(userSettings)
-                    case .bubblePop:
-                        BubblePopGameView(onComplete: handleGameComplete)
-                            .environmentObject(themeManager)
-                            .environmentObject(userSettings)
-                    }
-                }
+        .fullScreenCover(isPresented: $showTreatCatch) {
+            TreatCatchGameView(onComplete: handleGameComplete)
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
+        }
+        .fullScreenCover(isPresented: $showMemoryMatch) {
+            MemoryMatchGameView(onComplete: handleGameComplete)
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
+        }
+        .fullScreenCover(isPresented: $showBubblePop) {
+            BubblePopGameView(onComplete: handleGameComplete)
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
+        }
+    }
+    
+    private func showGame(_ game: MinigameType) {
+        selectedGame = game
+        
+        // Small delay to ensure state is set
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            switch game {
+            case .treatCatch:
+                showTreatCatch = true
+            case .memoryMatch:
+                showMemoryMatch = true
+            case .bubblePop:
+                showBubblePop = true
             }
         }
     }
@@ -116,21 +127,21 @@ struct MinigamesView: View {
                 .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundColor(themeManager.primaryTextColor)
             
-            // Credits display
+            // Free to play badge
             HStack(spacing: 8) {
-                Image(systemName: "bolt.fill")
+                Image(systemName: "gift.fill")
                     .font(.system(size: 14))
-                    .foregroundColor(.yellow)
+                    .foregroundColor(.green)
                 
-                Text("\(userSettings.playCredits) credits available")
+                Text("Free to Play - No Credits Needed!")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(themeManager.secondaryTextColor)
+                    .foregroundColor(.green)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(
                 Capsule()
-                    .fill(themeManager.cardBackgroundColor)
+                    .fill(Color.green.opacity(0.15))
             )
         }
         .padding(.top, 20)
@@ -139,20 +150,38 @@ struct MinigamesView: View {
     // MARK: - Games Section
     private var gamesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Choose a Game")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
-                .foregroundColor(themeManager.primaryTextColor)
+            HStack {
+                Text("Choose a Game")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+                
+                Spacer()
+                
+                // Free badge
+                HStack(spacing: 4) {
+                    Image(systemName: "gift.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.green)
+                    Text("FREE")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.green)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(Color.green.opacity(0.15)))
+            }
+            
+            Text("Play fun games with \(userSettings.pet.name)! No credits needed.")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(themeManager.secondaryTextColor)
             
             ForEach(MinigameType.allCases) { game in
                 MinigameCard(
                     game: game,
-                    isEnabled: userSettings.playCredits > 0
+                    isEnabled: true // Always enabled - free to play
                 ) {
-                    if userSettings.playCredits > 0 {
-                        selectedGame = game
-                        showGame = true
-                        HapticFeedback.medium.trigger()
-                    }
+                    HapticFeedback.medium.trigger()
+                    showGame(game)
                 }
             }
         }
@@ -160,17 +189,15 @@ struct MinigamesView: View {
     
     // MARK: - Handle Game Complete
     private func handleGameComplete(healthBonus: Int) {
-        showGame = false
+        // Close all game sheets
+        showTreatCatch = false
+        showMemoryMatch = false
+        showBubblePop = false
         
-        if healthBonus > 0 {
-            // Deduct credit and add health
-            userSettings.playCredits -= 1
-            userSettings.todayPlayHealthBoost += healthBonus
-            userSettings.lastPlayBoostDate = Date()
-            userSettings.pet.health = min(100, userSettings.pet.health + healthBonus)
-            
-            HapticFeedback.success.trigger()
-        }
+        // Minigames are free - no credits deducted, no health added
+        // Just a fun game to play!
+        HapticFeedback.success.trigger()
+        selectedGame = nil
     }
 }
 
@@ -206,21 +233,21 @@ struct MinigameCard: View {
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(themeManager.secondaryTextColor)
                     
-                    // Reward badge
+                    // Free badge
                     HStack(spacing: 4) {
-                        Image(systemName: "heart.fill")
+                        Image(systemName: "gift.fill")
                             .font(.system(size: 10))
-                            .foregroundColor(.pink)
+                            .foregroundColor(.green)
                         
-                        Text("\(game.healthReward) health")
+                        Text("Free to Play")
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.pink)
+                            .foregroundColor(.green)
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(
                         Capsule()
-                            .fill(Color.pink.opacity(0.12))
+                            .fill(Color.green.opacity(0.12))
                     )
                 }
                 

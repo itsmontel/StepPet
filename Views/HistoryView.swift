@@ -435,6 +435,7 @@ struct WeekDayCard: View {
     let isFuture: Bool
     
     @EnvironmentObject var themeManager: ThemeManager
+    @State private var showExactSteps = false
     
     private var dayName: String {
         let formatter = DateFormatter()
@@ -457,60 +458,120 @@ struct WeekDayCard: View {
         PetMoodState.from(health: health)
     }
     
+    private var progressColor: Color {
+        if steps >= goalSteps {
+            return themeManager.successColor
+        } else if steps >= Int(Double(goalSteps) * 0.7) {
+            return .orange
+        } else {
+            return themeManager.secondaryTextColor
+        }
+    }
+    
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 5) {
+            // Day name
             Text(dayName)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: 10, weight: .bold))
                 .foregroundColor(isToday ? themeManager.primaryTextColor : themeManager.secondaryTextColor)
             
+            // Day number
             Text(dayNumber)
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(themeManager.primaryTextColor)
+            
+            // Progress Bar
+            if !isFuture {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(themeManager.secondaryTextColor.opacity(0.2))
+                            .frame(height: 6)
+                        
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(progressColor)
+                            .frame(width: geo.size.width * min(1.0, CGFloat(steps) / CGFloat(max(1, goalSteps))), height: 6)
+                    }
+                }
+                .frame(height: 6)
+                .padding(.horizontal, 4)
+            }
             
             // Pet Image
             if isFuture {
                 Image(systemName: "pawprint.fill")
-                    .font(.system(size: 20))
+                    .font(.system(size: 18))
                     .foregroundColor(themeManager.tertiaryTextColor)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 36, height: 36)
             } else {
                 let imageName = petType.imageName(for: moodState)
                 if let _ = UIImage(named: imageName) {
                     Image(imageName)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 40, height: 40)
+                        .frame(width: 36, height: 36)
                         .grayscale(steps == 0 ? 1.0 : 0)
                         .opacity(steps == 0 ? 0.5 : 1.0)
                 } else {
                     Image(systemName: "pawprint.fill")
-                        .font(.system(size: 20))
+                        .font(.system(size: 18))
                         .foregroundColor(themeManager.secondaryTextColor)
-                        .frame(width: 40, height: 40)
+                        .frame(width: 36, height: 36)
                 }
             }
             
-            // Steps
-            Text(isFuture ? "-" : formatSteps(steps))
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(steps >= goalSteps ? themeManager.successColor : themeManager.primaryTextColor)
+            // Steps - Show exact number or abbreviated
+            if isFuture {
+                Text("-")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(themeManager.tertiaryTextColor)
+            } else {
+                VStack(spacing: 1) {
+                    Text(showExactSteps ? "\(steps)" : formatStepsShort(steps))
+                        .font(.system(size: showExactSteps ? 10 : 13, weight: .bold, design: .rounded))
+                        .foregroundColor(steps >= goalSteps ? themeManager.successColor : themeManager.primaryTextColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    
+                    // Goal indicator
+                    if steps >= goalSteps {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(themeManager.successColor)
+                    }
+                }
+            }
         }
-        .frame(maxWidth: .infinity)
+        .frame(width: 52)
         .padding(.vertical, 10)
+        .padding(.horizontal, 4)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(isToday ? themeManager.successColor.opacity(0.12) : Color.clear)
+                .fill(isToday ? themeManager.successColor.opacity(0.12) : themeManager.cardBackgroundColor)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(isToday ? themeManager.successColor.opacity(0.25) : themeManager.isDarkMode ? Color.white.opacity(0.05) : Color.gray.opacity(0.08), lineWidth: 1.5)
+                        .stroke(
+                            isToday ? themeManager.successColor.opacity(0.4) :
+                            (steps >= goalSteps ? themeManager.successColor.opacity(0.3) : themeManager.isDarkMode ? Color.white.opacity(0.05) : Color.gray.opacity(0.1)),
+                            lineWidth: isToday ? 2 : 1
+                        )
                 )
         )
+        .onTapGesture {
+            withAnimation(.spring(response: 0.2)) {
+                showExactSteps.toggle()
+            }
+            HapticFeedback.light.trigger()
+        }
     }
     
-    private func formatSteps(_ steps: Int) -> String {
-        if steps >= 1000 {
+    private func formatStepsShort(_ steps: Int) -> String {
+        if steps >= 10000 {
             let thousands = Double(steps) / 1000.0
-            return String(format: "%.0fk", thousands)
+            return String(format: "%.1fk", thousands)
+        } else if steps >= 1000 {
+            let thousands = Double(steps) / 1000.0
+            return String(format: "%.1fk", thousands)
         }
         return "\(steps)"
     }

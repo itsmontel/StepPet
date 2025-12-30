@@ -13,7 +13,7 @@ struct ChallengesView: View {
     @State private var selectedCategory: AchievementCategory? = nil
     @State private var showCompletedOnly = false
     @State private var selectedChallenge: Achievement?
-    @State private var selectedSegment = 0 // 0 = Challenges, 1 = Activities
+    @State private var selectedSegment = 0 // 0 = Minigames, 1 = Play with Pet, 2 = Achievements
     
     // Activities & Minigames States
     @State private var showCreditsSheet = false
@@ -21,7 +21,10 @@ struct ChallengesView: View {
     @State private var selectedActivity: PetActivity?
     @State private var showHealthBoostAnimation = false
     @State private var healthBoostAmount = 0
-    @State private var showMinigames = false
+    @State private var selectedGame: MinigameType?
+    @State private var showTreatCatch = false
+    @State private var showMemoryMatch = false
+    @State private var showBubblePop = false
     
     private var filteredChallenges: [Achievement] {
         var challenges = achievementManager.achievements
@@ -32,6 +35,14 @@ struct ChallengesView: View {
         
         if showCompletedOnly {
             challenges = challenges.filter { $0.isUnlocked }
+        }
+        
+        // Sort: completed first, then by progress percentage
+        challenges.sort { first, second in
+            if first.isUnlocked != second.isUnlocked {
+                return first.isUnlocked // Completed first
+            }
+            return first.progressPercentage > second.progressPercentage
         }
         
         return challenges
@@ -56,16 +67,19 @@ struct ChallengesView: View {
                 headerSection
                 segmentPicker
                 
-                if selectedSegment == 0 {
-                    // Challenges Tab
+                switch selectedSegment {
+                case 0:
+                    // Minigames Tab
+                    minigamesFullSection
+                case 1:
+                    // Play with Pet Tab
+                    playWithPetSection
+                default:
+                    // Achievements Tab
                     progressBanner
                     categoryFilter
                     showCompletedToggle
                     challengesGrid
-                } else {
-                    // Activities & Minigames Tab
-                    activitiesSection
-                    minigamesSection
                 }
                 
                 Spacer(minLength: 120)
@@ -77,9 +91,6 @@ struct ChallengesView: View {
             ChallengeDetailSheet(challenge: challenge)
         }
         .sheet(isPresented: $showCreditsSheet) { creditsSheet }
-        .sheet(isPresented: $showMinigames) {
-            MinigamesView()
-        }
         .sheet(isPresented: $showActivitySheet) {
             if let activity = selectedActivity {
                 ActivityPlaySheet(
@@ -88,6 +99,21 @@ struct ChallengesView: View {
                     onComplete: { handleActivityComplete() }
                 )
             }
+        }
+        .fullScreenCover(isPresented: $showTreatCatch) {
+            TreatCatchGameView(onComplete: handleMinigameComplete)
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
+        }
+        .fullScreenCover(isPresented: $showMemoryMatch) {
+            MemoryMatchGameView(onComplete: handleMinigameComplete)
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
+        }
+        .fullScreenCover(isPresented: $showBubblePop) {
+            BubblePopGameView(onComplete: handleMinigameComplete)
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
         }
         .onAppear {
             userSettings.checkAndResetDailyBoost()
@@ -99,187 +125,280 @@ struct ChallengesView: View {
         }
     }
     
-    // MARK: - Segment Picker
+    private func handleMinigameComplete(_ healthBonus: Int) {
+        showTreatCatch = false
+        showMemoryMatch = false
+        showBubblePop = false
+        HapticFeedback.success.trigger()
+    }
+    
+    // MARK: - Segment Picker (3 Tabs)
     private var segmentPicker: some View {
-        HStack(spacing: 0) {
-            Button(action: {
+        HStack(spacing: 4) {
+            // Minigames Tab
+            SegmentButton(
+                title: "Games",
+                icon: "gamecontroller.fill",
+                isSelected: selectedSegment == 0,
+                badge: "FREE",
+                badgeColor: .green
+            ) {
                 withAnimation(.spring(response: 0.3)) { selectedSegment = 0 }
                 HapticFeedback.light.trigger()
-            }) {
-                Text("Challenges")
-                    .font(.system(size: 14, weight: selectedSegment == 0 ? .bold : .medium))
-                    .foregroundColor(selectedSegment == 0 ? .white : themeManager.primaryTextColor)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(selectedSegment == 0 ? themeManager.accentColor : Color.clear)
-                    )
             }
             
-            Button(action: {
+            // Play with Pet Tab
+            SegmentButton(
+                title: "Pet",
+                icon: "heart.fill",
+                isSelected: selectedSegment == 1,
+                badge: "\(userSettings.playCredits)",
+                badgeColor: .yellow
+            ) {
                 withAnimation(.spring(response: 0.3)) { selectedSegment = 1 }
                 HapticFeedback.light.trigger()
-            }) {
-                HStack(spacing: 6) {
-                    Text("Activities")
-                        .font(.system(size: 14, weight: selectedSegment == 1 ? .bold : .medium))
-                    
-                    // Credits badge
-                    HStack(spacing: 2) {
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 8))
-                            .foregroundColor(.yellow)
-                        Text("\(userSettings.playCredits)")
-                            .font(.system(size: 10, weight: .bold))
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(Capsule().fill(Color.yellow.opacity(0.2)))
-                }
-                .foregroundColor(selectedSegment == 1 ? .white : themeManager.primaryTextColor)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(selectedSegment == 1 ? themeManager.accentColor : Color.clear)
-                )
+            }
+            
+            // Achievements Tab
+            SegmentButton(
+                title: "Awards",
+                icon: "trophy.fill",
+                isSelected: selectedSegment == 2,
+                badge: "\(achievementManager.unlockedCount)",
+                badgeColor: themeManager.accentColor
+            ) {
+                withAnimation(.spring(response: 0.3)) { selectedSegment = 2 }
+                HapticFeedback.light.trigger()
             }
         }
-        .padding(4)
+        .padding(5)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(themeManager.secondaryTextColor.opacity(0.08))
+            RoundedRectangle(cornerRadius: 18)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.06), radius: 8, y: 3)
         )
     }
     
-    // MARK: - Activities Section
-    private var activitiesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Play with Pet", systemImage: "figure.play")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
+    // MARK: - Full Minigames Section
+    private var minigamesFullSection: some View {
+        VStack(spacing: 20) {
+            // Header with pet
+            HStack(spacing: 16) {
+                // Pet preview
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [themeManager.accentColor.opacity(0.2), themeManager.accentColor.opacity(0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 80, height: 80)
+                    
+                    AnimatedPetVideoView(petType: userSettings.pet.type, moodState: .happy)
+                        .frame(width: 65, height: 65)
+                        .clipShape(Circle())
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Play with \(userSettings.pet.name)!")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    HStack(spacing: 6) {
+                        Image(systemName: "gift.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(.green)
+                        Text("All games are FREE to play")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.green)
+                    }
+                }
                 
                 Spacer()
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(themeManager.cardBackgroundColor)
+                    .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.05), radius: 10, y: 4)
+            )
+            
+            // Game Cards
+            VStack(spacing: 14) {
+                // Mood Catch Game
+                GameCard(
+                    title: "Mood Catch",
+                    description: "Catch happy moods, avoid sad ones!",
+                    icon: "face.smiling.fill",
+                    color: .orange,
+                    gradient: [Color.orange, Color.yellow],
+                    emoji: "😊"
+                ) {
+                    HapticFeedback.medium.trigger()
+                    showTreatCatch = true
+                }
                 
-                if userSettings.todayPlayHealthBoost > 0 {
-                    Text("+\(userSettings.todayPlayHealthBoost) Health Today")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.green)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(Color.green.opacity(0.12)))
+                // Memory Match Game
+                GameCard(
+                    title: "Memory Match",
+                    description: "Match pairs to test your memory!",
+                    icon: "square.grid.2x2.fill",
+                    color: .purple,
+                    gradient: [Color.purple, Color.pink],
+                    emoji: "🧠"
+                ) {
+                    HapticFeedback.medium.trigger()
+                    showMemoryMatch = true
+                }
+                
+                // Bubble Pop Game
+                GameCard(
+                    title: "Bubble Pop",
+                    description: "Pop bubbles before they float away!",
+                    icon: "bubble.left.and.bubble.right.fill",
+                    color: .cyan,
+                    gradient: [Color.cyan, Color.blue],
+                    emoji: "🫧"
+                ) {
+                    HapticFeedback.medium.trigger()
+                    showBubblePop = true
                 }
             }
             
-            Text("Each activity gives +20 health to your pet!")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(themeManager.secondaryTextColor)
+            // Fun fact
+            HStack(spacing: 12) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 20))
+                    .foregroundColor(.yellow)
+                
+                Text("Playing games is a great way to bond with \(userSettings.pet.name)!")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(themeManager.secondaryTextColor)
+                
+                Spacer()
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.yellow.opacity(0.1))
+            )
+        }
+    }
+    
+    // MARK: - Play with Pet Section
+    private var playWithPetSection: some View {
+        VStack(spacing: 20) {
+            // Credits Header
+            HStack(spacing: 16) {
+                // Credits display
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.yellow.opacity(0.3), Color.orange.opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 70, height: 70)
+                    
+                    VStack(spacing: 2) {
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.yellow)
+                        Text("\(userSettings.playCredits)")
+                            .font(.system(size: 18, weight: .black, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Play Credits")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    Text("Each activity costs 1 credit & gives +20 health")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                    
+                    if userSettings.todayPlayHealthBoost > 0 {
+                        HStack(spacing: 4) {
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.green)
+                            Text("+\(userSettings.todayPlayHealthBoost) earned today")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.green)
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                // Buy button
+                Button(action: { showCreditsSheet = true }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(themeManager.accentColor)
+                        Text("Buy")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(themeManager.accentColor)
+                    }
+                }
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(themeManager.cardBackgroundColor)
+                    .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.05), radius: 10, y: 4)
+            )
             
             // Activity Cards
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            VStack(spacing: 14) {
                 ForEach(PetActivity.allCases) { activity in
-                    Button(action: {
+                    PetActivityCard(
+                        activity: activity,
+                        petType: userSettings.pet.type,
+                        hasCredits: userSettings.playCredits > 0
+                    ) {
                         if userSettings.playCredits > 0 {
                             selectedActivity = activity
                             showActivitySheet = true
                         } else {
                             showCreditsSheet = true
                         }
-                    }) {
-                        VStack(spacing: 10) {
-                            ZStack {
-                                Circle()
-                                    .fill(activity.color.opacity(0.15))
-                                    .frame(width: 50, height: 50)
-                                
-                                Image(systemName: activity.icon)
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(activity.color)
-                            }
-                            
-                            Text(activity.rawValue)
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(themeManager.primaryTextColor)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(activity.color.opacity(0.08))
-                        )
                     }
-                    .disabled(userSettings.playCredits <= 0)
-                    .opacity(userSettings.playCredits > 0 ? 1 : 0.5)
                 }
             }
             
-            // Get Credits Button
-            if userSettings.playCredits == 0 {
-                Button(action: { showCreditsSheet = true }) {
-                    HStack {
-                        Image(systemName: "bolt.fill")
-                            .foregroundColor(.yellow)
-                        Text("Get Credits to Play")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                    .foregroundColor(themeManager.primaryTextColor)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.yellow.opacity(0.15))
-                    )
-                }
-            }
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(themeManager.accentColor.opacity(0.06))
-        )
-    }
-    
-    // MARK: - Minigames Section
-    private var minigamesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Minigames", systemImage: "gamecontroller.fill")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
-                
-                Spacer()
-            }
-            
-            Text("Fun games to boost your pet's health!")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(themeManager.secondaryTextColor)
-            
-            Button(action: {
-                if userSettings.playCredits > 0 {
-                    showMinigames = true
-                } else {
-                    showCreditsSheet = true
-                }
-            }) {
+            // Buy Credits Card
+            Button(action: { showCreditsSheet = true }) {
                 HStack(spacing: 16) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(LinearGradient(colors: [.purple, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(width: 56, height: 56)
-                            .opacity(0.15)
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.yellow, Color.orange],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 50, height: 50)
                         
-                        Text("🎮")
-                            .font(.system(size: 28))
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.white)
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Play Minigames")
+                        Text(userSettings.playCredits == 0 ? "Get Credits to Play" : "Buy More Credits")
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                         
-                        Text("Treat Catch, Memory Match, Bubble Pop")
+                        Text("Starting at $1.99 for 3 credits")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                     }
@@ -290,20 +409,23 @@ struct ChallengesView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(themeManager.tertiaryTextColor)
                 }
-                .padding(16)
+                .padding(18)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.purple.opacity(0.08))
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.yellow.opacity(0.15), Color.orange.opacity(0.1)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.yellow.opacity(0.3), lineWidth: 1.5)
+                        )
                 )
             }
-            .disabled(userSettings.playCredits <= 0)
-            .opacity(userSettings.playCredits > 0 ? 1 : 0.6)
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.purple.opacity(0.06))
-        )
     }
     
     // MARK: - Credits Sheet
@@ -884,112 +1006,123 @@ struct ActivityPlaySheet: View {
     @EnvironmentObject var userSettings: UserSettings
     @Environment(\.dismiss) var dismiss
     
+    @State private var isReady = false
     @State private var showAnimation = false
     @State private var animationComplete = false
+    
+    // Smaller animation size
+    private let animationSize: CGFloat = 140
     
     var body: some View {
         NavigationView {
             VStack(spacing: 16) {
                 Spacer()
                 
-                if showAnimation {
-                    VStack(spacing: 14) {
-                        // GIF Animation for activity
-                        let size: CGFloat = 220
-                        GIFImage(activity.gifName(for: petType))
-                            .frame(width: size, height: size)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .id("\(activity.id)-\(petType.rawValue)")
-                        
-                        if animationComplete {
-                            VStack(spacing: 8) {
-                                Text("🎉")
-                                    .font(.system(size: 36))
+                if isReady {
+                    if showAnimation {
+                        VStack(spacing: 14) {
+                            // GIF Animation for activity - smaller size
+                            GIFImage(activity.gifName(for: petType))
+                                .frame(width: animationSize, height: animationSize)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .id("\(activity.id)-\(petType.rawValue)-\(UUID())")
+                            
+                            if animationComplete {
+                                VStack(spacing: 8) {
+                                    Text("🎉")
+                                        .font(.system(size: 36))
+                                    
+                                    Text("\(userSettings.pet.name) loved it!")
+                                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                                        .foregroundColor(themeManager.primaryTextColor)
+                                    
+                                    Text("+20 Health")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.green)
+                                }
+                                .transition(.scale.combined(with: .opacity))
+                            } else {
+                                Text("Playing...")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(themeManager.secondaryTextColor)
+                            }
+                        }
+                    } else {
+                        VStack(spacing: 16) {
+                            ZStack {
+                                Circle()
+                                    .fill(activity.color.opacity(0.12))
+                                    .frame(width: 80, height: 80)
                                 
-                                Text("\(userSettings.pet.name) loved it!")
-                                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                                Image(systemName: activity.icon)
+                                    .font(.system(size: 32, weight: .semibold))
+                                    .foregroundColor(activity.color)
+                            }
+                            
+                            VStack(spacing: 4) {
+                                Text(activity.displayName(for: petType))
+                                    .font(.system(size: 20, weight: .bold, design: .rounded))
                                     .foregroundColor(themeManager.primaryTextColor)
                                 
-                                Text("+20 Health")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.green)
+                                Text(activity.description)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(themeManager.secondaryTextColor)
                             }
-                            .transition(.scale.combined(with: .opacity))
-                        } else {
-                            Text("Playing...")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(themeManager.secondaryTextColor)
+                            
+                            HStack(spacing: 4) {
+                                Image(systemName: "bolt.fill")
+                                    .foregroundColor(.yellow)
+                                    .font(.system(size: 12))
+                                
+                                Text("1 Credit (\(userSettings.playCredits) left)")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(themeManager.primaryTextColor)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Capsule().fill(Color.yellow.opacity(0.15)))
                         }
                     }
                 } else {
-                    VStack(spacing: 16) {
-                        ZStack {
-                            Circle()
-                                .fill(activity.color.opacity(0.12))
-                                .frame(width: 80, height: 80)
-                            
-                            Image(systemName: activity.icon)
-                                .font(.system(size: 32, weight: .semibold))
-                                .foregroundColor(activity.color)
-                        }
-                        
-                        VStack(spacing: 4) {
-                            Text(activity.displayName(for: petType))
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(themeManager.primaryTextColor)
-                            
-                            Text(activity.description)
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(themeManager.secondaryTextColor)
-                        }
-                        
-                        HStack(spacing: 4) {
-                            Image(systemName: "bolt.fill")
-                                .foregroundColor(.yellow)
-                                .font(.system(size: 12))
-                            
-                            Text("1 Credit (\(userSettings.playCredits) left)")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(themeManager.primaryTextColor)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Capsule().fill(Color.yellow.opacity(0.15)))
-                    }
+                    // Loading state
+                    ProgressView()
+                        .scaleEffect(1.2)
                 }
                 
                 Spacer()
                 
-                if animationComplete {
-                    Button(action: {
-                        dismiss()
-                        onComplete()
-                    }) {
-                        Text("Done!")
-                            .font(.system(size: 15, weight: .bold))
+                if isReady {
+                    if animationComplete {
+                        Button(action: {
+                            dismiss()
+                            onComplete()
+                        }) {
+                            Text("Done!")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(RoundedRectangle(cornerRadius: 12).fill(Color.green))
+                        }
+                        .padding(.horizontal, 16)
+                    } else if !showAnimation {
+                        Button(action: startActivity) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "play.fill")
+                                    .font(.system(size: 12, weight: .bold))
+                                
+                                Text("Start")
+                                    .font(.system(size: 15, weight: .bold))
+                            }
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(Color.green))
-                    }
-                    .padding(.horizontal, 16)
-                } else if !showAnimation {
-                    Button(action: startActivity) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "play.fill")
-                                .font(.system(size: 12, weight: .bold))
-                            
-                            Text("Start")
-                                .font(.system(size: 15, weight: .bold))
+                            .background(RoundedRectangle(cornerRadius: 12).fill(activity.color))
                         }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(activity.color))
+                        .padding(.horizontal, 16)
+                        .disabled(userSettings.playCredits <= 0)
+                        .opacity(userSettings.playCredits > 0 ? 1 : 0.5)
                     }
-                    .padding(.horizontal, 16)
-                    .disabled(userSettings.playCredits <= 0)
-                    .opacity(userSettings.playCredits > 0 ? 1 : 0.5)
                 }
                 
                 Spacer().frame(height: 16)
@@ -1001,6 +1134,14 @@ struct ActivityPlaySheet: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
                         .font(.system(size: 14))
+                }
+            }
+        }
+        .onAppear {
+            // Ensure view is ready before showing content
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeIn(duration: 0.2)) {
+                    isReady = true
                 }
             }
         }
@@ -1017,6 +1158,245 @@ struct ActivityPlaySheet: View {
             }
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         }
+    }
+}
+
+// MARK: - Segment Button Component
+struct SegmentButton: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let badge: String
+    let badgeColor: Color
+    let action: () -> Void
+    
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                ZStack {
+                    Image(systemName: icon)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(isSelected ? .white : themeManager.secondaryTextColor)
+                    
+                    // Badge
+                    Text(badge)
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(badgeColor))
+                        .offset(x: 14, y: -10)
+                }
+                
+                Text(title)
+                    .font(.system(size: 11, weight: isSelected ? .bold : .medium))
+                    .foregroundColor(isSelected ? .white : themeManager.secondaryTextColor)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(isSelected ? themeManager.accentColor : Color.clear)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Game Card Component
+struct GameCard: View {
+    let title: String
+    let description: String
+    let icon: String
+    let color: Color
+    let gradient: [Color]
+    let emoji: String
+    let action: () -> Void
+    
+    @EnvironmentObject var themeManager: ThemeManager
+    @State private var isPressed = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                // Icon with gradient background
+                ZStack {
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(
+                            LinearGradient(
+                                colors: gradient,
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 70, height: 70)
+                        .shadow(color: color.opacity(0.4), radius: 8, y: 4)
+                    
+                    Text(emoji)
+                        .font(.system(size: 32))
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title)
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    Text(description)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                        .lineLimit(2)
+                    
+                    // Free badge
+                    HStack(spacing: 4) {
+                        Image(systemName: "gift.fill")
+                            .font(.system(size: 10))
+                        Text("Free to Play")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .foregroundColor(.green)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(Color.green.opacity(0.15)))
+                }
+                
+                Spacer()
+                
+                // Play button
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(color)
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(themeManager.cardBackgroundColor)
+                    .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.06), radius: 10, y: 4)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(color.opacity(0.2), lineWidth: 1)
+            )
+        }
+        .buttonStyle(ScaleButtonStyle())
+    }
+}
+
+// MARK: - Pet Activity Card Component
+struct PetActivityCard: View {
+    let activity: PetActivity
+    let petType: PetType
+    let hasCredits: Bool
+    let action: () -> Void
+    
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                // Activity Icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [activity.color, activity.color.opacity(0.7)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 60, height: 60)
+                        .shadow(color: activity.color.opacity(0.3), radius: 6, y: 3)
+                    
+                    Image(systemName: activity.icon)
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(activity.rawValue)
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    HStack(spacing: 8) {
+                        // Cost
+                        HStack(spacing: 4) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.yellow)
+                            Text("1 credit")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                        }
+                        
+                        Text("•")
+                            .foregroundColor(themeManager.tertiaryTextColor)
+                        
+                        // Reward
+                        HStack(spacing: 4) {
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.pink)
+                            Text("+20 health")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.pink)
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                // Play button or lock
+                if hasCredits {
+                    ZStack {
+                        Circle()
+                            .fill(activity.color.opacity(0.15))
+                            .frame(width: 40, height: 40)
+                        
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(activity.color)
+                    }
+                } else {
+                    ZStack {
+                        Circle()
+                            .fill(Color.gray.opacity(0.1))
+                            .frame(width: 40, height: 40)
+                        
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(themeManager.tertiaryTextColor)
+                    }
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(themeManager.cardBackgroundColor)
+                    .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.05), radius: 8, y: 3)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(hasCredits ? activity.color.opacity(0.2) : Color.clear, lineWidth: 1)
+            )
+        }
+        .buttonStyle(ScaleButtonStyle())
+        .opacity(hasCredits ? 1 : 0.7)
+    }
+}
+
+// MARK: - Scale Button Style
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.2), value: configuration.isPressed)
     }
 }
 
