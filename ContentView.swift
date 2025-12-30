@@ -97,7 +97,7 @@ struct CenteredTabBar: View {
         }
         .padding(.horizontal, 8)
         .padding(.top, 12)
-        .padding(.bottom, 28)
+        .padding(.bottom, 40)
         .background(
             themeManager.cardBackgroundColor
                 .shadow(color: Color.black.opacity(0.08), radius: 20, x: 0, y: -5)

@@ -346,17 +346,37 @@ struct ActivityView: View {
             
             Spacer()
             
-            // History Button
-            Button(action: { showHistory = true }) {
-                ZStack {
-                    Circle()
-                        .fill(themeManager.accentColor.opacity(0.15))
-                        .frame(width: 44, height: 44)
-                    
+            // History Button - More Prominent
+            Button(action: { 
+                HapticFeedback.light.trigger()
+                showHistory = true 
+            }) {
+                HStack(spacing: 8) {
                     Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(themeManager.accentColor)
+                        .font(.system(size: 16, weight: .semibold))
+                    
+                    if !walkHistory.walkHistory.isEmpty {
+                        Text("\(walkHistory.walkHistory.count)")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                    }
+                    
+                    Text("History")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
                 }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(
+                            LinearGradient(
+                                colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                )
+                .shadow(color: themeManager.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
             }
         }
         .padding(.top, 16)
@@ -598,7 +618,7 @@ struct ActivityView: View {
                     .padding(.bottom, 20)
                 }
                 
-                // STOP BUTTON - Very prominent
+                // STOP BUTTON - Positioned above tab bar
                 Button {
                     stopWorkout()
                 } label: {
@@ -626,7 +646,7 @@ struct ActivityView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 .padding(.horizontal, 20)
-                .padding(.bottom, 50)
+                .padding(.bottom, 120) // Increased to be above tab bar (tab bar is ~100px + safe area)
             }
         }
         .onAppear {
