@@ -61,8 +61,7 @@ class AchievementManager: ObservableObject {
         saveAchievements()
         
         // Trigger haptic feedback
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        HapticFeedback.success.trigger()
         
         // Hide animation after delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
@@ -86,6 +85,17 @@ class AchievementManager: ObservableObject {
         }
     }
     
+    // MARK: - Reset Daily Progress
+    // For achievements that require completion within a single day
+    func resetDailyProgress(achievementId: String) {
+        guard let index = achievements.firstIndex(where: { $0.id == achievementId && !$0.isUnlocked }) else {
+            return
+        }
+        
+        achievements[index].progress = 0
+        saveAchievements()
+    }
+    
     // MARK: - Check Achievements
     func checkAchievements(
         todaySteps: Int,
@@ -102,7 +112,8 @@ class AchievementManager: ObservableObject {
             updateProgress(achievementId: "first_step", progress: 1)
         }
         
-        // Step achievements
+        // DAILY step achievements - progress updates only for current day
+        // These show X/target but reset at midnight if not achieved
         updateProgress(achievementId: "step_up", progress: todaySteps)
         updateProgress(achievementId: "getting_started", progress: todaySteps)
         updateProgress(achievementId: "ten_thousand", progress: todaySteps)
@@ -111,14 +122,14 @@ class AchievementManager: ObservableObject {
         updateProgress(achievementId: "marathon_day", progress: todaySteps)
         updateProgress(achievementId: "ultra_walker", progress: todaySteps)
         
-        // Total steps achievements
+        // Total steps achievements (cumulative, never reset)
         updateProgress(achievementId: "hundred_k_total", progress: totalSteps)
         updateProgress(achievementId: "half_million", progress: totalSteps)
         updateProgress(achievementId: "millionaire", progress: totalSteps)
         updateProgress(achievementId: "five_million", progress: totalSteps)
         updateProgress(achievementId: "ten_million", progress: totalSteps)
         
-        // Streak achievements
+        // Streak achievements (cumulative)
         updateProgress(achievementId: "on_fire", progress: streak)
         updateProgress(achievementId: "week_warrior", progress: streak)
         updateProgress(achievementId: "two_week_titan", progress: streak)
@@ -131,12 +142,12 @@ class AchievementManager: ObservableObject {
             updateProgress(achievementId: "full_health_first", progress: 1)
         }
         
-        // First goal
+        // First goal (trigger when goal is reached)
         if todaySteps >= goalSteps {
             updateProgress(achievementId: "first_goal", progress: 1)
         }
         
-        // Milestone achievements
+        // Milestone achievements (cumulative)
         updateProgress(achievementId: "one_week_user", progress: daysUsed)
         updateProgress(achievementId: "one_month_user", progress: daysUsed)
         updateProgress(achievementId: "three_month_user", progress: daysUsed)
@@ -147,39 +158,53 @@ class AchievementManager: ObservableObject {
         // Special achievements
         updateProgress(achievementId: "pet_lover", progress: petsUsed)
         
-        // Double goal
+        // Double goal (daily achievement)
         if todaySteps >= goalSteps * 2 {
             updateProgress(achievementId: "double_trouble", progress: 1)
         }
         
-        // Triple goal
+        // Triple goal (daily achievement)
         if todaySteps >= goalSteps * 3 {
             updateProgress(achievementId: "triple_threat", progress: 1)
         }
         
-        // Lucky seven
+        // Lucky seven (daily achievement)
         if todaySteps == 7777 {
             updateProgress(achievementId: "lucky_seven", progress: 1)
         }
         
         // Check special date achievements
-        checkSpecialDateAchievements()
+        checkSpecialDateAchievements(todaySteps: todaySteps, goalSteps: goalSteps)
     }
     
-    private func checkSpecialDateAchievements() {
+    // MARK: - Reset Daily Achievements
+    // Call this at the start of each new day for achievements that must be completed in a single day
+    func resetDailyAchievements() {
+        let dailyAchievementIds = [
+            "step_up", "getting_started", "ten_thousand", "fifteen_k",
+            "twenty_k", "marathon_day", "ultra_walker",
+            "double_trouble", "triple_threat", "lucky_seven"
+        ]
+        
+        for id in dailyAchievementIds {
+            resetDailyProgress(achievementId: id)
+        }
+    }
+    
+    private func checkSpecialDateAchievements(todaySteps: Int, goalSteps: Int) {
         let calendar = Calendar.current
         let today = Date()
         let month = calendar.component(.month, from: today)
         let day = calendar.component(.day, from: today)
         
         // New Year's Day
-        if month == 1 && day == 1 {
-            // Will be unlocked if goal is achieved on this day
+        if month == 1 && day == 1 && todaySteps >= goalSteps {
+            updateProgress(achievementId: "new_years_walk", progress: 1)
         }
         
         // Christmas
-        if month == 12 && day == 25 {
-            // Will be unlocked if goal is achieved on this day
+        if month == 12 && day == 25 && todaySteps >= goalSteps {
+            updateProgress(achievementId: "holiday_spirit", progress: 1)
         }
     }
     

@@ -9,7 +9,13 @@ import SwiftUI
 enum HapticFeedback {
     case light, medium, heavy, success, warning, error
     
+    // Static property to control haptics globally - set this from UserSettings
+    static var isEnabled: Bool = true
+    
     func trigger() {
+        // Check if haptics are enabled before triggering
+        guard HapticFeedback.isEnabled else { return }
+        
         switch self {
         case .light:
             UIImpactFeedbackGenerator(style: .light).impactOccurred()

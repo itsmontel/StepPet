@@ -107,6 +107,16 @@ enum PetMoodState: String, CaseIterable, Codable {
         }
     }
     
+    var color: Color {
+        switch self {
+        case .sick: return .red
+        case .sad: return .orange
+        case .content: return .yellow
+        case .happy: return Color(hex: "8BC34A")
+        case .fullHealth: return .green
+        }
+    }
+    
     var description: String {
         switch self {
         case .sick: return "Your pet is feeling unwell. Get moving!"

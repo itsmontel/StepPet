@@ -491,26 +491,37 @@ struct TodayView: View {
     private func refreshData() {
         healthKitManager.fetchTodaySteps()
         healthKitManager.fetchWeeklySteps()
+        
+        // Check if it's a new day and reset daily achievements
+        let lastCheckDate = UserDefaults.standard.object(forKey: "lastAchievementResetDate") as? Date ?? Date.distantPast
+        let calendar = Calendar.current
+        
+        if !calendar.isDate(lastCheckDate, inSameDayAs: Date()) {
+            achievementManager.resetDailyAchievements()
+            UserDefaults.standard.set(Date(), forKey: "lastAchievementResetDate")
+        }
     }
     
     private func updateData(steps: Int) {
         userSettings.updatePetHealth(steps: steps)
         stepDataManager.updateTodayRecord(steps: steps, goalSteps: userSettings.dailyStepGoal)
         
+        // Always check achievements, not just when at 100% health
+        let daysUsed = Calendar.current.dateComponents([.day], from: userSettings.firstLaunchDate ?? Date(), to: Date()).day ?? 0
+        achievementManager.checkAchievements(
+            todaySteps: steps,
+            totalSteps: stepDataManager.totalStepsAllTime,
+            streak: userSettings.streakData.currentStreak,
+            health: currentHealth,
+            goalSteps: userSettings.dailyStepGoal,
+            goalsAchieved: stepDataManager.totalGoalsAchieved,
+            daysUsed: daysUsed,
+            petsUsed: userSettings.petsUsed.count
+        )
+        
+        // Update streak only when goal achieved
         if currentHealth >= 100 {
             userSettings.streakData.updateStreak(goalAchieved: true, date: Date())
-            
-            let daysUsed = Calendar.current.dateComponents([.day], from: userSettings.firstLaunchDate ?? Date(), to: Date()).day ?? 0
-            achievementManager.checkAchievements(
-                todaySteps: steps,
-                totalSteps: stepDataManager.totalStepsAllTime,
-                streak: userSettings.streakData.currentStreak,
-                health: currentHealth,
-                goalSteps: userSettings.dailyStepGoal,
-                goalsAchieved: stepDataManager.totalGoalsAchieved,
-                daysUsed: daysUsed,
-                petsUsed: userSettings.petsUsed.count
-            )
         }
     }
 }

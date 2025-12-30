@@ -77,39 +77,8 @@ struct SecondaryButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - Haptic Feedback
-enum HapticFeedback {
-    case light
-    case medium
-    case heavy
-    case success
-    case warning
-    case error
-    
-    func trigger() {
-        switch self {
-        case .light:
-            let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.impactOccurred()
-        case .medium:
-            let generator = UIImpactFeedbackGenerator(style: .medium)
-            generator.impactOccurred()
-        case .heavy:
-            let generator = UIImpactFeedbackGenerator(style: .heavy)
-            generator.impactOccurred()
-        case .success:
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.success)
-        case .warning:
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.warning)
-        case .error:
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.error)
-        }
-    }
-}
-
+// MARK: - Haptic Feedback Extension
+// Note: HapticFeedback enum is defined in OnboardingComponents.swift
 extension View {
     func hapticFeedback(_ style: HapticFeedback) -> some View {
         self.onAppear {

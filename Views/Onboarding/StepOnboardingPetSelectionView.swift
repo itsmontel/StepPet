@@ -8,6 +8,7 @@ import SwiftUI
 struct StepOnboardingPetSelectionView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
+    @EnvironmentObject var achievementManager: AchievementManager
     let onContinue: () -> Void
     let onBack: (() -> Void)?
     
@@ -255,6 +256,8 @@ struct StepOnboardingPetSelectionView: View {
     private func savePet() {
         let finalName = petName.trimmingCharacters(in: .whitespacesAndNewlines)
         userSettings.pet = Pet(type: selectedPetType, name: finalName)
+        // Trigger pet_parent achievement for naming pet
+        achievementManager.updateProgress(achievementId: "pet_parent", progress: 1)
     }
 }
 

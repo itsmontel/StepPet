@@ -80,6 +80,9 @@ struct PetCustomizationView: View {
             newPetName = userSettings.pet.name
             userSettings.checkAndResetDailyBoost()
             
+            // Trigger health_check achievement for viewing pet status
+            achievementManager.updateProgress(achievementId: "health_check", progress: 1)
+            
             // Set initial slider based on current health
             let currentHealth = userSettings.pet.health
             if currentHealth <= 20 { previewStep = 0 }
@@ -163,9 +166,7 @@ struct PetCustomizationView: View {
                 Slider(value: $previewStep, in: 0...4, step: 1)
                     .tint(sliderColor)
                     .onChange(of: previewStep) {
-                        if userSettings.hapticsEnabled {
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        }
+                        HapticFeedback.light.trigger()
                     }
                 
                 // Labels
@@ -613,9 +614,7 @@ struct PetCustomizationView: View {
             achievementManager.updateProgress(achievementId: "pet_lover", progress: userSettings.petsUsed.count)
         }
         
-        if userSettings.hapticsEnabled {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        }
+        HapticFeedback.light.trigger()
     }
     
     private func handleActivityComplete() {
@@ -628,7 +627,7 @@ struct PetCustomizationView: View {
                 showHealthBoostAnimation = true
             }
             
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            HapticFeedback.success.trigger()
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 withAnimation {
@@ -640,9 +639,7 @@ struct PetCustomizationView: View {
     
     private func purchaseCredits(package: CreditPackage) {
         userSettings.playCredits += package.credits
-        if userSettings.hapticsEnabled {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        }
+        HapticFeedback.medium.trigger()
     }
 }
 

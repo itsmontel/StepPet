@@ -25,6 +25,7 @@ struct ChallengesView: View {
     @State private var showTreatCatch = false
     @State private var showMemoryMatch = false
     @State private var showBubblePop = false
+    @State private var showPatternMatch = false
     
     private var filteredChallenges: [Achievement] {
         var challenges = achievementManager.achievements
@@ -115,6 +116,11 @@ struct ChallengesView: View {
                 .environmentObject(themeManager)
                 .environmentObject(userSettings)
         }
+        .fullScreenCover(isPresented: $showPatternMatch) {
+            PatternMatchGameView(onComplete: handleMinigameComplete)
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
+        }
         .onAppear {
             userSettings.checkAndResetDailyBoost()
         }
@@ -129,6 +135,7 @@ struct ChallengesView: View {
         showTreatCatch = false
         showMemoryMatch = false
         showBubblePop = false
+        showPatternMatch = false
         HapticFeedback.success.trigger()
     }
     
@@ -231,10 +238,10 @@ struct ChallengesView: View {
                 GameCard(
                     title: "Mood Catch",
                     description: "Catch happy moods, avoid sad ones!",
-                    icon: "face.smiling.fill",
+                    icon: "heart.circle.fill",
                     color: .orange,
                     gradient: [Color.orange, Color.yellow],
-                    emoji: "😊"
+                    emoji: ""
                 ) {
                     HapticFeedback.medium.trigger()
                     showTreatCatch = true
@@ -264,6 +271,19 @@ struct ChallengesView: View {
                 ) {
                     HapticFeedback.medium.trigger()
                     showBubblePop = true
+                }
+                
+                // Pattern Match Game
+                GameCard(
+                    title: "Pattern Match",
+                    description: "Remember the pattern, beat 5 levels!",
+                    icon: "brain.head.profile",
+                    color: Color(hex: "11998e"),
+                    gradient: [Color(hex: "11998e"), Color(hex: "38ef7d")],
+                    emoji: "🧩"
+                ) {
+                    HapticFeedback.medium.trigger()
+                    showPatternMatch = true
                 }
             }
             
@@ -577,7 +597,7 @@ struct ChallengesView: View {
                 showHealthBoostAnimation = true
             }
             
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            HapticFeedback.success.trigger()
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 withAnimation {
@@ -589,9 +609,7 @@ struct ChallengesView: View {
     
     private func purchaseCredits(package: CreditPackage) {
         userSettings.playCredits += package.credits
-        if userSettings.hapticsEnabled {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        }
+        HapticFeedback.medium.trigger()
     }
     
     // MARK: - Header Section
@@ -1156,7 +1174,7 @@ struct ActivityPlaySheet: View {
             withAnimation(.spring(response: 0.5)) {
                 animationComplete = true
             }
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            HapticFeedback.success.trigger()
         }
     }
 }
@@ -1234,8 +1252,14 @@ struct GameCard: View {
                         .frame(width: 70, height: 70)
                         .shadow(color: color.opacity(0.4), radius: 8, y: 4)
                     
-                    Text(emoji)
-                        .font(.system(size: 32))
+                    if emoji.isEmpty {
+                        Image(systemName: icon)
+                            .font(.system(size: 28, weight: .semibold))
+                            .foregroundColor(.white)
+                    } else {
+                        Text(emoji)
+                            .font(.system(size: 32))
+                    }
                 }
                 
                 VStack(alignment: .leading, spacing: 6) {

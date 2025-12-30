@@ -23,7 +23,11 @@ class UserSettings: ObservableObject {
         didSet { save() }
     }
     @Published var hapticsEnabled: Bool {
-        didSet { save() }
+        didSet {
+            save()
+            // Sync with global HapticFeedback setting
+            HapticFeedback.isEnabled = hapticsEnabled
+        }
     }
     @Published var reminderTime: Date {
         didSet { save() }
@@ -98,6 +102,9 @@ class UserSettings: ObservableObject {
             self.todayPlayHealthBoost = 0
             self.lastPlayBoostDate = nil
         }
+        
+        // Sync haptics setting with global HapticFeedback
+        HapticFeedback.isEnabled = self.hapticsEnabled
     }
     
     // Use a play credit and boost health

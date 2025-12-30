@@ -5,28 +5,21 @@
 
 import SwiftUI
 
-// MARK: - Memory Card
-struct MemoryCard: Identifiable, Equatable {
+// MARK: - Pet Mood Card
+struct PetMoodCard: Identifiable {
     let id = UUID()
-    let symbol: String
-    let color: Color
-    var isFlipped: Bool = false
+    let petType: PetType
+    let mood: PetMoodState
     var isMatched: Bool = false
     
-    static func == (lhs: MemoryCard, rhs: MemoryCard) -> Bool {
-        lhs.id == rhs.id
+    // Unique value for matching (pet + mood combination)
+    var value: String {
+        "\(petType.rawValue)_\(mood.rawValue)"
     }
     
-    static let symbols: [(String, Color)] = [
-        ("🦴", .orange),
-        ("🐾", .brown),
-        ("❤️", .red),
-        ("⭐", .yellow),
-        ("🎾", .green),
-        ("🏠", .blue),
-        ("🍖", .pink),
-        ("🎀", .purple)
-    ]
+    var displayName: String {
+        "\(petType.displayName) \(mood.displayName)"
+    }
 }
 
 // MARK: - Memory Match Game View
@@ -37,15 +30,16 @@ struct MemoryMatchGameView: View {
     
     let onComplete: (Int) -> Void
     
-    // Game state
-    @State private var gameState: GameState = .ready
-    @State private var cards: [MemoryCard] = []
-    @State private var selectedCards: [MemoryCard] = []
+    // Game state - Using index-based tracking like reference
+    @State private var gameState: MemoryGameState = .ready
+    @State private var cards: [PetMoodCard] = []
+    @State private var firstFlippedIndex: Int? = nil
+    @State private var secondFlippedIndex: Int? = nil
     @State private var moves: Int = 0
     @State private var matchedPairs: Int = 0
     @State private var timeElapsed: Int = 0
     @State private var isProcessing: Bool = false
-    @State private var showMatchAnimation: Bool = false
+    @State private var refreshID = UUID() // Force refresh when cards update
     
     // Timer
     @State private var gameTimer: Timer?
@@ -58,7 +52,7 @@ struct MemoryMatchGameView: View {
         GridItem(.flexible(), spacing: 10)
     ]
     
-    enum GameState {
+    enum MemoryGameState {
         case ready, playing, finished
     }
     
@@ -67,8 +61,8 @@ struct MemoryMatchGameView: View {
             // Background
             LinearGradient(
                 colors: [
-                    Color(hex: "667eea"),
-                    Color(hex: "764ba2")
+                    themeManager.accentColor.opacity(0.8),
+                    themeManager.accentColor.opacity(0.4)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -102,67 +96,77 @@ struct MemoryMatchGameView: View {
     
     // MARK: - Game Header
     private var gameHeader: some View {
-        HStack {
+        HStack(spacing: 8) {
             // Close button
             Button(action: {
                 stopGame()
                 dismiss()
             }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 28))
-                    .foregroundColor(.white.opacity(0.8))
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.9))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.gray)
+                }
             }
             
-            Spacer()
-            
-            // Stats
-            HStack(spacing: 20) {
-                // Moves
-                HStack(spacing: 6) {
-                    Image(systemName: "hand.tap.fill")
-                        .foregroundColor(.white)
-                    
-                    Text("\(moves)")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                }
+            // Moves
+            HStack(spacing: 4) {
+                Image(systemName: "hand.tap.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(themeManager.accentColor)
                 
-                // Timer
-                HStack(spacing: 6) {
-                    Image(systemName: "clock.fill")
-                        .foregroundColor(.white)
-                    
-                    Text(formatTime(timeElapsed))
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                }
+                Text("\(moves)")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
             .background(
                 Capsule()
-                    .fill(Color.black.opacity(0.3))
+                    .fill(Color.white.opacity(0.95))
+            )
+            
+            // Timer
+            HStack(spacing: 4) {
+                Image(systemName: "clock.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(themeManager.accentColor)
+                
+                Text(formatTime(timeElapsed))
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.95))
             )
             
             Spacer()
             
             // Pairs found
-            HStack(spacing: 6) {
+            HStack(spacing: 4) {
                 Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 14))
                     .foregroundColor(.green)
                 
                 Text("\(matchedPairs)/\(totalPairs)")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
             .background(
                 Capsule()
-                    .fill(Color.black.opacity(0.3))
+                    .fill(Color.white.opacity(0.95))
             )
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .padding(.top, 60)
         .padding(.bottom, 10)
     }
@@ -170,36 +174,83 @@ struct MemoryMatchGameView: View {
     // MARK: - Cards Grid
     private var cardsGrid: some View {
         LazyVGrid(columns: columns, spacing: 10) {
-            ForEach(cards) { card in
-                CardView(card: card) {
-                    cardTapped(card)
-                }
-                .aspectRatio(0.7, contentMode: .fit)
+            ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
+                PetMoodCardView(
+                    card: card,
+                    isFlipped: isCardFlipped(at: index),
+                    onTap: {
+                        handleCardTap(at: index)
+                    }
+                )
+                .id("\(card.id)-\(card.isMatched)-\(firstFlippedIndex == index)-\(secondFlippedIndex == index)-\(refreshID)")
+                .aspectRatio(0.75, contentMode: .fit)
             }
         }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+        )
+    }
+    
+    // Check if a card should appear flipped
+    private func isCardFlipped(at index: Int) -> Bool {
+        if cards[index].isMatched {
+            return true
+        }
+        return firstFlippedIndex == index || secondFlippedIndex == index
     }
     
     // MARK: - Ready Overlay
     private var readyOverlay: some View {
         VStack(spacing: 24) {
-            // Pet
-            AnimatedPetView(petType: userSettings.pet.type, moodState: .happy)
-                .frame(height: 120)
+            // Pet preview
+            let imageName = userSettings.pet.type.imageName(for: .happy)
+            if let _ = UIImage(named: imageName) {
+                Image(imageName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 100, height: 100)
+            }
             
-            Text("🃏 Memory Match 🃏")
-                .font(.system(size: 36, weight: .black, design: .rounded))
+            Text("Memory Match")
+                .font(.system(size: 32, weight: .black, design: .rounded))
                 .foregroundColor(.white)
                 .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
             
             VStack(spacing: 12) {
-                Text("Match all the pairs!")
+                Text("Match the pet moods!")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white.opacity(0.9))
                 
-                Text("Find matching cards in fewest moves")
+                Text("Find 8 matching pairs of pets")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white.opacity(0.8))
             }
+            
+            // Preview of card types
+            HStack(spacing: 12) {
+                ForEach(PetMoodState.allCases.prefix(4), id: \.self) { mood in
+                    VStack(spacing: 4) {
+                        let imageName = userSettings.pet.type.imageName(for: mood)
+                        if let _ = UIImage(named: imageName) {
+                            Image(imageName)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 36, height: 36)
+                        }
+                        Text(mood.displayName)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                }
+            }
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.white.opacity(0.15))
+            )
             
             Button(action: startGame) {
                 HStack(spacing: 10) {
@@ -214,14 +265,8 @@ struct MemoryMatchGameView: View {
                 .padding(.vertical, 16)
                 .background(
                     Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [.purple, .pink],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .shadow(color: .purple.opacity(0.5), radius: 10, x: 0, y: 5)
+                        .fill(themeManager.accentColor)
+                        .shadow(color: themeManager.accentColor.opacity(0.5), radius: 10, x: 0, y: 5)
                 )
             }
         }
@@ -235,11 +280,20 @@ struct MemoryMatchGameView: View {
                 .font(.system(size: 32, weight: .black, design: .rounded))
                 .foregroundColor(.white)
             
+            // Pet celebration
+            let imageName = userSettings.pet.type.imageName(for: .fullHealth)
+            if let _ = UIImage(named: imageName) {
+                Image(imageName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 80, height: 80)
+            }
+            
             // Stats
             VStack(spacing: 16) {
-                StatRow(icon: "clock.fill", label: "Time", value: formatTime(timeElapsed))
-                StatRow(icon: "hand.tap.fill", label: "Moves", value: "\(moves)")
-                StatRow(icon: "star.fill", label: "Rating", value: getRating())
+                MemoryStatRow(icon: "clock.fill", label: "Time", value: formatTime(timeElapsed), color: themeManager.accentColor)
+                MemoryStatRow(icon: "hand.tap.fill", label: "Moves", value: "\(moves)", color: themeManager.accentColor)
+                MemoryStatRow(icon: "star.fill", label: "Rating", value: getRating(), color: .yellow)
             }
             .padding(20)
             .background(
@@ -247,7 +301,7 @@ struct MemoryMatchGameView: View {
                     .fill(Color.white.opacity(0.15))
             )
             
-            // Fun game - no health reward
+            // Fun game message
             VStack(spacing: 4) {
                 Text("Great job!")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
@@ -261,11 +315,11 @@ struct MemoryMatchGameView: View {
             .padding(.horizontal, 32)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.purple.opacity(0.2))
+                    .fill(themeManager.accentColor.opacity(0.2))
             )
             
             Button(action: {
-                onComplete(0) // No health reward
+                onComplete(0) // No health reward for minigames
             }) {
                 Text("Done!")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
@@ -274,13 +328,7 @@ struct MemoryMatchGameView: View {
                     .padding(.vertical, 16)
                     .background(
                         Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [.purple, .pink],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                            .fill(themeManager.accentColor)
                     )
             }
         }
@@ -290,11 +338,25 @@ struct MemoryMatchGameView: View {
     
     // MARK: - Game Logic
     private func startGame() {
-        // Create pairs of cards
-        var newCards: [MemoryCard] = []
-        for (symbol, color) in MemoryCard.symbols {
-            newCards.append(MemoryCard(symbol: symbol, color: color))
-            newCards.append(MemoryCard(symbol: symbol, color: color))
+        // Create pairs using different pet types and moods
+        var newCards: [PetMoodCard] = []
+        
+        // Use 8 different pet/mood combinations
+        let petMoodCombinations: [(PetType, PetMoodState)] = [
+            (.cat, .fullHealth),
+            (.cat, .happy),
+            (.dog, .content),
+            (.dog, .sad),
+            (.bunny, .fullHealth),
+            (.bunny, .happy),
+            (.hamster, .content),
+            (.horse, .fullHealth)
+        ]
+        
+        for (petType, mood) in petMoodCombinations {
+            // Create pair
+            newCards.append(PetMoodCard(petType: petType, mood: mood))
+            newCards.append(PetMoodCard(petType: petType, mood: mood))
         }
         
         // Shuffle
@@ -304,8 +366,11 @@ struct MemoryMatchGameView: View {
         moves = 0
         matchedPairs = 0
         timeElapsed = 0
-        selectedCards = []
+        firstFlippedIndex = nil
+        secondFlippedIndex = nil
+        isProcessing = false
         gameState = .playing
+        refreshID = UUID()
         
         // Start timer
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
@@ -315,73 +380,87 @@ struct MemoryMatchGameView: View {
         HapticFeedback.medium.trigger()
     }
     
-    private func cardTapped(_ card: MemoryCard) {
-        guard gameState == .playing,
-              !isProcessing,
-              !card.isFlipped,
-              !card.isMatched,
-              selectedCards.count < 2 else { return }
+    private func handleCardTap(at index: Int) {
+        // Don't allow tap if processing or card is already matched
+        guard !isProcessing else { return }
+        guard !cards[index].isMatched else { return }
         
-        // Find and flip the card
-        if let index = cards.firstIndex(where: { $0.id == card.id }) {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                cards[index].isFlipped = true
+        // Don't allow tapping the same card that's already flipped
+        guard firstFlippedIndex != index else { return }
+        guard secondFlippedIndex != index else { return }
+        
+        HapticFeedback.light.trigger()
+        
+        if firstFlippedIndex == nil {
+            // First card flip
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                firstFlippedIndex = index
             }
-            selectedCards.append(cards[index])
-            HapticFeedback.light.trigger()
+        } else if secondFlippedIndex == nil {
+            // Second card flip
+            moves += 1
+            isProcessing = true
             
-            // Check for match if two cards selected
-            if selectedCards.count == 2 {
-                moves += 1
-                isProcessing = true
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                    checkForMatch()
-                }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                secondFlippedIndex = index
+            }
+            
+            // Check for match after delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                checkForMatch()
             }
         }
     }
     
     private func checkForMatch() {
-        guard selectedCards.count == 2 else { return }
+        guard let first = firstFlippedIndex, let second = secondFlippedIndex else {
+            isProcessing = false
+            return
+        }
         
-        let first = selectedCards[0]
-        let second = selectedCards[1]
+        let firstCard = cards[first]
+        let secondCard = cards[second]
         
-        if first.symbol == second.symbol {
+        if firstCard.value == secondCard.value {
             // Match found!
-            if let index1 = cards.firstIndex(where: { $0.id == first.id }),
-               let index2 = cards.firstIndex(where: { $0.id == second.id }) {
-                
-                withAnimation(.spring(response: 0.3)) {
-                    cards[index1].isMatched = true
-                    cards[index2].isMatched = true
+            matchedPairs += 1
+            HapticFeedback.success.trigger()
+            
+            // Update cards
+            var updatedCards = cards
+            updatedCards[first].isMatched = true
+            updatedCards[second].isMatched = true
+            
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                cards = updatedCards
+                refreshID = UUID()
+            }
+            
+            // Keep cards flipped briefly then reset indices
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
+                    firstFlippedIndex = nil
+                    secondFlippedIndex = nil
                 }
-                
-                matchedPairs += 1
-                HapticFeedback.success.trigger()
+                isProcessing = false
                 
                 // Check if game complete
                 if matchedPairs == totalPairs {
-                    endGame()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        endGame()
+                    }
                 }
             }
         } else {
-            // No match - flip back
-            if let index1 = cards.firstIndex(where: { $0.id == first.id }),
-               let index2 = cards.firstIndex(where: { $0.id == second.id }) {
-                
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    cards[index1].isFlipped = false
-                    cards[index2].isFlipped = false
-                }
-                
-                HapticFeedback.warning.trigger()
+            // No match - flip cards back
+            HapticFeedback.error.trigger()
+            
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                firstFlippedIndex = nil
+                secondFlippedIndex = nil
             }
+            isProcessing = false
         }
-        
-        selectedCards = []
-        isProcessing = false
     }
     
     private func endGame() {
@@ -402,7 +481,6 @@ struct MemoryMatchGameView: View {
     }
     
     private func getRating() -> String {
-        // Rating based on moves (fewer is better)
         if moves <= 16 {
             return "⭐⭐⭐"
         } else if moves <= 24 {
@@ -411,36 +489,24 @@ struct MemoryMatchGameView: View {
             return "⭐"
         }
     }
-    
-    private func calculateHealthReward() -> Int {
-        // Base: 15-30 based on performance
-        if moves <= 16 {
-            return 30
-        } else if moves <= 20 {
-            return 25
-        } else if moves <= 24 {
-            return 20
-        } else {
-            return 15
-        }
-    }
 }
 
-// MARK: - Card View
-struct CardView: View {
-    let card: MemoryCard
-    let action: () -> Void
+// MARK: - Pet Mood Card View
+struct PetMoodCardView: View {
+    let card: PetMoodCard
+    let isFlipped: Bool
+    let onTap: () -> Void
     
-    @State private var rotation: Double = 0
+    @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
-        Button(action: action) {
+        Button(action: onTap) {
             ZStack {
-                // Card back
+                // Card back (question mark side)
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         LinearGradient(
-                            colors: [Color(hex: "667eea"), Color(hex: "764ba2")],
+                            colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.7)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -451,47 +517,75 @@ struct CardView: View {
                     )
                     .overlay(
                         Image(systemName: "pawprint.fill")
-                            .font(.system(size: 30))
-                            .foregroundColor(.white.opacity(0.3))
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white.opacity(0.4))
                     )
-                    .opacity(card.isFlipped || card.isMatched ? 0 : 1)
+                    .opacity((isFlipped || card.isMatched) ? 0 : 1)
                 
-                // Card front
+                // Card front (pet mood side)
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white)
+                    .fill(card.isMatched ? Color.green.opacity(0.2) : Color.white)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(card.isMatched ? Color.green : card.color.opacity(0.5), lineWidth: 3)
+                            .stroke(card.isMatched ? Color.green : themeManager.accentColor.opacity(0.3), lineWidth: 2)
                     )
                     .overlay(
-                        Text(card.symbol)
-                            .font(.system(size: 40))
+                        VStack(spacing: 4) {
+                            let imageName = card.petType.imageName(for: card.mood)
+                            if let uiImage = UIImage(named: imageName) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 50, height: 50)
+                            } else {
+                                Text(card.petType.emoji)
+                                    .font(.system(size: 36))
+                            }
+                            
+                            Text(card.mood.displayName)
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(card.mood.color)
+                                .lineLimit(1)
+                        }
+                        .padding(4)
                     )
-                    .opacity(card.isFlipped || card.isMatched ? 1 : 0)
+                    .opacity((isFlipped || card.isMatched) ? 1 : 0)
+                
+                // Matched checkmark overlay
+                if card.isMatched {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(.green)
+                                .padding(4)
+                        }
+                        Spacer()
+                    }
+                }
             }
-            .rotation3DEffect(
-                .degrees(card.isFlipped || card.isMatched ? 180 : 0),
-                axis: (x: 0, y: 1, z: 0)
-            )
             .scaleEffect(card.isMatched ? 0.95 : 1.0)
-            .opacity(card.isMatched ? 0.7 : 1.0)
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isFlipped)
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: card.isMatched)
         }
-        .buttonStyle(PlainButtonStyle())
         .disabled(card.isMatched)
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
-// MARK: - Stat Row
-struct StatRow: View {
+// MARK: - Memory Stat Row
+struct MemoryStatRow: View {
     let icon: String
     let label: String
     let value: String
+    let color: Color
     
     var body: some View {
         HStack {
             Image(systemName: icon)
                 .font(.system(size: 18))
-                .foregroundColor(.yellow)
+                .foregroundColor(color)
                 .frame(width: 30)
             
             Text(label)

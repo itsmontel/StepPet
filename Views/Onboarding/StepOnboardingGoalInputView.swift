@@ -8,6 +8,7 @@ import SwiftUI
 struct StepOnboardingGoalInputView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
+    @EnvironmentObject var achievementManager: AchievementManager
     let onContinue: () -> Void
     let onBack: (() -> Void)?
     
@@ -144,6 +145,8 @@ struct StepOnboardingGoalInputView: View {
                     isEnabled: true,
                     action: {
                         userSettings.dailyStepGoal = Int(selectedSteps)
+                        // Trigger goal_setter achievement for setting first goal
+                        achievementManager.updateProgress(achievementId: "goal_setter", progress: 1)
                         onContinue()
                     }
                 )

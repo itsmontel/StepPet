@@ -223,36 +223,64 @@ struct TreatCatchGameView: View {
                 gameBackground
                 
                 VStack(spacing: 0) {
-                    gameHeader
+                    // Only show header when playing
+                    if gameState == .playing {
+                        gameHeader
+                    } else {
+                        // Show just the close button when not playing
+                        HStack {
+                            Button(action: {
+                                stopGame()
+                                dismiss()
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.9))
+                                        .frame(width: 36, height: 36)
+                                        .shadow(color: .black.opacity(0.1), radius: 4)
+                                    
+                                    Image(systemName: "xmark")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 45)
+                        .padding(.bottom, 10)
+                    }
                     
                     ZStack {
-                        // Falling items
-                        ForEach(items) { item in
-                            if !item.isCollected {
-                                FallingItemView(
-                                    item: item,
-                                    petType: userSettings.pet.type,
-                                    accentColor: themeManager.accentColor
-                                )
+                        // Falling items (only when playing)
+                        if gameState == .playing {
+                            ForEach(items) { item in
+                                if !item.isCollected {
+                                    FallingItemView(
+                                        item: item,
+                                        petType: userSettings.pet.type,
+                                        accentColor: themeManager.accentColor
+                                    )
+                                }
                             }
-                        }
-                        
-                        // Catch effects
-                        ForEach(effects) { effect in
-                            CatchEffectView(effect: effect)
-                        }
-                        
-                        // Pet catcher
-                        petCatcher
-                            .position(
-                                x: petPosition * (geometry.size.width - petWidth) + petWidth / 2,
-                                y: geometry.size.height - 200
-                            )
-                            .scaleEffect(petScale)
-                        
-                        // Combo display
-                        if combo > 1 && gameState == .playing {
-                            comboDisplay
+                            
+                            // Catch effects
+                            ForEach(effects) { effect in
+                                CatchEffectView(effect: effect)
+                            }
+                            
+                            // Pet catcher (only when playing)
+                            petCatcher
+                                .position(
+                                    x: petPosition * (geometry.size.width - petWidth) + petWidth / 2,
+                                    y: geometry.size.height - 200
+                                )
+                                .scaleEffect(petScale)
+                            
+                            // Combo display
+                            if combo > 1 {
+                                comboDisplay
+                            }
                         }
                         
                         // Overlays
@@ -488,167 +516,215 @@ struct TreatCatchGameView: View {
     }
     
     // MARK: - Ready Overlay
+    @State private var buttonPulse: Bool = false
+    @State private var petBounce: Bool = false
+    
     private var readyOverlay: some View {
         ZStack {
-            Color.black.opacity(0.5)
-                .ignoresSafeArea()
+            // Same gradient as game background
+            LinearGradient(
+                colors: [
+                    themeManager.accentColor.opacity(0.3),
+                    Color(hex: "87CEEB").opacity(0.6),
+                    Color(hex: "98FB98").opacity(0.4)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            VStack(spacing: 28) {
-                // Title with pet
-                VStack(spacing: 16) {
+            // Decorative circles (matching game)
+            Circle()
+                .fill(themeManager.accentColor.opacity(0.15))
+                .frame(width: 250, height: 250)
+                .offset(x: -100, y: -250)
+                .blur(radius: 40)
+            
+            Circle()
+                .fill(Color(hex: "98FB98").opacity(0.2))
+                .frame(width: 200, height: 200)
+                .offset(x: 120, y: 300)
+                .blur(radius: 40)
+            
+            VStack(spacing: 16) {
+                Spacer()
+                
+                // Pet mascot with bounce
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.3))
+                        .frame(width: 90, height: 90)
+                        .blur(radius: 10)
+                    
                     let imageName = userSettings.pet.type.imageName(for: .fullHealth)
                     if let uiImage = UIImage(named: imageName) {
                         Image(uiImage: uiImage)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 80, height: 80)
-                            .clipShape(Circle())
-                            .shadow(color: themeManager.accentColor.opacity(0.3), radius: 10)
+                            .frame(width: 75, height: 75)
+                            .shadow(color: .black.opacity(0.2), radius: 8)
                     }
-                    
-                    Text("Mood Catch!")
-                        .font(.system(size: 34, weight: .black, design: .rounded))
-                        .foregroundColor(.white)
                 }
+                .offset(y: petBounce ? -4 : 4)
+                .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: petBounce)
                 
-                // High score badge
+                // Title
+                Text("Mood Catch!")
+                    .font(.system(size: 32, weight: .black, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+                
+                // High score
                 HStack(spacing: 8) {
                     Image(systemName: "trophy.fill")
-                        .foregroundColor(.yellow)
+                        .foregroundColor(Color(hex: "FFD700"))
                     Text("Best: \(TreatCatchHighScoreManager.shared.highScore)")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(Color.white.opacity(0.2)))
-                
-                // Instructions
-                VStack(spacing: 14) {
-                    instructionCard(
-                        title: "CATCH",
-                        subtitle: "Happy & Full Health",
-                        icon: "heart.fill",
-                        color: .green,
-                        petMoods: [.fullHealth, .happy]
-                    )
-                    
-                    instructionCard(
-                        title: "AVOID",
-                        subtitle: "Sick & Sad",
-                        icon: "xmark.circle.fill",
-                        color: .red,
-                        petMoods: [.sick, .sad]
-                    )
-                    
-                    HStack(spacing: 12) {
-                        timeInstructionBadge(text: "+3 +5", subtitle: "Bonus Time", color: .cyan)
-                        timeInstructionBadge(text: "-3 -5", subtitle: "Lose Time", color: .purple)
-                    }
-                    
-                    // Game Over Rule
-                    HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.orange)
-                        Text("Catch 3 sad or sick moods = Game Over!")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(
-                        Capsule()
-                            .fill(Color.orange.opacity(0.2))
-                    )
-                }
-                .padding(20)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 8)
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white.opacity(0.1))
+                    Capsule()
+                        .fill(Color.white.opacity(0.8))
+                        .shadow(color: .black.opacity(0.1), radius: 4)
                 )
                 
-                // Tip
-                Text("Drag anywhere to move \(userSettings.pet.name)")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
+                // Compact Instructions
+                VStack(spacing: 10) {
+                    // CATCH row
+                    compactInstructionRow(
+                        title: "CATCH",
+                        moods: [.fullHealth, .happy],
+                        color: Color(hex: "00D26A"),
+                        icon: "heart.fill"
+                    )
+                    
+                    // AVOID row
+                    compactInstructionRow(
+                        title: "AVOID",
+                        moods: [.sick, .sad],
+                        color: Color(hex: "FF6B6B"),
+                        icon: "xmark.circle.fill"
+                    )
+                    
+                    // Time row
+                    HStack(spacing: 8) {
+                        compactTimeBadge(text: "+3 +5", color: Color(hex: "00D9FF"))
+                        compactTimeBadge(text: "-3 -5", color: Color(hex: "A855F7"))
+                    }
+                    
+                    // Warning
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(.orange)
+                        Text("3 bad catches = Game Over!")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor.opacity(0.8))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color.orange.opacity(0.15))
+                    )
+                }
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(Color.white.opacity(0.85))
+                        .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+                )
+                .padding(.horizontal, 20)
                 
-                // Start button
+                // Drag hint
+                HStack(spacing: 6) {
+                    Image(systemName: "hand.draw.fill")
+                        .font(.system(size: 12))
+                    Text("Drag to move \(userSettings.pet.name)")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                }
+                .foregroundColor(themeManager.secondaryTextColor)
+                
+                // Start Button
                 Button(action: startGame) {
                     HStack(spacing: 12) {
                         Image(systemName: "play.fill")
-                            .font(.system(size: 22))
+                            .font(.system(size: 18))
                         Text("START")
-                            .font(.system(size: 24, weight: .black, design: .rounded))
+                            .font(.system(size: 20, weight: .black, design: .rounded))
                     }
                     .foregroundColor(.white)
                     .padding(.horizontal, 50)
-                    .padding(.vertical, 18)
+                    .padding(.vertical, 16)
                     .background(
                         Capsule()
                             .fill(themeManager.accentColor)
-                            .shadow(color: themeManager.accentColor.opacity(0.5), radius: 15, y: 8)
+                            .shadow(color: themeManager.accentColor.opacity(0.4), radius: buttonPulse ? 15 : 8, y: 6)
                     )
+                    .scaleEffect(buttonPulse ? 1.03 : 1.0)
                 }
+                .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: buttonPulse)
+                
+                Spacer()
             }
-            .padding(28)
+            .padding(.horizontal, 24)
+        }
+        .onAppear {
+            petBounce = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                buttonPulse = true
+            }
         }
     }
     
-    private func instructionCard(title: String, subtitle: String, icon: String, color: Color, petMoods: [PetMoodState]) -> some View {
-        HStack(spacing: 16) {
+    // MARK: - Compact Instruction Row
+    private func compactInstructionRow(title: String, moods: [PetMoodState], color: Color, icon: String) -> some View {
+        HStack(spacing: 10) {
             // Pet previews
-            HStack(spacing: -10) {
-                ForEach(petMoods, id: \.self) { mood in
+            HStack(spacing: -8) {
+                ForEach(moods, id: \.self) { mood in
                     let imageName = userSettings.pet.type.imageName(for: mood)
                     if let uiImage = UIImage(named: imageName) {
                         Image(uiImage: uiImage)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 40, height: 40)
+                            .frame(width: 32, height: 32)
                             .clipShape(Circle())
-                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                            .overlay(Circle().stroke(color.opacity(0.5), lineWidth: 1.5))
                     }
                 }
             }
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 16, weight: .black, design: .rounded))
-                    .foregroundColor(color)
-                Text(subtitle)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
-            }
+            Text(title)
+                .font(.system(size: 14, weight: .black, design: .rounded))
+                .foregroundColor(color)
             
             Spacer()
             
             Image(systemName: icon)
-                .font(.system(size: 24))
+                .font(.system(size: 16, weight: .bold))
                 .foregroundColor(color)
         }
-        .padding(14)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(color.opacity(0.15))
+            RoundedRectangle(cornerRadius: 12)
+                .fill(color.opacity(0.1))
         )
     }
     
-    private func timeInstructionBadge(text: String, subtitle: String, color: Color) -> some View {
-        VStack(spacing: 4) {
-            Text(text)
-                .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundColor(color)
-            Text(subtitle)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(color.opacity(0.15))
-        )
+    // MARK: - Compact Time Badge
+    private func compactTimeBadge(text: String, color: Color) -> some View {
+        Text(text)
+            .font(.system(size: 14, weight: .black, design: .rounded))
+            .foregroundColor(color)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(color.opacity(0.1))
+            )
     }
     
     // MARK: - Finished Overlay

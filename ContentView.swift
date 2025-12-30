@@ -8,7 +8,9 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var achievementManager: AchievementManager
+    @EnvironmentObject var userSettings: UserSettings
     @State private var selectedTab = 2 // Start on Today (center)
+    @State private var visitedTabs: Set<Int> = [2] // Start with Today visited
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -39,7 +41,8 @@ struct ContentView: View {
             CenteredTabBar(selectedTab: $selectedTab)
         }
         .onChange(of: selectedTab) { _, newValue in
-            achievementManager.updateProgress(achievementId: "explorer", progress: min(newValue + 1, 5))
+            visitedTabs.insert(newValue)
+            achievementManager.updateProgress(achievementId: "explorer", progress: visitedTabs.count)
             HapticFeedback.light.trigger()
         }
         .overlay {
