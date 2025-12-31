@@ -229,20 +229,22 @@ struct MemoryMatchGameView: View {
                     .foregroundColor(.white.opacity(0.8))
             }
             
-            // Preview of card types
-            HStack(spacing: 12) {
-                ForEach(PetMoodState.allCases.prefix(4), id: \.self) { mood in
+            // Preview of all 5 card types
+            HStack(spacing: 10) {
+                ForEach(PetMoodState.allCases, id: \.self) { mood in
                     VStack(spacing: 4) {
                         let imageName = userSettings.pet.type.imageName(for: mood)
                         if let _ = UIImage(named: imageName) {
                             Image(imageName)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(width: 36, height: 36)
+                                .frame(width: 32, height: 32)
                         }
                         Text(mood.displayName)
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.system(size: 9, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                 }
             }

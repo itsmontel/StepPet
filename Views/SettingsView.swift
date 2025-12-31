@@ -202,7 +202,8 @@ struct SettingsView: View {
                     subtitle: "\(userSettings.dailyStepGoal.formatted()) steps",
                     showChevron: true,
                     action: {
-                        selectedGoal = userSettings.dailyStepGoal
+                        // Ensure goal is at least 500
+                        selectedGoal = max(500, userSettings.dailyStepGoal)
                         showGoalSheet = true
                     }
                 )
@@ -621,14 +622,14 @@ struct SettingsView: View {
                 // Slider
                 VStack(spacing: 8) {
                     Slider(value: Binding(
-                        get: { Double(selectedGoal) },
-                        set: { selectedGoal = Int($0) }
-                    ), in: 3000...20000, step: 500)
+                        get: { Double(max(500, selectedGoal)) },
+                        set: { selectedGoal = max(500, min(20000, Int($0))) }
+                    ), in: 500...20000, step: 500)
                     .accentColor(themeManager.accentColor)
                     .padding(.horizontal, 20)
                     
                     HStack {
-                        Text("3,000")
+                        Text("500")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                         

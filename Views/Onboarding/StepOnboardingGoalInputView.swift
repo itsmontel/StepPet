@@ -99,13 +99,13 @@ struct StepOnboardingGoalInputView: View {
                     
                     // Slider
                     VStack(spacing: 12) {
-                        Slider(value: $selectedSteps, in: 3000...15000, step: 500)
+                        Slider(value: $selectedSteps, in: 500...15000, step: 500)
                             .tint(themeManager.accentColor)
                             .frame(height: 40)
                             .opacity(animateContent ? 1.0 : 0.0)
                         
                         HStack {
-                            Text("3,000")
+                            Text("500")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(themeManager.secondaryTextColor)
                             Spacer()

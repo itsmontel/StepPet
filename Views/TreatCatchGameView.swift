@@ -15,28 +15,12 @@ enum GameItemType: CaseIterable {
     case sick
     case sad
     
-    // Time bonuses
-    case timePlus3
-    case timePlus5
-    
-    // Time penalties
-    case timeMinus3
-    case timeMinus5
-    
-    var moodState: PetMoodState? {
+    var moodState: PetMoodState {
         switch self {
         case .fullHealth: return .fullHealth
         case .happy: return .happy
         case .sick: return .sick
         case .sad: return .sad
-        default: return nil
-        }
-    }
-    
-    var isTimeItem: Bool {
-        switch self {
-        case .timePlus3, .timePlus5, .timeMinus3, .timeMinus5: return true
-        default: return false
         }
     }
     
@@ -44,79 +28,33 @@ enum GameItemType: CaseIterable {
         switch self {
         case .fullHealth: return 20
         case .happy: return 15
-        case .sick: return -20
-        case .sad: return -15
-        default: return 0
+        case .sick: return 0
+        case .sad: return 0
         }
     }
     
-    var timeEffect: Int {
+    var isGood: Bool {
         switch self {
-        case .timePlus3: return 3
-        case .timePlus5: return 5
-        case .timeMinus3: return -3
-        case .timeMinus5: return -5
-        case .sick: return -2
-        case .sad: return -1
-        default: return 0
-        }
-    }
-    
-    var category: ItemCategory {
-        switch self {
-        case .fullHealth, .happy:
-            return .goodMood
-        case .sick, .sad:
-            return .badMood
-        case .timePlus3, .timePlus5:
-            return .timeBonus
-        case .timeMinus3, .timeMinus5:
-            return .timePenalty
-        }
-    }
-    
-    var displayText: String {
-        switch self {
-        case .timePlus3: return "+3"
-        case .timePlus5: return "+5"
-        case .timeMinus3: return "-3"
-        case .timeMinus5: return "-5"
-        default: return ""
+        case .fullHealth, .happy: return true
+        case .sick, .sad: return false
         }
     }
     
     var itemColor: Color {
-        switch category {
-        case .goodMood: return .green
-        case .badMood: return .red
-        case .timeBonus: return .cyan
-        case .timePenalty: return .purple
-        }
+        isGood ? .green : .red
     }
     
-    var size: CGFloat {
-        isTimeItem ? 52 : 55
-    }
-    
-    enum ItemCategory {
-        case goodMood, badMood, timeBonus, timePenalty
-    }
+    var size: CGFloat { 55 }
     
     static func randomItem() -> GameItemType {
         let rand = Double.random(in: 0...1)
         
-        if rand < 0.45 {
-            // 45% good moods
+        if rand < 0.55 {
+            // 55% good moods
             return [.fullHealth, .happy].randomElement()!
-        } else if rand < 0.70 {
-            // 25% bad moods
-            return [.sick, .sad].randomElement()!
-        } else if rand < 0.85 {
-            // 15% time bonus
-            return Double.random(in: 0...1) < 0.6 ? .timePlus3 : .timePlus5
         } else {
-            // 15% time penalty
-            return Double.random(in: 0...1) < 0.6 ? .timeMinus3 : .timeMinus5
+            // 45% bad moods
+            return [.sick, .sad].randomElement()!
         }
     }
 }
@@ -174,7 +112,6 @@ struct TreatCatchGameView: View {
     // Game state
     @State private var gameState: GameState = .ready
     @State private var score: Int = 0
-    @State private var timeRemaining: Double = 30.0
     @State private var petPosition: CGFloat = 0.5
     @State private var targetPosition: CGFloat = 0.5
     @State private var items: [GameItem] = []
@@ -195,13 +132,11 @@ struct TreatCatchGameView: View {
     
     // Visual effects
     @State private var screenShake: CGFloat = 0
-    @State private var timeFlash: Bool = false
     @State private var scoreFlash: Bool = false
     @State private var petScale: CGFloat = 1.0
     @State private var wobblePhase: Double = 0
     
     // Timers
-    @State private var gameTimer: Timer?
     @State private var updateTimer: Timer?
     
     // Screen
@@ -210,7 +145,6 @@ struct TreatCatchGameView: View {
     // Constants
     private let petWidth: CGFloat = 90
     private let catchRadius: CGFloat = 55
-    private let maxTime: Double = 30.0
     
     enum GameState {
         case ready, playing, finished
@@ -353,7 +287,7 @@ struct TreatCatchGameView: View {
     
     // MARK: - Header
     private var gameHeader: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             // Close button
             Button(action: {
                 stopGame()
@@ -371,22 +305,23 @@ struct TreatCatchGameView: View {
                 }
             }
             
-            // Score - fixed to one line
-            HStack(spacing: 4) {
+            Spacer()
+            
+            // Score - centered and prominent
+            HStack(spacing: 6) {
                 Image(systemName: "star.fill")
                     .foregroundColor(.yellow)
-                    .font(.system(size: 14))
+                    .font(.system(size: 16))
                 
                 Text("\(score)")
-                    .font(.system(size: 18, weight: .black, design: .rounded))
+                    .font(.system(size: 22, weight: .black, design: .rounded))
                     .foregroundColor(themeManager.primaryTextColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                     .contentTransition(.numericText())
             }
-            .frame(minWidth: 60)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
             .background(
                 Capsule()
                     .fill(Color.white.opacity(0.95))
@@ -395,50 +330,25 @@ struct TreatCatchGameView: View {
             )
             .scaleEffect(scoreFlash ? 1.05 : 1.0)
             
+            Spacer()
+            
             // Lives (3 strikes indicator)
-            HStack(spacing: 3) {
+            HStack(spacing: 4) {
                 ForEach(0..<3, id: \.self) { index in
                     Image(systemName: index < (3 - badMoodsCaught) ? "heart.fill" : "heart.slash.fill")
-                        .font(.system(size: 13))
+                        .font(.system(size: 16))
                         .foregroundColor(index < (3 - badMoodsCaught) ? .red : .gray.opacity(0.4))
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
             .background(
                 Capsule()
                     .fill(Color.white.opacity(0.95))
                     .shadow(color: .black.opacity(0.1), radius: 4)
             )
-            
-            Spacer()
-            
-            // Timer - more compact
-            HStack(spacing: 4) {
-                Image(systemName: "clock.fill")
-                    .foregroundColor(timeRemaining <= 10 ? .red : themeManager.accentColor)
-                    .font(.system(size: 13))
-                
-                Text(String(format: "%.0fs", max(0, timeRemaining)))
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(timeRemaining <= 10 ? .red : themeManager.primaryTextColor)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(
-                        timeFlash ? Color.green.opacity(0.3) :
-                        (timeRemaining <= 10 ? Color.red.opacity(0.15) : Color.white.opacity(0.95))
-                    )
-                    .shadow(color: .black.opacity(0.1), radius: 4)
-            )
-            .scaleEffect(timeFlash ? 1.08 : 1.0)
-            .animation(.spring(response: 0.2), value: timeFlash)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 16)
         .padding(.top, 55)
         .padding(.bottom, 12)
     }
@@ -607,12 +517,6 @@ struct TreatCatchGameView: View {
                         icon: "xmark.circle.fill"
                     )
                     
-                    // Time row
-                    HStack(spacing: 8) {
-                        compactTimeBadge(text: "+3 +5", color: Color(hex: "00D9FF"))
-                        compactTimeBadge(text: "-3 -5", color: Color(hex: "A855F7"))
-                    }
-                    
                     // Warning
                     HStack(spacing: 6) {
                         Image(systemName: "exclamationmark.triangle.fill")
@@ -712,19 +616,6 @@ struct TreatCatchGameView: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(color.opacity(0.1))
         )
-    }
-    
-    // MARK: - Compact Time Badge
-    private func compactTimeBadge(text: String, color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 14, weight: .black, design: .rounded))
-            .foregroundColor(color)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(color.opacity(0.1))
-            )
     }
     
     // MARK: - Finished Overlay
@@ -861,7 +752,6 @@ struct TreatCatchGameView: View {
     private func startGame() {
         gameState = .playing
         score = 0
-        timeRemaining = 30.0
         items = []
         effects = []
         combo = 0
@@ -872,24 +762,13 @@ struct TreatCatchGameView: View {
         catchCount = 0
         missCount = 0
         badMoodsCaught = 0
-        gameOverReason = .timeUp
+        gameOverReason = .threeStrikes
         lastCatchWasGood = true
         wobblePhase = 0
         
-        // 60fps update
+        // 60fps update for smooth gameplay
         updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { _ in
             updateGame()
-        }
-        
-        // Countdown timer
-        gameTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            if timeRemaining > 0 {
-                timeRemaining -= 0.1
-                if timeRemaining <= 0 {
-                    timeRemaining = 0
-                    endGame()
-                }
-            }
         }
         
         scheduleNextSpawn()
@@ -899,9 +778,8 @@ struct TreatCatchGameView: View {
     private func scheduleNextSpawn() {
         guard gameState == .playing else { return }
         
-        let baseInterval = 1.0
-        let speedBonus = (30.0 - timeRemaining) * 0.015
-        let interval = max(0.45, baseInterval - speedBonus)
+        // Faster spawn rate - 0.45 to 0.65 seconds between items (harder)
+        let interval = Double.random(in: 0.45...0.65)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + interval) {
             if gameState == .playing {
@@ -918,9 +796,9 @@ struct TreatCatchGameView: View {
         let padding: CGFloat = 60
         let x = CGFloat.random(in: padding...(screenSize.width - padding))
         
-        let baseSpeed: CGFloat = 2.8
-        let timeBonus = CGFloat(30.0 - timeRemaining) * 0.08
-        let speed = baseSpeed + CGFloat.random(in: 0...1.2) + timeBonus
+        // Increased falling speed - base 3.6 with variation (harder)
+        let baseSpeed: CGFloat = 3.6
+        let speed = baseSpeed + CGFloat.random(in: 0...1.8)
         
         let item = GameItem(x: x, y: -60, type: type, speed: speed)
         items.append(item)
@@ -955,7 +833,7 @@ struct TreatCatchGameView: View {
                 }
                 
                 if itemY > screenSize.height + 50 {
-                    if items[i].type.category == .goodMood {
+                    if items[i].type.isGood {
                         combo = 0
                         missCount += 1
                     }
@@ -976,8 +854,8 @@ struct TreatCatchGameView: View {
         var effectText = ""
         var effectColor: Color = .white
         
-        switch item.type.category {
-        case .goodMood:
+        if item.type.isGood {
+            // Caught a good mood!
             combo += 1
             maxCombo = max(maxCombo, combo)
             let comboBonus = combo > 1 ? combo * 5 : 0
@@ -989,7 +867,7 @@ struct TreatCatchGameView: View {
             effectColor = .green
             lastCatchWasGood = true
             
-            // Gentle scale animation, no shake
+            // Gentle scale animation
             withAnimation(.spring(response: 0.15, dampingFraction: 0.7)) {
                 petScale = 1.08
             }
@@ -1001,20 +879,17 @@ struct TreatCatchGameView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 withAnimation { scoreFlash = false }
             }
-            
-            // No haptic feedback for catching good items
-            
-        case .badMood:
-            score = max(0, score + item.type.points)
-            timeRemaining = max(0, timeRemaining + Double(item.type.timeEffect))
+        } else {
+            // Caught a bad mood - Strike!
             combo = 0
             missCount += 1
-            badMoodsCaught += 1 // Strike!
+            badMoodsCaught += 1
             
             effectText = badMoodsCaught >= 3 ? "💀" : "Strike \(badMoodsCaught)!"
             effectColor = .red
             lastCatchWasGood = false
             
+            // Screen shake
             withAnimation(.easeInOut(duration: 0.04).repeatCount(5)) {
                 screenShake = 10
             }
@@ -1024,7 +899,7 @@ struct TreatCatchGameView: View {
             
             HapticFeedback.error.trigger()
             
-            // Check for 3 strikes game over
+            // Check for 3 strikes - Game Over!
             if badMoodsCaught >= 3 {
                 gameOverReason = .threeStrikes
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -1032,43 +907,9 @@ struct TreatCatchGameView: View {
                 }
                 return
             }
-            
-        case .timeBonus:
-            // Cap at max time
-            timeRemaining = min(maxTime, timeRemaining + Double(item.type.timeEffect))
-            
-            effectText = "+\(item.type.timeEffect)s"
-            effectColor = .cyan
-            
-            withAnimation(.easeInOut(duration: 0.2)) { timeFlash = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation { timeFlash = false }
-            }
-            
-            // No haptic for time bonus
-            
-        case .timePenalty:
-            timeRemaining = max(0, timeRemaining + Double(item.type.timeEffect))
-            combo = 0
-            
-            effectText = "\(item.type.timeEffect)s"
-            effectColor = .purple
-            
-            withAnimation(.easeInOut(duration: 0.04).repeatCount(4)) {
-                screenShake = 5
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
-                screenShake = 0
-            }
-            
-            HapticFeedback.error.trigger()
         }
         
         addCatchEffect(at: item.x, y: item.y, text: effectText, color: effectColor)
-        
-        if timeRemaining <= 0 {
-            endGame()
-        }
     }
     
     private func addCatchEffect(at x: CGFloat, y: CGFloat, text: String, color: Color) {
@@ -1093,9 +934,7 @@ struct TreatCatchGameView: View {
     }
     
     private func stopGame() {
-        gameTimer?.invalidate()
         updateTimer?.invalidate()
-        gameTimer = nil
         updateTimer = nil
     }
     
@@ -1113,44 +952,26 @@ struct FallingItemView: View {
     let accentColor: Color
     
     var body: some View {
+        let mood = item.type.moodState
+        let imageName = petType.imageName(for: mood)
+        
         ZStack {
-            if item.type.isTimeItem {
-                // Time item
-                Circle()
-                    .fill(item.type.itemColor.opacity(0.2))
+            // Glow
+            Circle()
+                .fill(item.type.itemColor.opacity(0.3))
+                .frame(width: item.type.size + 10, height: item.type.size + 10)
+            
+            // Pet image
+            if let uiImage = UIImage(named: imageName) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
                     .frame(width: item.type.size, height: item.type.size)
-                
-                Circle()
-                    .stroke(item.type.itemColor, lineWidth: 3)
-                    .frame(width: item.type.size, height: item.type.size)
-                
-                Text(item.type.displayText)
-                    .font(.system(size: 18, weight: .black, design: .rounded))
-                    .foregroundColor(item.type.itemColor)
-            } else {
-                // Pet mood item
-                if let mood = item.type.moodState {
-                    let imageName = petType.imageName(for: mood)
-                    if let uiImage = UIImage(named: imageName) {
-                        ZStack {
-                            // Glow
-                            Circle()
-                                .fill(item.type.itemColor.opacity(0.3))
-                                .frame(width: item.type.size + 10, height: item.type.size + 10)
-                            
-                            // Pet image
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: item.type.size, height: item.type.size)
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(item.type.itemColor, lineWidth: 3)
-                                )
-                        }
-                    }
-                }
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(item.type.itemColor, lineWidth: 3)
+                    )
             }
         }
         .position(x: item.x + item.wobble, y: item.y)

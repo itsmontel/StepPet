@@ -16,6 +16,22 @@ struct TodayView: View {
     @State private var showCelebration = false
     @State private var selectedDay: Date? = nil
     
+    // Streak animation states
+    @State private var showStreakAnimation = false
+    @State private var streakFlamePosition: CGPoint = .zero
+    @State private var streakFlameScale: CGFloat = 0
+    @State private var streakFlameOpacity: Double = 0
+    @State private var streakBadgeScale: CGFloat = 1.0
+    @State private var showStreakPlusOne = false
+    @State private var plusOneOffset: CGFloat = 0
+    @State private var plusOneOpacity: Double = 0
+    @State private var streakFlameRotation: Double = 0
+    @State private var showTestButton = true // Set to false in production
+    
+    // Milestone celebration states
+    @State private var showMilestoneCelebration = false
+    @State private var milestoneStreakValue: Int = 0
+    
     private var stepBasedHealth: Int {
         guard userSettings.dailyStepGoal > 0 else { return 0 }
         return Int((Double(healthKitManager.todaySteps) / Double(userSettings.dailyStepGoal)) * 100)
@@ -31,28 +47,6 @@ struct TodayView: View {
     
     private var stepsToGoal: Int {
         max(0, userSettings.dailyStepGoal - healthKitManager.todaySteps)
-    }
-    
-    private var stepsToNextMood: (steps: Int, nextMood: PetMoodState)? {
-        let currentMood = moodState
-        let currentSteps = healthKitManager.todaySteps
-        let goal = userSettings.dailyStepGoal
-        
-        // Calculate thresholds based on goal
-        let moodThresholds: [(mood: PetMoodState, threshold: Int)] = [
-            (.sick, Int(Double(goal) * 0.2)),
-            (.sad, Int(Double(goal) * 0.4)),
-            (.content, Int(Double(goal) * 0.6)),
-            (.happy, Int(Double(goal) * 0.8)),
-            (.fullHealth, goal)
-        ]
-        
-        for (mood, threshold) in moodThresholds {
-            if currentSteps < threshold {
-                return (threshold - currentSteps, mood)
-            }
-        }
-        return nil
     }
     
     private var goalProgress: Double {
@@ -81,16 +75,78 @@ struct TodayView: View {
     }
     
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 0) {
-                headerSection
-                heroCardSection
-                weeklyGraphSection
-                encouragementSection
-                dashboardSection
-                Spacer(minLength: 120)
+        GeometryReader { geometry in
+            ZStack {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        headerSection
+                        heroCardSection
+                        
+                        // Test buttons (remove in production)
+                        if showTestButton {
+                            VStack(spacing: 10) {
+                                Button(action: {
+                                    triggerStreakAnimation(in: geometry)
+                                }) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "flame.fill")
+                                            .foregroundColor(.orange)
+                                        Text("Test +1 Streak")
+                                            .font(.system(size: 14, weight: .semibold))
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 12)
+                                    .background(
+                                        Capsule()
+                                            .fill(LinearGradient(
+                                                colors: [.orange, .red],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            ))
+                                    )
+                                }
+                                
+                                // Milestone test buttons
+                                HStack(spacing: 8) {
+                                    ForEach([7, 30, 100], id: \.self) { milestone in
+                                        Button(action: {
+                                            milestoneStreakValue = milestone
+                                            withAnimation {
+                                                showMilestoneCelebration = true
+                                            }
+                                        }) {
+                                            Text("\(milestone)d")
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundColor(.white)
+                                                .padding(.horizontal, 14)
+                                                .padding(.vertical, 8)
+                                                .background(
+                                                    Capsule()
+                                                        .fill(LinearGradient(
+                                                            colors: [.purple, .pink],
+                                                            startPoint: .leading,
+                                                            endPoint: .trailing
+                                                        ))
+                                                )
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(.top, 16)
+                        }
+                        
+                        weeklyGraphSection
+                        encouragementSection
+                        dashboardSection
+                        Spacer(minLength: 120)
+                    }
+                    .padding(.horizontal, 20)
+                }
+                
+                // Streak animation overlay
+                streakAnimationOverlay(in: geometry)
             }
-            .padding(.horizontal, 20)
         }
         .background(themeManager.backgroundColor.ignoresSafeArea())
         .onAppear {
@@ -111,6 +167,20 @@ struct TodayView: View {
                 CelebrationOverlay(petName: userSettings.pet.name) {
                     withAnimation { showCelebration = false }
                 }
+            }
+        }
+        .overlay {
+            if showMilestoneCelebration {
+                StreakMilestoneCelebrationView(
+                    streak: milestoneStreakValue,
+                    petType: userSettings.pet.type,
+                    petName: userSettings.pet.name,
+                    onDismiss: {
+                        withAnimation {
+                            showMilestoneCelebration = false
+                        }
+                    }
+                )
             }
         }
     }
@@ -147,21 +217,40 @@ struct TodayView: View {
                     .fill(Color.yellow.opacity(0.15))
             )
             
-            // Streak (small)
-            HStack(spacing: 4) {
-                Text("🔥")
-                    .font(.system(size: 12))
+            // Streak (small) with animation target
+            ZStack {
+                HStack(spacing: 4) {
+                    Text("🔥")
+                        .font(.system(size: 12))
+                    
+                    Text("\(userSettings.streakData.currentStreak)")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(Color.orange.opacity(0.15))
+                )
+                .scaleEffect(streakBadgeScale)
+                .overlay(
+                    GeometryReader { geo in
+                        Color.clear
+                            .preference(key: StreakBadgePositionKey.self, value: geo.frame(in: .global))
+                    }
+                )
                 
-                Text("\(userSettings.streakData.currentStreak)")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
+                // +1 floating text
+                if showStreakPlusOne {
+                    Text("+1")
+                        .font(.system(size: 16, weight: .black, design: .rounded))
+                        .foregroundColor(.orange)
+                        .shadow(color: .orange.opacity(0.5), radius: 4)
+                        .offset(x: 30, y: plusOneOffset)
+                        .opacity(plusOneOpacity)
+                }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.orange.opacity(0.15))
-            )
         }
         .padding(.top, 12)
     }
@@ -316,18 +405,6 @@ struct TodayView: View {
                     Capsule()
                         .fill(Color.green.opacity(0.1))
                 )
-            }
-            
-            // Steps to next mood
-            if let nextMoodInfo = stepsToNextMood, stepsToGoal > 0 {
-                HStack(spacing: 8) {
-                    Text(nextMoodInfo.nextMood.emoji)
-                        .font(.system(size: 14))
-                    
-                    Text("\(nextMoodInfo.steps) more to \(nextMoodInfo.nextMood.displayName.lowercased())")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundColor(themeManager.secondaryTextColor)
-                }
             }
         }
         .padding(.top, 8)
@@ -502,6 +579,143 @@ struct TodayView: View {
         }
     }
     
+    // MARK: - Streak Animation Overlay
+    @ViewBuilder
+    private func streakAnimationOverlay(in geometry: GeometryProxy) -> some View {
+        if showStreakAnimation {
+            ZStack {
+                // Flying flame
+                ZStack {
+                    // Outer glow
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [.orange.opacity(0.6), .red.opacity(0.3), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 50
+                            )
+                        )
+                        .frame(width: 100, height: 100)
+                        .blur(radius: 10)
+                    
+                    // Flame emoji with effects
+                    Text("🔥")
+                        .font(.system(size: 50))
+                        .shadow(color: .orange, radius: 10)
+                        .shadow(color: .red.opacity(0.8), radius: 20)
+                }
+                .scaleEffect(streakFlameScale)
+                .rotationEffect(.degrees(streakFlameRotation))
+                .position(streakFlamePosition)
+                .opacity(streakFlameOpacity)
+                
+                // Particle trail effect
+                ForEach(0..<8, id: \.self) { index in
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.orange, .yellow, .red],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: CGFloat.random(in: 8...16), height: CGFloat.random(in: 8...16))
+                        .position(
+                            x: streakFlamePosition.x + CGFloat.random(in: -30...30),
+                            y: streakFlamePosition.y + CGFloat.random(in: -30...30)
+                        )
+                        .opacity(streakFlameOpacity * 0.6)
+                        .blur(radius: 2)
+                }
+            }
+            .allowsHitTesting(false)
+        }
+    }
+    
+    // MARK: - Trigger Streak Animation
+    private func triggerStreakAnimation(in geometry: GeometryProxy) {
+        // Reset states
+        let centerX = geometry.size.width / 2
+        let centerY = geometry.size.height / 2
+        let targetX = geometry.size.width - 50 // Top right area
+        let targetY: CGFloat = 70 // Near the top
+        
+        streakFlamePosition = CGPoint(x: centerX, y: centerY)
+        streakFlameScale = 0
+        streakFlameOpacity = 0
+        streakFlameRotation = -30
+        showStreakPlusOne = false
+        plusOneOffset = 10 // Start at safe position below badge
+        plusOneOpacity = 0
+        streakBadgeScale = 1.0
+        
+        showStreakAnimation = true
+        HapticFeedback.medium.trigger()
+        
+        // Phase 1: Appear with scale and glow (slower)
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
+            streakFlameScale = 1.3
+            streakFlameOpacity = 1.0
+            streakFlameRotation = 0
+        }
+        
+        // Phase 2: Fly to target with curved path (slower - 0.8s delay, 1.1s duration)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            HapticFeedback.light.trigger()
+            
+            withAnimation(.easeInOut(duration: 1.1)) {
+                streakFlamePosition = CGPoint(x: targetX, y: targetY)
+                streakFlameScale = 0.6
+                streakFlameRotation = 360
+            }
+        }
+        
+        // Phase 3: Impact - shrink and fade, badge pulse (2.0s delay - slower)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            HapticFeedback.success.trigger()
+            
+            withAnimation(.easeOut(duration: 0.3)) {
+                streakFlameScale = 0.1
+                streakFlameOpacity = 0
+            }
+            
+            // Badge pulse
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.4)) {
+                streakBadgeScale = 1.4
+            }
+            
+            // Show +1 (start at positive offset to avoid being cut off)
+            showStreakPlusOne = true
+            plusOneOffset = 10 // Start below the badge
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.5)) {
+                plusOneOffset = -10 // Move up slightly, but not too much
+                plusOneOpacity = 1.0
+            }
+        }
+        
+        // Phase 4: Badge settle (2.5s delay - slower)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                streakBadgeScale = 1.0
+            }
+        }
+        
+        // Phase 5: +1 float up and fade (3.0s delay - slower)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            withAnimation(.easeOut(duration: 0.7)) {
+                plusOneOffset = -25 // Less upward movement to avoid cutoff
+                plusOneOpacity = 0
+            }
+        }
+        
+        // Phase 6: Cleanup (4.0s delay - slower)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+            showStreakAnimation = false
+            showStreakPlusOne = false
+        }
+    }
+    
     private func updateData(steps: Int) {
         userSettings.updatePetHealth(steps: steps)
         stepDataManager.updateTodayRecord(steps: steps, goalSteps: userSettings.dailyStepGoal)
@@ -521,7 +735,20 @@ struct TodayView: View {
         
         // Update streak only when goal achieved
         if currentHealth >= 100 {
+            let previousStreak = userSettings.streakData.currentStreak
             userSettings.streakData.updateStreak(goalAchieved: true, date: Date())
+            let newStreak = userSettings.streakData.currentStreak
+            
+            // Check for milestone celebration (only if streak actually increased)
+            if newStreak > previousStreak && StreakMilestoneCelebrationView.shouldShowCelebration(for: newStreak) {
+                // Delay to show after regular celebration
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    milestoneStreakValue = newStreak
+                    withAnimation {
+                        showMilestoneCelebration = true
+                    }
+                }
+            }
         }
     }
 }
@@ -783,6 +1010,14 @@ struct CelebrationOverlay: View {
                 showContent = true
             }
         }
+    }
+}
+
+// MARK: - Streak Badge Position Key
+struct StreakBadgePositionKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
     }
 }
 

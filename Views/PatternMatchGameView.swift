@@ -31,12 +31,11 @@ struct PatternMatchGameView: View {
     @State private var userInput: [PetMoodState] = []
     @State private var attemptsLeft: Int = 3
     @State private var currentSequence: [PetMoodState] = []
-    @State private var score: Int = 0
     @State private var isAnimating: Bool = false
     
-    // High score
-    @State private var highScore: Int = PatternMatchHighScoreManager.shared.highScore
-    @State private var isNewHighScore: Bool = false
+    // Best level tracking
+    @State private var bestLevel: Int = PatternMatchHighScoreManager.shared.bestLevel
+    @State private var isNewBestLevel: Bool = false
     
     // Pattern lengths per level: Level 1 = 4, Level 2 = 5, ... Level 5 = 8
     private func patternLengthForLevel(_ level: Int) -> Int {
@@ -84,8 +83,8 @@ struct PatternMatchGameView: View {
     
     // MARK: - Game Header
     private var gameHeader: some View {
-        HStack(spacing: 8) {
-            // Close button
+        HStack(spacing: 12) {
+            // Close button - fixed width for alignment
             Button(action: {
                 dismiss()
             }) {
@@ -93,51 +92,39 @@ struct PatternMatchGameView: View {
                     Circle()
                         .fill(Color.white.opacity(0.9))
                         .frame(width: 36, height: 36)
+                        .shadow(color: .black.opacity(0.1), radius: 4)
                     
                     Image(systemName: "xmark")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.gray)
                 }
             }
+            .frame(width: 36)
             
-            // Level
-            HStack(spacing: 4) {
+            Spacer()
+            
+            // Level - Centered and prominent
+            HStack(spacing: 6) {
                 Image(systemName: "flag.fill")
-                    .font(.system(size: 12))
+                    .font(.system(size: 14))
                     .foregroundColor(.orange)
                 
                 Text("Level \(currentLevel)")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundColor(themeManager.primaryTextColor)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
             .background(
                 Capsule()
                     .fill(Color.white.opacity(0.95))
-            )
-            
-            // Score
-            HStack(spacing: 4) {
-                Image(systemName: "star.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.yellow)
-                
-                Text("\(score)")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.white.opacity(0.95))
+                    .shadow(color: .black.opacity(0.1), radius: 4)
             )
             
             Spacer()
             
-            // Attempts
-            HStack(spacing: 3) {
+            // Attempts - fixed width for alignment
+            HStack(spacing: 4) {
                 ForEach(0..<3, id: \.self) { index in
                     Image(systemName: index < attemptsLeft ? "heart.fill" : "heart.slash.fill")
                         .font(.system(size: 14))
@@ -145,15 +132,16 @@ struct PatternMatchGameView: View {
                 }
             }
             .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .padding(.vertical, 8)
             .background(
                 Capsule()
                     .fill(Color.white.opacity(0.95))
+                    .shadow(color: .black.opacity(0.1), radius: 4)
             )
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 60)
-        .padding(.bottom, 10)
+        .padding(.horizontal, 20)
+        .padding(.top, 55)
+        .padding(.bottom, 12)
     }
     
     // MARK: - Ready Overlay
@@ -173,11 +161,11 @@ struct PatternMatchGameView: View {
                 .foregroundColor(.white)
                 .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
             
-            // High score
+            // Best level
             HStack(spacing: 8) {
                 Image(systemName: "trophy.fill")
                     .foregroundColor(.yellow)
-                Text("Best: \(highScore)")
+                Text("Best: Level \(bestLevel)")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
             }
@@ -406,13 +394,13 @@ struct PatternMatchGameView: View {
                     .frame(width: 80, height: 80)
             }
             
-            // Points earned
+            // Level progress
             VStack(spacing: 8) {
-                Text("+\(currentLevel * 100) points!")
+                Text("Level \(currentLevel) Complete!")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.yellow)
                 
-                Text("Total: \(score)")
+                Text("\(maxLevel - currentLevel) levels remaining")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white.opacity(0.8))
             }
@@ -460,21 +448,25 @@ struct PatternMatchGameView: View {
                     .frame(width: 100, height: 100)
             }
             
-            // Final score
+            // Level achievement
             VStack(spacing: 12) {
-                Text("Final Score")
+                Text("Level 5 Mastered!")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white.opacity(0.7))
                 
-                Text("\(score)")
-                    .font(.system(size: 48, weight: .black, design: .rounded))
-                    .foregroundColor(.yellow)
+                HStack(spacing: 4) {
+                    ForEach(1...5, id: \.self) { level in
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(.yellow)
+                    }
+                }
                 
-                if isNewHighScore {
+                if isNewBestLevel {
                     HStack(spacing: 6) {
                         Image(systemName: "crown.fill")
                             .foregroundColor(.yellow)
-                        Text("NEW HIGH SCORE!")
+                        Text("NEW BEST LEVEL!")
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.yellow)
                     }
@@ -571,15 +563,15 @@ struct PatternMatchGameView: View {
             } else {
                 // Game over
                 VStack(spacing: 12) {
-                    Text("Final Score: \(score)")
+                    Text("Reached: Level \(currentLevel > 1 ? currentLevel - 1 : 1)")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(.yellow)
                     
-                    if isNewHighScore {
+                    if isNewBestLevel {
                         HStack(spacing: 6) {
                             Image(systemName: "crown.fill")
                                 .foregroundColor(.yellow)
-                            Text("NEW HIGH SCORE!")
+                            Text("NEW BEST LEVEL!")
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(.yellow)
                         }
@@ -629,20 +621,39 @@ struct PatternMatchGameView: View {
     // MARK: - Game Logic
     private func startGame() {
         currentLevel = 1
-        score = 0
         attemptsLeft = 3
-        isNewHighScore = false
+        isNewBestLevel = false
         startLevel()
         HapticFeedback.medium.trigger()
     }
     
     private func startLevel() {
-        // Generate random sequence for current level
+        // Generate truly random sequence for current level
+        // Ensure variety by avoiding too many consecutive same moods
         let length = patternLengthForLevel(currentLevel)
-        currentSequence = (0..<length).map { _ in
-            PetMoodState.allCases.randomElement()!
+        var sequence: [PetMoodState] = []
+        var lastTwoMoods: [PetMoodState] = []
+        
+        for _ in 0..<length {
+            var availableMoods = PetMoodState.allCases
+            
+            // If last two moods are the same, exclude that mood for more variety
+            if lastTwoMoods.count >= 2 && lastTwoMoods[0] == lastTwoMoods[1] {
+                availableMoods = availableMoods.filter { $0 != lastTwoMoods[0] }
+            }
+            
+            // Shuffle for better randomness
+            let randomMood = availableMoods.shuffled().first!
+            sequence.append(randomMood)
+            
+            // Track last two moods
+            lastTwoMoods.append(randomMood)
+            if lastTwoMoods.count > 2 {
+                lastTwoMoods.removeFirst()
+            }
         }
         
+        currentSequence = sequence
         userInput = []
         currentShowIndex = 0
         showElement = nil
@@ -699,12 +710,11 @@ struct PatternMatchGameView: View {
             
             // Check if sequence is complete
             if userInput.count == currentSequence.count {
-                // Level complete!
-                score += currentLevel * 100
+                // Level complete - check for best level
+                isNewBestLevel = PatternMatchHighScoreManager.shared.checkAndUpdateBestLevel(currentLevel)
                 
                 if currentLevel == maxLevel {
                     // Game complete!
-                    isNewHighScore = PatternMatchHighScoreManager.shared.checkAndUpdateHighScore(score)
                     gameState = .gameComplete
                 } else {
                     gameState = .levelComplete
@@ -716,8 +726,10 @@ struct PatternMatchGameView: View {
             HapticFeedback.error.trigger()
             attemptsLeft -= 1
             
-            // Update high score even on failure
-            isNewHighScore = PatternMatchHighScoreManager.shared.checkAndUpdateHighScore(score)
+            // Update best level even on failure (current level -1 since we failed this one)
+            if currentLevel > 1 {
+                isNewBestLevel = PatternMatchHighScoreManager.shared.checkAndUpdateBestLevel(currentLevel - 1)
+            }
             
             gameState = .failure
         }
@@ -735,33 +747,38 @@ struct PatternMatchGameView: View {
     }
     
     private func startNextLevel() {
+        // Reset state first before incrementing level
+        gameState = .ready
         currentLevel += 1
-        startLevel()
+        
+        // Small delay before starting to show the transition
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            startLevel()
+        }
     }
     
     private func restartGame() {
         currentLevel = 1
-        score = 0
         attemptsLeft = 3
-        isNewHighScore = false
+        isNewBestLevel = false
         startLevel()
     }
 }
 
-// MARK: - High Score Manager
+// MARK: - Best Level Manager
 class PatternMatchHighScoreManager {
     static let shared = PatternMatchHighScoreManager()
     
-    private let highScoreKey = "PatternMatchHighScore"
+    private let bestLevelKey = "PatternMatchBestLevel"
     
-    var highScore: Int {
-        get { UserDefaults.standard.integer(forKey: highScoreKey) }
-        set { UserDefaults.standard.set(newValue, forKey: highScoreKey) }
+    var bestLevel: Int {
+        get { UserDefaults.standard.integer(forKey: bestLevelKey) }
+        set { UserDefaults.standard.set(newValue, forKey: bestLevelKey) }
     }
     
-    func checkAndUpdateHighScore(_ score: Int) -> Bool {
-        if score > highScore {
-            highScore = score
+    func checkAndUpdateBestLevel(_ level: Int) -> Bool {
+        if level > bestLevel {
+            bestLevel = level
             return true
         }
         return false

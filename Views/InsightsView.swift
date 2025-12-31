@@ -519,10 +519,19 @@ struct WeeklyInsightChart: View {
         return formatter.string(from: date)
     }
     
+    private func formatSteps(_ steps: Int) -> String {
+        if steps >= 10000 {
+            return String(format: "%.1fK", Double(steps) / 1000.0)
+        } else if steps >= 1000 {
+            return String(format: "%.1fK", Double(steps) / 1000.0)
+        }
+        return "\(steps)"
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
-            let height = geometry.size.height - 30
+            let height = geometry.size.height - 50 // Increased space for labels
             let barWidth: CGFloat = (width - 60) / CGFloat(weekDays.count)
             let spacing: CGFloat = 8
             
@@ -535,7 +544,14 @@ struct WeeklyInsightChart: View {
                         let reachedGoal = steps >= goalSteps
                         let isToday = Calendar.current.isDateInToday(day)
                         
-                        VStack(spacing: 6) {
+                        VStack(spacing: 4) {
+                            // Step count label above bar
+                            Text(formatSteps(steps))
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundColor(reachedGoal ? .green : themeManager.accentColor)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                            
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(
                                     reachedGoal
@@ -551,7 +567,7 @@ struct WeeklyInsightChart: View {
                         }
                     }
                 }
-                .frame(height: height + 20)
+                .frame(height: height + 40)
             }
         }
     }

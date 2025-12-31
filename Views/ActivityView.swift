@@ -1236,16 +1236,24 @@ class ActivityLocationManager: NSObject, ObservableObject, CLLocationManagerDele
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.distanceFilter = 5
         manager.activityType = .fitness
-        manager.allowsBackgroundLocationUpdates = true
+        // Don't enable background updates by default - only when actively tracking
+        manager.allowsBackgroundLocationUpdates = false
         manager.pausesLocationUpdatesAutomatically = false
-        manager.showsBackgroundLocationIndicator = true
     }
     
     func requestPermission() {
         manager.requestAlwaysAuthorization()
     }
     
+    /// Get a single location update for display purposes (not tracking)
+    func requestSingleLocation() {
+        manager.requestLocation()
+    }
+    
     func startTracking() {
+        // Enable background location updates only when actively tracking
+        manager.allowsBackgroundLocationUpdates = true
+        manager.showsBackgroundLocationIndicator = true
         manager.startUpdatingLocation()
         isTracking = true
         startTime = Date()
@@ -1266,6 +1274,11 @@ class ActivityLocationManager: NSObject, ObservableObject, CLLocationManagerDele
         isTracking = false
         timer?.invalidate()
         timer = nil
+        
+        // Stop location updates and disable background tracking
+        manager.stopUpdatingLocation()
+        manager.allowsBackgroundLocationUpdates = false
+        manager.showsBackgroundLocationIndicator = false
         
         let result = (totalDistance, elapsedTime, routeCoordinates)
         return result
@@ -1299,11 +1312,18 @@ class ActivityLocationManager: NSObject, ObservableObject, CLLocationManagerDele
         DispatchQueue.main.async {
             self.authorizationStatus = manager.authorizationStatus
             
+            // Only request a single location for display, don't continuously track
             if manager.authorizationStatus == .authorizedWhenInUse ||
                manager.authorizationStatus == .authorizedAlways {
-                manager.startUpdatingLocation()
+                // Get initial location for map display only
+                manager.requestLocation()
             }
         }
+    }
+    
+    // Required for requestLocation()
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location manager error: \(error.localizedDescription)")
     }
 }
 
