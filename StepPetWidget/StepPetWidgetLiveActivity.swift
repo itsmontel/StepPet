@@ -41,6 +41,36 @@ struct WidgetTheme {
     static let textSecondary = Color(red: 0.5, green: 0.5, blue: 0.5)
 }
 
+// MARK: - Pet Image Helper for Live Activity
+struct LiveActivityPetImage: View {
+    let petType: String
+    let size: CGFloat
+    
+    private var emoji: String {
+        switch petType.lowercased() {
+        case "dog": return "🐕"
+        case "cat": return "🐱"
+        case "bunny": return "🐰"
+        case "hamster": return "🐹"
+        case "horse": return "🐴"
+        default: return "🐾"
+        }
+    }
+    
+    var body: some View {
+        ZStack {
+            // Background
+            Circle()
+                .fill(WidgetTheme.accent.opacity(0.2))
+                .frame(width: size, height: size)
+            
+            // Emoji fallback that always shows
+            Text(emoji)
+                .font(.system(size: size * 0.55))
+        }
+    }
+}
+
 // MARK: - Live Activity Widget
 struct StepPetWidgetLiveActivity: Widget {
     var body: some WidgetConfiguration {
@@ -95,10 +125,6 @@ struct PremiumLockScreenView: View {
         return String(format: "%d:%02d", minutes, seconds)
     }
     
-    private var petImageName: String {
-        "\(context.attributes.petType)\(context.attributes.petMood)"
-    }
-    
     var body: some View {
         HStack(spacing: 0) {
             // Left: Pet Hero Section
@@ -116,10 +142,10 @@ struct PremiumLockScreenView: View {
                     .frame(width: 80, height: 80)
                 
                 // Pet image
-                Image(petImageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 60, height: 60)
+                LiveActivityPetImage(
+                    petType: context.attributes.petType,
+                    size: 60
+                )
             }
             .padding(.leading, 12)
             
@@ -241,17 +267,13 @@ struct PremiumStatBadge: View {
 struct PremiumExpandedLeading: View {
     let context: ActivityViewContext<WorkoutActivityAttributes>
     
-    private var petImageName: String {
-        "\(context.attributes.petType)\(context.attributes.petMood)"
-    }
-    
     var body: some View {
         HStack(spacing: 8) {
             // Pet image
-            Image(petImageName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 36, height: 36)
+            LiveActivityPetImage(
+                petType: context.attributes.petType,
+                size: 36
+            )
             
             VStack(alignment: .leading, spacing: 1) {
                 Text(context.attributes.petName)
@@ -385,15 +407,11 @@ struct ExpandedStatItem: View {
 struct PremiumCompactLeading: View {
     let context: ActivityViewContext<WorkoutActivityAttributes>
     
-    private var petImageName: String {
-        "\(context.attributes.petType)\(context.attributes.petMood)"
-    }
-    
     var body: some View {
-        Image(petImageName)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: 24, height: 24)
+        LiveActivityPetImage(
+            petType: context.attributes.petType,
+            size: 24
+        )
     }
 }
 
@@ -424,15 +442,11 @@ struct PremiumCompactTrailing: View {
 struct PremiumMinimal: View {
     let context: ActivityViewContext<WorkoutActivityAttributes>
     
-    private var petImageName: String {
-        "\(context.attributes.petType)\(context.attributes.petMood)"
-    }
-    
     var body: some View {
-        Image(petImageName)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: 20, height: 20)
+        LiveActivityPetImage(
+            petType: context.attributes.petType,
+            size: 20
+        )
     }
 }
 

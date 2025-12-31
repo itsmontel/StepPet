@@ -17,6 +17,43 @@ struct StepPetWidgetTheme {
     static let textSecondary = Color(red: 0.5, green: 0.5, blue: 0.5)
 }
 
+// MARK: - Pet Image Helper
+struct WidgetPetImage: View {
+    let petType: String
+    let petMood: String
+    let size: CGFloat
+    let healthColor: Color
+    
+    private var imageName: String {
+        "\(petType)\(petMood)"
+    }
+    
+    private var emoji: String {
+        switch petType.lowercased() {
+        case "dog": return "🐕"
+        case "cat": return "🐱"
+        case "bunny": return "🐰"
+        case "hamster": return "🐹"
+        case "horse": return "🐴"
+        default: return "🐾"
+        }
+    }
+    
+    var body: some View {
+        // Show emoji with colored background - simple and always works
+        ZStack {
+            // Background circle with pet color
+            Circle()
+                .fill(healthColor.opacity(0.15))
+                .frame(width: size, height: size)
+            
+            // Emoji - always visible
+            Text(emoji)
+                .font(.system(size: size * 0.55))
+        }
+    }
+}
+
 // MARK: - Timeline Provider
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> StepPetEntry {
@@ -107,29 +144,14 @@ struct StepPetWidgetEntryView: View {
         }
     }
     
-    private var petImageName: String {
-        "\(entry.petType)\(entry.petMood)"
-    }
-    
-    private var petSymbol: String {
-        switch entry.petType.lowercased() {
-        case "cat": return "cat.fill"
-        case "dog": return "dog.fill"
-        case "bunny", "rabbit": return "hare.fill"
-        case "hamster": return "lizard.fill" // closest match
-        case "horse": return "🐴"
-        default: return "pawprint.fill"
-        }
-    }
-    
     var body: some View {
         switch family {
         case .systemSmall:
-            SmallWidgetView(entry: entry, progress: progress, healthColor: healthColor, petImageName: petImageName, petSymbol: petSymbol)
+            SmallWidgetView(entry: entry, progress: progress, healthColor: healthColor)
         case .systemMedium:
-            MediumWidgetView(entry: entry, progress: progress, healthColor: healthColor, petImageName: petImageName, petSymbol: petSymbol)
+            MediumWidgetView(entry: entry, progress: progress, healthColor: healthColor)
         default:
-            SmallWidgetView(entry: entry, progress: progress, healthColor: healthColor, petImageName: petImageName, petSymbol: petSymbol)
+            SmallWidgetView(entry: entry, progress: progress, healthColor: healthColor)
         }
     }
 }
@@ -139,8 +161,6 @@ struct SmallWidgetView: View {
     let entry: StepPetEntry
     let progress: Double
     let healthColor: Color
-    let petImageName: String
-    let petSymbol: String
     
     var body: some View {
         ZStack {
@@ -217,18 +237,12 @@ struct SmallWidgetView: View {
                         .rotationEffect(.degrees(-90))
                     
                     // Pet image - THE HERO
-                    if let _ = UIImage(named: petImageName, in: Bundle.main, with: nil) {
-                        Image(petImageName)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 45, height: 45)
-                    } else {
-                        // Fallback to SF Symbol
-                        Image(systemName: petSymbol)
-                            .font(.system(size: 35, weight: .medium))
-                            .foregroundColor(healthColor)
-                            .frame(width: 45, height: 45)
-                    }
+                    WidgetPetImage(
+                        petType: entry.petType,
+                        petMood: entry.petMood,
+                        size: 45,
+                        healthColor: healthColor
+                    )
                 }
                 
                 // Bottom: Steps + Progress
@@ -282,8 +296,6 @@ struct MediumWidgetView: View {
     let entry: StepPetEntry
     let progress: Double
     let healthColor: Color
-    let petImageName: String
-    let petSymbol: String
     
     var body: some View {
         ZStack {
@@ -334,18 +346,12 @@ struct MediumWidgetView: View {
                             .rotationEffect(.degrees(-90))
                         
                         // Pet - HERO
-                        if let _ = UIImage(named: petImageName, in: Bundle.main, with: nil) {
-                            Image(petImageName)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 52, height: 52)
-                        } else {
-                            // Fallback to SF Symbol
-                            Image(systemName: petSymbol)
-                                .font(.system(size: 40, weight: .medium))
-                                .foregroundColor(healthColor)
-                                .frame(width: 52, height: 52)
-                        }
+                        WidgetPetImage(
+                            petType: entry.petType,
+                            petMood: entry.petMood,
+                            size: 52,
+                            healthColor: healthColor
+                        )
                     }
                     
                     // Pet name

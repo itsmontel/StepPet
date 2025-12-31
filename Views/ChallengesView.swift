@@ -1028,7 +1028,6 @@ struct ActivityPlaySheet: View {
     @EnvironmentObject var userSettings: UserSettings
     @Environment(\.dismiss) var dismiss
     
-    @State private var isReady = false
     @State private var showAnimation = false
     @State private var animationComplete = false
     @State private var pulseAnimation = false
@@ -1098,8 +1097,7 @@ struct ActivityPlaySheet: View {
                     Spacer()
                     
                     // Main content area
-                    if isReady {
-                        if showAnimation {
+                    if showAnimation {
                             // Animation playing state
                             VStack(spacing: isCompact ? 16 : 24) {
                                 // GIF container with nice styling
@@ -1245,24 +1243,11 @@ struct ActivityPlaySheet: View {
                                 )
                             }
                         }
-                    } else {
-                        // Loading
-                        VStack(spacing: 16) {
-                            ProgressView()
-                                .scaleEffect(1.3)
-                                .tint(activity.color)
-                            
-                            Text("Loading...")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(themeManager.secondaryTextColor)
-                        }
-                    }
                     
                     Spacer()
                     
                     // Bottom button
-                    if isReady {
-                        if animationComplete {
+                    if animationComplete {
                             Button(action: {
                                 dismiss()
                                 // Don't call onComplete here - credits already deducted at start
@@ -1317,16 +1302,8 @@ struct ActivityPlaySheet: View {
                             .disabled(userSettings.playCredits <= 0)
                             .opacity(userSettings.playCredits > 0 ? 1 : 0.5)
                         }
-                    }
                     
                     Spacer().frame(height: isCompact ? 20 : 30)
-                }
-            }
-        }
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                    isReady = true
                 }
             }
         }
