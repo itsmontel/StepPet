@@ -12,6 +12,9 @@ struct ContentView: View {
     @State private var selectedTab = 2 // Start on Today (center)
     @State private var visitedTabs: Set<Int> = [2] // Start with Today visited
     
+    // Listen for navigation to Challenges
+    private let navigateToChallengesNotification = NotificationCenter.default.publisher(for: NSNotification.Name("NavigateToChallenges"))
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             // Background
@@ -44,6 +47,11 @@ struct ContentView: View {
             visitedTabs.insert(newValue)
             achievementManager.updateProgress(achievementId: "explorer", progress: visitedTabs.count)
             HapticFeedback.light.trigger()
+        }
+        .onReceive(navigateToChallengesNotification) { _ in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                selectedTab = 3 // Navigate to Challenges tab
+            }
         }
         .overlay {
             if achievementManager.showUnlockAnimation, let achievement = achievementManager.recentlyUnlocked {

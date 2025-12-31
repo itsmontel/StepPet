@@ -26,7 +26,6 @@ struct TodayView: View {
     @State private var plusOneOffset: CGFloat = 0
     @State private var plusOneOpacity: Double = 0
     @State private var streakFlameRotation: Double = 0
-    @State private var showTestButton = true // Set to false in production
     
     // Milestone celebration states
     @State private var showMilestoneCelebration = false
@@ -81,61 +80,6 @@ struct TodayView: View {
                     VStack(spacing: 0) {
                         headerSection
                         heroCardSection
-                        
-                        // Test buttons (remove in production)
-                        if showTestButton {
-                            VStack(spacing: 10) {
-                                Button(action: {
-                                    triggerStreakAnimation(in: geometry)
-                                }) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "flame.fill")
-                                            .foregroundColor(.orange)
-                                        Text("Test +1 Streak")
-                                            .font(.system(size: 14, weight: .semibold))
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 12)
-                                    .background(
-                                        Capsule()
-                                            .fill(LinearGradient(
-                                                colors: [.orange, .red],
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            ))
-                                    )
-                                }
-                                
-                                // Milestone test buttons
-                                HStack(spacing: 8) {
-                                    ForEach([7, 30, 100], id: \.self) { milestone in
-                                        Button(action: {
-                                            milestoneStreakValue = milestone
-                                            withAnimation {
-                                                showMilestoneCelebration = true
-                                            }
-                                        }) {
-                                            Text("\(milestone)d")
-                                                .font(.system(size: 12, weight: .bold))
-                                                .foregroundColor(.white)
-                                                .padding(.horizontal, 14)
-                                                .padding(.vertical, 8)
-                                                .background(
-                                                    Capsule()
-                                                        .fill(LinearGradient(
-                                                            colors: [.purple, .pink],
-                                                            startPoint: .leading,
-                                                            endPoint: .trailing
-                                                        ))
-                                                )
-                                        }
-                                    }
-                                }
-                            }
-                            .padding(.top, 16)
-                        }
-                        
                         weeklyGraphSection
                         encouragementSection
                         dashboardSection
@@ -200,30 +144,19 @@ struct TodayView: View {
             
             Spacer()
             
-            // Credits
-            HStack(spacing: 4) {
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.yellow)
-                
-                Text("\(userSettings.playCredits)")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.yellow.opacity(0.15))
-            )
-            
-            // Streak (small) with animation target
-            ZStack {
+            // Credits (clickable - navigates to Pet section)
+            Button(action: {
+                HapticFeedback.light.trigger()
+                // Set target section to Pet (1) and navigate to Challenges
+                UserDefaults.standard.set(1, forKey: "challengesTargetSegment")
+                NotificationCenter.default.post(name: NSNotification.Name("NavigateToChallenges"), object: nil, userInfo: ["segment": 1])
+            }) {
                 HStack(spacing: 4) {
-                    Text("🔥")
-                        .font(.system(size: 12))
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.yellow)
                     
-                    Text("\(userSettings.streakData.currentStreak)")
+                    Text("\(userSettings.playCredits)")
                         .font(.system(size: 14, weight: .bold, design: .rounded))
                         .foregroundColor(themeManager.primaryTextColor)
                 }
@@ -231,8 +164,35 @@ struct TodayView: View {
                 .padding(.vertical, 6)
                 .background(
                     Capsule()
-                        .fill(Color.orange.opacity(0.15))
+                        .fill(Color.yellow.opacity(0.15))
                 )
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // Streak (small) with animation target (clickable - navigates to Awards section)
+            ZStack {
+                Button(action: {
+                    HapticFeedback.light.trigger()
+                    // Set target section to Awards (2) and navigate to Challenges
+                    UserDefaults.standard.set(2, forKey: "challengesTargetSegment")
+                    NotificationCenter.default.post(name: NSNotification.Name("NavigateToChallenges"), object: nil, userInfo: ["segment": 2])
+                }) {
+                    HStack(spacing: 4) {
+                        Text("🔥")
+                            .font(.system(size: 12))
+                        
+                        Text("\(userSettings.streakData.currentStreak)")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color.orange.opacity(0.15))
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
                 .scaleEffect(streakBadgeScale)
                 .overlay(
                     GeometryReader { geo in
@@ -355,16 +315,7 @@ struct TodayView: View {
         .padding(.horizontal, 16)
         .background(
             RoundedRectangle(cornerRadius: 28)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            themeManager.accentColor.opacity(0.12),
-                            themeManager.accentColor.opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(themeManager.backgroundColor)
         )
         .padding(.top, 16)
     }

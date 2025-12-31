@@ -88,6 +88,14 @@ struct ChallengesView: View {
             .padding(.horizontal, 20)
         }
         .background(themeManager.backgroundColor.ignoresSafeArea())
+        .onAppear {
+            // Check if we should navigate to a specific segment
+            if let targetSegment = UserDefaults.standard.object(forKey: "challengesTargetSegment") as? Int {
+                selectedSegment = targetSegment
+                // Clear the target so it doesn't trigger again
+                UserDefaults.standard.removeObject(forKey: "challengesTargetSegment")
+            }
+        }
         .sheet(item: $selectedChallenge) { challenge in
             ChallengeDetailSheet(challenge: challenge)
         }

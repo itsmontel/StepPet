@@ -788,6 +788,7 @@ struct CountdownOverlay: View {
     @Binding var isShowing: Bool
     @Binding var countdownValue: Int
     let onComplete: () -> Void
+    let onCancel: () -> Void
     
     @State private var numberScale: CGFloat = 0.3
     @State private var numberOpacity: Double = 0
@@ -796,6 +797,8 @@ struct CountdownOverlay: View {
     @State private var particles: [CountdownParticle] = []
     @State private var backgroundBlur: CGFloat = 0
     @State private var pulseRings: [PulseRing] = []
+    @State private var cancelButtonOpacity: Double = 0
+    @State private var isCancelled: Bool = false
     
     private let accentColor = Color(red: 0.4, green: 0.8, blue: 0.6)
     
@@ -882,10 +885,38 @@ struct CountdownOverlay: View {
                     .tracking(4)
                     .textCase(.uppercase)
                     .opacity(numberOpacity)
+                
+                // Cancel button
+                Button(action: {
+                    HapticFeedback.light.trigger()
+                    isCancelled = true
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        isShowing = false
+                    }
+                    onCancel()
+                }) {
+                    Text("Cancel")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 14)
+                        .background(
+                            Capsule()
+                                .fill(Color.red.opacity(0.8))
+                        )
+                        .shadow(color: Color.red.opacity(0.4), radius: 10)
+                }
+                .padding(.top, 20)
+                .opacity(cancelButtonOpacity)
             }
         }
         .onAppear {
             startPremiumCountdown()
+            
+            // Fade in cancel button
+            withAnimation(.easeIn(duration: 0.3).delay(0.2)) {
+                cancelButtonOpacity = 1.0
+            }
         }
     }
     
@@ -920,6 +951,9 @@ struct CountdownOverlay: View {
     }
     
     private func animateSequence(remaining: Int) {
+        // Check if cancelled
+        guard !isCancelled else { return }
+        
         if remaining > 0 {
             // Haptic
             HapticFeedback.medium.trigger()
@@ -928,6 +962,9 @@ struct CountdownOverlay: View {
             addPulseRing()
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) {
+                // Check again before continuing
+                guard !self.isCancelled else { return }
+                
                 // Shrink out
                 withAnimation(.easeIn(duration: 0.15)) {
                     numberScale = 1.3
@@ -935,6 +972,9 @@ struct CountdownOverlay: View {
                 }
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    // Check again before continuing
+                    guard !self.isCancelled else { return }
+                    
                     countdownValue = remaining - 1
                     numberScale = 0.5
                     
@@ -948,6 +988,9 @@ struct CountdownOverlay: View {
                 }
             }
         } else {
+            // Check if cancelled before completing
+            guard !isCancelled else { return }
+            
             // GO! animation
             HapticFeedback.success.trigger()
             
@@ -959,11 +1002,15 @@ struct CountdownOverlay: View {
             // Multiple pulse rings
             for i in 0..<3 {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.1) {
+                    guard !self.isCancelled else { return }
                     addPulseRing()
                 }
             }
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                // Final check before starting workout
+                guard !self.isCancelled else { return }
+                
                 withAnimation(.easeOut(duration: 0.4)) {
                     numberScale = 2.0
                     numberOpacity = 0
@@ -971,6 +1018,7 @@ struct CountdownOverlay: View {
                 }
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    guard !self.isCancelled else { return }
                     isShowing = false
                     onComplete()
                 }
@@ -1379,6 +1427,10 @@ struct ActivityView: View {
                     countdownValue: $countdownValue,
                     onComplete: {
                         actuallyStartWorkout()
+                    },
+                    onCancel: {
+                        // Reset state when cancelled
+                        showCountdown = false
                     }
                 )
                 .transition(.opacity)

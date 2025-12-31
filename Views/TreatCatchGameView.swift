@@ -867,12 +867,12 @@ struct TreatCatchGameView: View {
             effectColor = .green
             lastCatchWasGood = true
             
-            // Gentle scale animation
-            withAnimation(.spring(response: 0.15, dampingFraction: 0.7)) {
-                petScale = 1.08
+            // Very subtle scale animation
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.9)) {
+                petScale = 1.02
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.spring()) { petScale = 1.0 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { petScale = 1.0 }
             }
             
             withAnimation(.easeInOut(duration: 0.15)) { scoreFlash = true }
