@@ -1219,7 +1219,21 @@ class WalkHistoryManager: ObservableObject {
     }
     
     func deleteWalk(at offsets: IndexSet) {
+        // Delete photos for each walk being removed
+        for index in offsets {
+            PhotoStorageManager.shared.deletePhotos(for: walkHistory[index].id)
+        }
         walkHistory.remove(atOffsets: offsets)
+        saveHistory()
+    }
+    
+    /// Delete a specific walk by ID (with photo cleanup)
+    func deleteWalk(id: UUID) {
+        // Delete associated photos first
+        PhotoStorageManager.shared.deletePhotos(for: id)
+        
+        // Remove from history
+        walkHistory.removeAll { $0.id == id }
         saveHistory()
     }
     
@@ -1409,6 +1423,8 @@ struct ActivityView: View {
     @State private var encouragementTimer: Timer?
     @State private var showCountdown = false
     @State private var countdownValue = 3
+    @State private var selectedRecentWalk: WalkRecord?
+    @State private var showRecentDetail = false
     
     var body: some View {
         ZStack {
@@ -1448,6 +1464,12 @@ struct ActivityView: View {
                 weatherManager.fetchWeather(for: location)
             }
         }
+        .onChange(of: locationManager.elapsedTime) { _, _ in
+            // Update Live Activity every time the elapsed time changes
+            if isWorkoutActive {
+                updateLiveActivity()
+            }
+        }
         .sheet(isPresented: $showHistory) {
             ActivityHistoryView(walkHistory: walkHistory)
         }
@@ -1458,6 +1480,11 @@ struct ActivityView: View {
                     walkHistory: walkHistory,
                     onDismiss: { showWorkoutComplete = false }
                 )
+            }
+        }
+        .sheet(isPresented: $showRecentDetail) {
+            if let walk = selectedRecentWalk {
+                ActivityDetailView(walk: walk, walkHistory: walkHistory)
             }
         }
         .alert("Location Access Required", isPresented: $showPermissionAlert) {
@@ -1698,9 +1725,13 @@ struct ActivityView: View {
                 
                 if !walkHistory.walkHistory.isEmpty {
                     Button(action: { showHistory = true }) {
-                        Text("See All")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(themeManager.accentColor)
+                        HStack(spacing: 4) {
+                            Text("See All")
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(themeManager.accentColor)
                     }
                 }
             }
@@ -1725,8 +1756,24 @@ struct ActivityView: View {
             } else {
                 VStack(spacing: 10) {
                     ForEach(Array(walkHistory.walkHistory.prefix(3))) { walk in
-                        RecentActivityCard(walk: walk)
+                        Button(action: {
+                            selectedRecentWalk = walk
+                            showRecentDetail = true
+                            HapticFeedback.light.trigger()
+                        }) {
+                            EnhancedRecentActivityCard(walk: walk)
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
+                }
+                
+                // Tap hint
+                if walkHistory.walkHistory.count > 0 {
+                    Text("Tap an activity to view details")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor.opacity(0.6))
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 4)
                 }
             }
         }
@@ -1863,12 +1910,23 @@ struct ActivityView: View {
         locationManager.startTracking()
         withAnimation(.spring(response: 0.4)) { isWorkoutActive = true }
         HapticFeedback.success.trigger()
+        
+        // Start Live Activity for lock screen display
+        WorkoutLiveActivityWrapper.shared.startActivity(
+            workoutType: "Activity",
+            petName: userSettings.pet.name,
+            petType: userSettings.pet.type.rawValue.lowercased(),
+            petMood: userSettings.pet.moodState.rawValue.lowercased()
+        )
     }
     
     private func stopWorkout() {
         let result = locationManager.stopTracking()
         encouragementTimer?.invalidate()
         encouragementTimer = nil
+        
+        // End Live Activity
+        WorkoutLiveActivityWrapper.shared.endActivity()
         
         let calories = Int(result.distance * 0.000621371 * 80)
         
@@ -1891,6 +1949,21 @@ struct ActivityView: View {
         HapticFeedback.success.trigger()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { showWorkoutComplete = true }
+    }
+    
+    /// Update live activity with current workout stats
+    private func updateLiveActivity() {
+        let distance = locationManager.totalDistance
+        let calories = Int(distance * 0.000621371 * 80)
+        let steps = Int(distance / 0.762) // Estimated steps
+        
+        WorkoutLiveActivityWrapper.shared.updateActivity(
+            elapsedTime: locationManager.elapsedTime,
+            distance: distance,
+            pace: calculatePace(),
+            calories: calories,
+            steps: steps
+        )
     }
     
     private func formatTime(_ interval: TimeInterval) -> String {
@@ -2043,6 +2116,155 @@ struct WorkoutStatPill: View {
     }
 }
 
+// MARK: - Enhanced Recent Activity Card (with better map preview)
+struct EnhancedRecentActivityCard: View {
+    let walk: WalkRecord
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    private var activityColor: Color { walk.workoutType == "run" ? .orange : .green }
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Route Map Preview
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(activityColor.opacity(0.1))
+                    .frame(width: 60, height: 60)
+                
+                if !walk.coordinates.isEmpty {
+                    // Real mini map
+                    MiniMapPreview(coordinates: walk.coordinates, color: activityColor)
+                        .frame(width: 52, height: 52)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                } else {
+                    Image(systemName: walk.workoutType == "run" ? "figure.run" : "figure.walk")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(activityColor)
+                }
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(formatDate(walk.date))
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    if let mood = walk.mood {
+                        Text(mood.emoji)
+                            .font(.system(size: 12))
+                    }
+                    
+                    Spacer()
+                    
+                    Text(walk.workoutType.capitalized)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(activityColor))
+                }
+                
+                HStack(spacing: 12) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(activityColor)
+                        Text(String(format: "%.2f mi", walk.distanceInMiles))
+                    }
+                    
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.blue)
+                        Text(walk.formattedDuration)
+                    }
+                    
+                    HStack(spacing: 4) {
+                        Image(systemName: "speedometer")
+                            .font(.system(size: 10))
+                            .foregroundColor(.purple)
+                        Text(walk.pace)
+                    }
+                }
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(themeManager.secondaryTextColor)
+            }
+            
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(themeManager.secondaryTextColor.opacity(0.5))
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.05), radius: 8, y: 4)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(activityColor.opacity(0.15), lineWidth: 1)
+        )
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        if Calendar.current.isDateInToday(date) {
+            return "Today"
+        } else if Calendar.current.isDateInYesterday(date) {
+            return "Yesterday"
+        }
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Mini Map Preview (actual Map view)
+struct MiniMapPreview: View {
+    let coordinates: [CLLocationCoordinate2D]
+    let color: Color
+    
+    private var mapRegion: MKCoordinateRegion {
+        guard !coordinates.isEmpty else {
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            )
+        }
+        
+        let lats = coordinates.map { $0.latitude }
+        let lons = coordinates.map { $0.longitude }
+        
+        let minLat = lats.min() ?? 0
+        let maxLat = lats.max() ?? 0
+        let minLon = lons.min() ?? 0
+        let maxLon = lons.max() ?? 0
+        
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLon + maxLon) / 2
+        )
+        
+        let latDelta = max((maxLat - minLat) * 1.5, 0.005)
+        let lonDelta = max((maxLon - minLon) * 1.5, 0.005)
+        
+        return MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
+        )
+    }
+    
+    var body: some View {
+        Map(initialPosition: .region(mapRegion)) {
+            MapPolyline(coordinates: coordinates)
+                .stroke(color, lineWidth: 2)
+        }
+        .mapStyle(.standard)
+        .disabled(true) // Prevent interaction
+        .allowsHitTesting(false)
+    }
+}
+
+// Legacy card kept for compatibility
 struct RecentActivityCard: View {
     let walk: WalkRecord
     @EnvironmentObject var themeManager: ThemeManager
@@ -2536,6 +2758,8 @@ struct ActivityHistoryView: View {
     @State private var selectedPeriod = 0
     @State private var selectedWalk: WalkRecord?
     @State private var showDetailView = false
+    @State private var walkToDelete: WalkRecord?
+    @State private var showDeleteConfirmation = false
     
     private var filteredWalks: [WalkRecord] {
         switch selectedPeriod {
@@ -2660,29 +2884,11 @@ struct ActivityHistoryView: View {
                         }
                         .padding(.horizontal, 20)
                         
-                        // Combined Routes Map
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack {
-                                Text("Your Routes")
-                                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                                    .foregroundColor(themeManager.primaryTextColor)
-                                
-                                Spacer()
-                                
-                                Text("\(filteredWalks.filter { !$0.coordinates.isEmpty }.count) tracked")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(themeManager.secondaryTextColor)
-                            }
-                            
-                            CombinedRoutesMap(walks: filteredWalks)
-                                .frame(height: 200)
-                                .clipShape(RoundedRectangle(cornerRadius: 20))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                                )
-                                .shadow(color: Color.black.opacity(0.1), radius: 15)
-                        }
+                        // Enhanced Routes Overview
+                        EnhancedRoutesOverview(
+                            walks: filteredWalks,
+                            periodName: selectedPeriod == 0 ? "This Week" : (selectedPeriod == 1 ? "This Month" : "All Time")
+                        )
                         .padding(.horizontal, 20)
                     }
                     
@@ -2729,6 +2935,22 @@ struct ActivityHistoryView: View {
                                         showDetailView = true
                                         HapticFeedback.light.trigger()
                                     }
+                                    .contextMenu {
+                                        Button(role: .destructive) {
+                                            walkToDelete = walk
+                                            showDeleteConfirmation = true
+                                        } label: {
+                                            Label("Delete Activity", systemImage: "trash")
+                                        }
+                                    }
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button(role: .destructive) {
+                                            walkToDelete = walk
+                                            showDeleteConfirmation = true
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
                             }
                         }
                         .padding(.horizontal, 20)
@@ -2747,6 +2969,20 @@ struct ActivityHistoryView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(Color(red: 0.4, green: 0.8, blue: 0.6))
                 }
+            }
+            .alert("Delete Activity?", isPresented: $showDeleteConfirmation) {
+                Button("Cancel", role: .cancel) {
+                    walkToDelete = nil
+                }
+                Button("Delete", role: .destructive) {
+                    if let walk = walkToDelete {
+                        HapticFeedback.medium.trigger()
+                        walkHistory.deleteWalk(id: walk.id)
+                        walkToDelete = nil
+                    }
+                }
+            } message: {
+                Text("Are you sure you want to delete this activity? This can't be undone.")
             }
         }
         .sheet(isPresented: $showDetailView) {
@@ -2994,8 +3230,40 @@ struct ActivityDetailView: View {
     @State private var loadedPhotos: [UIImage] = []
     @State private var selectedPhotoIndex: Int?
     @State private var showFullScreenPhoto = false
+    @State private var showDeleteConfirmation = false
     
     private var activityColor: Color { walk.workoutType == "run" ? .orange : .green }
+    
+    // Calculate proper region for the route
+    private var routeRegion: MKCoordinateRegion {
+        guard !walk.coordinates.isEmpty else {
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+                span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+            )
+        }
+        
+        let lats = walk.coordinates.map { $0.latitude }
+        let lons = walk.coordinates.map { $0.longitude }
+        
+        let minLat = lats.min() ?? 0
+        let maxLat = lats.max() ?? 0
+        let minLon = lons.min() ?? 0
+        let maxLon = lons.max() ?? 0
+        
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLon + maxLon) / 2
+        )
+        
+        let latDelta = max((maxLat - minLat) * 1.5, 0.005)
+        let lonDelta = max((maxLon - minLon) * 1.5, 0.005)
+        
+        return MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
+        )
+    }
     
     var body: some View {
         NavigationView {
@@ -3004,7 +3272,7 @@ struct ActivityDetailView: View {
                     // Hero Map
                     ZStack(alignment: .bottom) {
                         if !walk.coordinates.isEmpty {
-                            Map {
+                            Map(initialPosition: .region(routeRegion)) {
                                 MapPolyline(coordinates: walk.coordinates)
                                     .stroke(
                                         LinearGradient(
@@ -3245,14 +3513,34 @@ struct ActivityDetailView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        // Share functionality
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(activityColor)
+                    HStack(spacing: 12) {
+                        // Share button
+                        Button {
+                            // Share functionality
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(activityColor)
+                        }
+                        
+                        // Delete button
+                        Button {
+                            showDeleteConfirmation = true
+                        } label: {
+                            Image(systemName: "trash")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.red)
+                        }
                     }
                 }
+            }
+            .alert("Delete Activity?", isPresented: $showDeleteConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    deleteActivity()
+                }
+            } message: {
+                Text("Are you sure you want to delete this activity? This can't be undone.")
             }
         }
         .onAppear {
@@ -3263,6 +3551,12 @@ struct ActivityDetailView: View {
                 FullScreenPhotoView(photos: loadedPhotos, selectedIndex: index)
             }
         }
+    }
+    
+    private func deleteActivity() {
+        HapticFeedback.medium.trigger()
+        walkHistory.deleteWalk(id: walk.id)
+        dismiss()
     }
     
     private func loadPhotos() {
@@ -3376,30 +3670,409 @@ struct FullScreenPhotoView: View {
     }
 }
 
-// MARK: - Combined Routes Map
-struct CombinedRoutesMap: View {
+// MARK: - Enhanced Routes Overview (with color legend)
+struct EnhancedRoutesOverview: View {
     let walks: [WalkRecord]
+    let periodName: String
+    @EnvironmentObject var themeManager: ThemeManager
+    @State private var showFullMap = false
+    
+    // Route colors
+    private let routeColors: [Color] = [
+        .green, .blue, .purple, .orange, .pink, .cyan, .mint, .indigo, .teal, .red
+    ]
+    
+    private func colorForWalk(at index: Int) -> Color {
+        routeColors[index % routeColors.count]
+    }
+    
+    private var walksWithRoutes: [WalkRecord] {
+        walks.filter { !$0.coordinates.isEmpty }
+    }
     
     var body: some View {
-        Map {
-            ForEach(walks) { walk in
-                if !walk.coordinates.isEmpty {
-                    MapPolyline(coordinates: walk.coordinates)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    walk.workoutType == "run" ? Color.orange : Color.green,
-                                    (walk.workoutType == "run" ? Color.orange : Color.green).opacity(0.5)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ),
-                            lineWidth: 3
-                        )
+        VStack(alignment: .leading, spacing: 12) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Route Overview")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    Text("\(walksWithRoutes.count) routes • \(periodName)")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                }
+                
+                Spacer()
+                
+                if !walksWithRoutes.isEmpty {
+                    Button(action: { showFullMap = true }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                .font(.system(size: 11, weight: .semibold))
+                            Text("Expand")
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(Color(red: 0.4, green: 0.8, blue: 0.6)))
+                    }
+                }
+            }
+            
+            // Map with routes
+            CombinedRoutesMapEnhanced(walks: walksWithRoutes, colors: routeColors)
+                .frame(height: 220)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.1), radius: 15)
+            
+            // Color legend (scrollable for many routes)
+            if !walksWithRoutes.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Route Colors")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(Array(walksWithRoutes.prefix(10).enumerated()), id: \.element.id) { index, walk in
+                                RouteLegendItem(
+                                    color: colorForWalk(at: index),
+                                    date: walk.date,
+                                    distance: walk.distanceInMiles
+                                )
+                            }
+                            
+                            if walksWithRoutes.count > 10 {
+                                Text("+\(walksWithRoutes.count - 10) more")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(themeManager.secondaryTextColor)
+                                    .padding(.horizontal, 8)
+                            }
+                        }
+                    }
+                }
+                .padding(.top, 4)
+            }
+        }
+        .sheet(isPresented: $showFullMap) {
+            FullScreenRoutesMap(walks: walksWithRoutes, periodName: periodName, colors: routeColors)
+        }
+    }
+}
+
+// MARK: - Route Legend Item
+struct RouteLegendItem: View {
+    let color: Color
+    let date: Date
+    let distance: Double
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+            
+            VStack(alignment: .leading, spacing: 1) {
+                Text(formatShortDate(date))
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(themeManager.primaryTextColor)
+                
+                Text(String(format: "%.1f mi", distance))
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(themeManager.secondaryTextColor)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(color.opacity(0.1))
+        )
+    }
+    
+    private func formatShortDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        if Calendar.current.isDateInToday(date) {
+            return "Today"
+        }
+        formatter.dateFormat = "M/d"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Full Screen Routes Map
+struct FullScreenRoutesMap: View {
+    let walks: [WalkRecord]
+    let periodName: String
+    let colors: [Color]
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    private var combinedRegion: MKCoordinateRegion {
+        let allCoordinates = walks.flatMap { $0.coordinates }
+        
+        guard !allCoordinates.isEmpty else {
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            )
+        }
+        
+        let lats = allCoordinates.map { $0.latitude }
+        let lons = allCoordinates.map { $0.longitude }
+        
+        let minLat = lats.min() ?? 0
+        let maxLat = lats.max() ?? 0
+        let minLon = lons.min() ?? 0
+        let maxLon = lons.max() ?? 0
+        
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLon + maxLon) / 2
+        )
+        
+        let latDelta = max((maxLat - minLat) * 1.3, 0.01)
+        let lonDelta = max((maxLon - minLon) * 1.3, 0.01)
+        
+        return MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
+        )
+    }
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Map(initialPosition: .region(combinedRegion)) {
+                    ForEach(Array(walks.enumerated()), id: \.element.id) { index, walk in
+                        if !walk.coordinates.isEmpty {
+                            MapPolyline(coordinates: walk.coordinates)
+                                .stroke(colors[index % colors.count], lineWidth: 4)
+                            
+                            // Start marker
+                            if let first = walk.coordinates.first {
+                                Annotation("", coordinate: first) {
+                                    Circle()
+                                        .fill(colors[index % colors.count])
+                                        .frame(width: 10, height: 10)
+                                        .overlay(
+                                            Circle().stroke(.white, lineWidth: 2)
+                                        )
+                                }
+                            }
+                        }
+                    }
+                }
+                .mapStyle(.standard(elevation: .realistic))
+                .ignoresSafeArea()
+                
+                // Legend overlay
+                VStack {
+                    Spacer()
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(Array(walks.enumerated()), id: \.element.id) { index, walk in
+                                HStack(spacing: 6) {
+                                    Circle()
+                                        .fill(colors[index % colors.count])
+                                        .frame(width: 10, height: 10)
+                                    
+                                    Text(formatDate(walk.date))
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundColor(.white)
+                                    
+                                    Text(String(format: "%.1fmi", walk.distanceInMiles))
+                                        .font(.system(size: 10, weight: .regular))
+                                        .foregroundColor(.white.opacity(0.7))
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Capsule()
+                                        .fill(.ultraThinMaterial)
+                                )
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    .padding(.bottom, 30)
+                }
+            }
+            .navigationTitle("\(periodName) Routes")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Color(red: 0.4, green: 0.8, blue: 0.6))
                 }
             }
         }
-        .mapStyle(.standard(elevation: .realistic))
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        if Calendar.current.isDateInToday(date) {
+            return "Today"
+        } else if Calendar.current.isDateInYesterday(date) {
+            return "Yesterday"
+        }
+        formatter.dateFormat = "M/d"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Combined Routes Map Enhanced
+struct CombinedRoutesMapEnhanced: View {
+    let walks: [WalkRecord]
+    let colors: [Color]
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Calculate region that encompasses all routes
+    private var combinedRegion: MKCoordinateRegion {
+        let allCoordinates = walks.flatMap { $0.coordinates }
+        
+        guard !allCoordinates.isEmpty else {
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            )
+        }
+        
+        let lats = allCoordinates.map { $0.latitude }
+        let lons = allCoordinates.map { $0.longitude }
+        
+        let minLat = lats.min() ?? 0
+        let maxLat = lats.max() ?? 0
+        let minLon = lons.min() ?? 0
+        let maxLon = lons.max() ?? 0
+        
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLon + maxLon) / 2
+        )
+        
+        let latDelta = max((maxLat - minLat) * 1.4, 0.01)
+        let lonDelta = max((maxLon - minLon) * 1.4, 0.01)
+        
+        return MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
+        )
+    }
+    
+    var body: some View {
+        ZStack {
+            if walks.isEmpty {
+                // No routes to display
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(themeManager.cardBackgroundColor)
+                    .overlay(
+                        VStack(spacing: 12) {
+                            Image(systemName: "map")
+                                .font(.system(size: 40))
+                                .foregroundColor(themeManager.secondaryTextColor.opacity(0.4))
+                            Text("No routes recorded yet")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                            Text("Start a walk to see your routes here")
+                                .font(.system(size: 12))
+                                .foregroundColor(themeManager.secondaryTextColor.opacity(0.7))
+                        }
+                    )
+            } else {
+                Map(initialPosition: .region(combinedRegion)) {
+                    ForEach(Array(walks.enumerated()), id: \.element.id) { index, walk in
+                        if !walk.coordinates.isEmpty {
+                            MapPolyline(coordinates: walk.coordinates)
+                                .stroke(colors[index % colors.count], lineWidth: 3)
+                        }
+                    }
+                }
+                .mapStyle(.standard(elevation: .realistic))
+            }
+        }
+    }
+}
+
+// MARK: - Combined Routes Map (Legacy - kept for compatibility)
+struct CombinedRoutesMap: View {
+    let walks: [WalkRecord]
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    private let routeColors: [Color] = [
+        .green, .blue, .purple, .orange, .pink, .cyan, .mint, .indigo, .teal, .red
+    ]
+    
+    // Calculate region that encompasses all routes
+    private var combinedRegion: MKCoordinateRegion {
+        let allCoordinates = walks.flatMap { $0.coordinates }
+        
+        guard !allCoordinates.isEmpty else {
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            )
+        }
+        
+        let lats = allCoordinates.map { $0.latitude }
+        let lons = allCoordinates.map { $0.longitude }
+        
+        let minLat = lats.min() ?? 0
+        let maxLat = lats.max() ?? 0
+        let minLon = lons.min() ?? 0
+        let maxLon = lons.max() ?? 0
+        
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLon + maxLon) / 2
+        )
+        
+        let latDelta = max((maxLat - minLat) * 1.4, 0.01)
+        let lonDelta = max((maxLon - minLon) * 1.4, 0.01)
+        
+        return MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
+        )
+    }
+    
+    var body: some View {
+        ZStack {
+            if walks.flatMap({ $0.coordinates }).isEmpty {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(themeManager.cardBackgroundColor)
+                    .overlay(
+                        VStack(spacing: 12) {
+                            Image(systemName: "map")
+                                .font(.system(size: 40))
+                                .foregroundColor(themeManager.secondaryTextColor.opacity(0.4))
+                            Text("No routes recorded yet")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                        }
+                    )
+            } else {
+                Map(initialPosition: .region(combinedRegion)) {
+                    ForEach(Array(walks.enumerated()), id: \.element.id) { index, walk in
+                        if !walk.coordinates.isEmpty {
+                            MapPolyline(coordinates: walk.coordinates)
+                                .stroke(routeColors[index % routeColors.count], lineWidth: 3)
+                        }
+                    }
+                }
+                .mapStyle(.standard(elevation: .realistic))
+            }
+        }
     }
 }
 

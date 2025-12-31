@@ -606,23 +606,9 @@ struct ChallengesView: View {
     
     // MARK: - Helper Methods
     private func handleActivityComplete() {
+        // Credits and health already handled when user clicked "Start"
+        // Just close the sheet
         showActivitySheet = false
-        
-        if userSettings.usePlayCredit() {
-            healthBoostAmount = 20
-            
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                showHealthBoostAnimation = true
-            }
-            
-            HapticFeedback.success.trigger()
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                withAnimation {
-                    showHealthBoostAnimation = false
-                }
-            }
-        }
     }
     
     private func purchaseCredits(package: CreditPackage) {
@@ -1045,138 +1031,301 @@ struct ActivityPlaySheet: View {
     @State private var isReady = false
     @State private var showAnimation = false
     @State private var animationComplete = false
-    
-    // Smaller animation size
-    private let animationSize: CGFloat = 140
+    @State private var pulseAnimation = false
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 16) {
-                Spacer()
+        GeometryReader { geo in
+            let isCompact = geo.size.height < 600
+            let animationSize: CGFloat = isCompact ? min(geo.size.width * 0.7, 280) : min(geo.size.width * 0.80, 320)
+            
+            ZStack {
+                // Background gradient matching app theme
+                LinearGradient(
+                    colors: themeManager.isDarkMode 
+                        ? [Color(red: 0.12, green: 0.12, blue: 0.14), Color(red: 0.18, green: 0.18, blue: 0.20)]
+                        : [Color(red: 1.0, green: 0.98, blue: 0.90), Color(red: 1.0, green: 0.96, blue: 0.85)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
                 
-                if isReady {
-                    if showAnimation {
-                        VStack(spacing: 14) {
-                            // GIF Animation for activity - smaller size
-                            GIFImage(activity.gifName(for: petType))
-                                .frame(width: animationSize, height: animationSize)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .id("\(activity.id)-\(petType.rawValue)-\(UUID())")
-                            
-                            if animationComplete {
-                                VStack(spacing: 8) {
-                                    Text("🎉")
-                                        .font(.system(size: 36))
+                // Decorative circles
+                Circle()
+                    .fill(activity.color.opacity(0.08))
+                    .frame(width: geo.size.width * 0.8)
+                    .offset(x: -geo.size.width * 0.3, y: -geo.size.height * 0.2)
+                    .blur(radius: 60)
+                
+                Circle()
+                    .fill(activity.color.opacity(0.06))
+                    .frame(width: geo.size.width * 0.6)
+                    .offset(x: geo.size.width * 0.3, y: geo.size.height * 0.3)
+                    .blur(radius: 50)
+                
+                VStack(spacing: 0) {
+                    // Header
+                    HStack {
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                                .frame(width: 32, height: 32)
+                                .background(Circle().fill(themeManager.cardBackgroundColor))
+                        }
+                        
+                        Spacer()
+                        
+                        // Credits badge
+                        HStack(spacing: 5) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 11))
+                                .foregroundColor(.yellow)
+                            Text("\(userSettings.playCredits)")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundColor(themeManager.primaryTextColor)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(themeManager.cardBackgroundColor)
+                                .shadow(color: Color.black.opacity(0.05), radius: 4, y: 2)
+                        )
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                    
+                    Spacer()
+                    
+                    // Main content area
+                    if isReady {
+                        if showAnimation {
+                            // Animation playing state
+                            VStack(spacing: isCompact ? 16 : 24) {
+                                // GIF container with nice styling
+                                ZStack {
+                                    // Glow effect behind GIF
+                                    RoundedRectangle(cornerRadius: 24)
+                                        .fill(activity.color.opacity(0.15))
+                                        .frame(width: animationSize + 20, height: animationSize + 20)
+                                        .blur(radius: 20)
+                                        .scaleEffect(pulseAnimation ? 1.05 : 1.0)
                                     
-                                    Text("\(userSettings.pet.name) loved it!")
-                                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                                    // GIF card
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .fill(themeManager.cardBackgroundColor)
+                                            .shadow(color: activity.color.opacity(0.2), radius: 20, y: 8)
+                                        
+                                        GIFImage(activity.gifName(for: petType))
+                                            .frame(width: animationSize - 16, height: animationSize - 16)
+                                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                                            .id("\(activity.id)-\(petType.rawValue)")
+                                    }
+                                    .frame(width: animationSize, height: animationSize)
+                                }
+                                
+                                // Status text
+                                if animationComplete {
+                                    VStack(spacing: 10) {
+                                        // Success emoji with bounce
+                                        Text("🎉")
+                                            .font(.system(size: isCompact ? 32 : 44))
+                                        
+                                        Text("\(userSettings.pet.name) loved it!")
+                                            .font(.system(size: isCompact ? 18 : 22, weight: .bold, design: .rounded))
+                                            .foregroundColor(themeManager.primaryTextColor)
+                                        
+                                        // Health boost badge
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "heart.fill")
+                                                .font(.system(size: 12))
+                                            Text("+20 Health")
+                                                .font(.system(size: 14, weight: .bold, design: .rounded))
+                                        }
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(
+                                            Capsule()
+                                                .fill(LinearGradient(
+                                                    colors: [Color.green, Color.green.opacity(0.8)],
+                                                    startPoint: .leading,
+                                                    endPoint: .trailing
+                                                ))
+                                        )
+                                    }
+                                    .transition(.asymmetric(
+                                        insertion: .scale(scale: 0.8).combined(with: .opacity),
+                                        removal: .opacity
+                                    ))
+                                } else {
+                                    // Playing indicator
+                                    HStack(spacing: 8) {
+                                        ForEach(0..<3) { i in
+                                            Circle()
+                                                .fill(activity.color)
+                                                .frame(width: 8, height: 8)
+                                                .scaleEffect(pulseAnimation ? 1.0 : 0.5)
+                                                .animation(
+                                                    .easeInOut(duration: 0.6)
+                                                    .repeatForever()
+                                                    .delay(Double(i) * 0.15),
+                                                    value: pulseAnimation
+                                                )
+                                        }
+                                        
+                                        Text("Playing")
+                                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                            .foregroundColor(themeManager.secondaryTextColor)
+                                    }
+                                }
+                            }
+                            .onAppear {
+                                pulseAnimation = true
+                            }
+                        } else {
+                            // Ready to start state
+                            VStack(spacing: isCompact ? 20 : 28) {
+                                // Activity icon
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [activity.color.opacity(0.2), activity.color.opacity(0.1)],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: isCompact ? 100 : 120, height: isCompact ? 100 : 120)
+                                    
+                                    Image(systemName: activity.icon)
+                                        .font(.system(size: isCompact ? 40 : 50, weight: .semibold))
+                                        .foregroundStyle(
+                                            LinearGradient(
+                                                colors: [activity.color, activity.color.opacity(0.7)],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+                                }
+                                .shadow(color: activity.color.opacity(0.3), radius: 20, y: 10)
+                                
+                                // Activity info
+                                VStack(spacing: 8) {
+                                    Text(activity.displayName(for: petType))
+                                        .font(.system(size: isCompact ? 22 : 26, weight: .bold, design: .rounded))
                                         .foregroundColor(themeManager.primaryTextColor)
                                     
-                                    Text("+20 Health")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.green)
+                                    Text(activity.description)
+                                        .font(.system(size: isCompact ? 14 : 15, weight: .medium))
+                                        .foregroundColor(themeManager.secondaryTextColor)
+                                        .multilineTextAlignment(.center)
                                 }
-                                .transition(.scale.combined(with: .opacity))
-                            } else {
-                                Text("Playing...")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(themeManager.secondaryTextColor)
+                                
+                                // Cost info
+                                HStack(spacing: 6) {
+                                    Image(systemName: "bolt.fill")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.yellow)
+                                    
+                                    Text("Costs 1 Credit")
+                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                        .foregroundColor(themeManager.secondaryTextColor)
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.yellow.opacity(0.12))
+                                        .overlay(
+                                            Capsule()
+                                                .strokeBorder(Color.yellow.opacity(0.2), lineWidth: 1)
+                                        )
+                                )
                             }
                         }
                     } else {
+                        // Loading
                         VStack(spacing: 16) {
-                            ZStack {
-                                Circle()
-                                    .fill(activity.color.opacity(0.12))
-                                    .frame(width: 80, height: 80)
-                                
-                                Image(systemName: activity.icon)
-                                    .font(.system(size: 32, weight: .semibold))
-                                    .foregroundColor(activity.color)
-                            }
+                            ProgressView()
+                                .scaleEffect(1.3)
+                                .tint(activity.color)
                             
-                            VStack(spacing: 4) {
-                                Text(activity.displayName(for: petType))
-                                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                                    .foregroundColor(themeManager.primaryTextColor)
-                                
-                                Text(activity.description)
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(themeManager.secondaryTextColor)
-                            }
-                            
-                            HStack(spacing: 4) {
-                                Image(systemName: "bolt.fill")
-                                    .foregroundColor(.yellow)
-                                    .font(.system(size: 12))
-                                
-                                Text("1 Credit (\(userSettings.playCredits) left)")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(themeManager.primaryTextColor)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Capsule().fill(Color.yellow.opacity(0.15)))
+                            Text("Loading...")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(themeManager.secondaryTextColor)
                         }
                     }
-                } else {
-                    // Loading state
-                    ProgressView()
-                        .scaleEffect(1.2)
-                }
-                
-                Spacer()
-                
-                if isReady {
-                    if animationComplete {
-                        Button(action: {
-                            dismiss()
-                            onComplete()
-                        }) {
-                            Text("Done!")
-                                .font(.system(size: 15, weight: .bold))
+                    
+                    Spacer()
+                    
+                    // Bottom button
+                    if isReady {
+                        if animationComplete {
+                            Button(action: {
+                                dismiss()
+                                // Don't call onComplete here - credits already deducted at start
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 14, weight: .bold))
+                                    Text("Done!")
+                                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                                }
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(Color.green))
-                        }
-                        .padding(.horizontal, 16)
-                    } else if !showAnimation {
-                        Button(action: startActivity) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "play.fill")
-                                    .font(.system(size: 12, weight: .bold))
-                                
-                                Text("Start")
-                                    .font(.system(size: 15, weight: .bold))
+                                .padding(.vertical, 16)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color.green, Color.green.opacity(0.85)],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+                                        .shadow(color: Color.green.opacity(0.3), radius: 10, y: 5)
+                                )
                             }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(activity.color))
+                            .padding(.horizontal, 20)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                        } else if !showAnimation {
+                            Button(action: startActivity) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "play.fill")
+                                        .font(.system(size: 14, weight: .bold))
+                                    Text("Start Activity")
+                                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [activity.color, activity.color.opacity(0.85)],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+                                        .shadow(color: activity.color.opacity(0.3), radius: 10, y: 5)
+                                )
+                            }
+                            .padding(.horizontal, 20)
+                            .disabled(userSettings.playCredits <= 0)
+                            .opacity(userSettings.playCredits > 0 ? 1 : 0.5)
                         }
-                        .padding(.horizontal, 16)
-                        .disabled(userSettings.playCredits <= 0)
-                        .opacity(userSettings.playCredits > 0 ? 1 : 0.5)
                     }
-                }
-                
-                Spacer().frame(height: 16)
-            }
-            .background(themeManager.backgroundColor.ignoresSafeArea())
-            .navigationTitle(activity.rawValue)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
-                        .font(.system(size: 14))
+                    
+                    Spacer().frame(height: isCompact ? 20 : 30)
                 }
             }
         }
         .onAppear {
-            // Ensure view is ready before showing content
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.easeIn(duration: 0.2)) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                     isReady = true
                 }
             }
@@ -1184,12 +1333,22 @@ struct ActivityPlaySheet: View {
     }
     
     private func startActivity() {
-        withAnimation(.spring(response: 0.5)) {
+        // Deduct credit and add health immediately when starting
+        guard userSettings.usePlayCredit() else {
+            // No credits available
+            dismiss()
+            return
+        }
+        
+        HapticFeedback.medium.trigger()
+        
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
             showAnimation = true
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            withAnimation(.spring(response: 0.5)) {
+        // Complete after animation plays
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                 animationComplete = true
             }
             HapticFeedback.success.trigger()

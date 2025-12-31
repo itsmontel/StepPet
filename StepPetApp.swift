@@ -62,6 +62,10 @@ struct StepPetApp: App {
         
         // Track app sections visited for achievement
         achievementManager.updateProgress(achievementId: "explorer", progress: 1)
+        
+        // Sync data to widget on app launch
+        let todaySteps = stepDataManager.todayRecord?.steps ?? 0
+        WidgetDataManager.shared.syncFromUserSettings(userSettings, todaySteps: todaySteps)
     }
     
     private func checkDailyReset() {

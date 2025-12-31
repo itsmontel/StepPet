@@ -671,6 +671,9 @@ struct TodayView: View {
         userSettings.updatePetHealth(steps: steps)
         stepDataManager.updateTodayRecord(steps: steps, goalSteps: userSettings.dailyStepGoal)
         
+        // Sync data to widget
+        WidgetDataManager.shared.syncFromUserSettings(userSettings, todaySteps: steps)
+        
         // Always check achievements, not just when at 100% health
         let daysUsed = Calendar.current.dateComponents([.day], from: userSettings.firstLaunchDate ?? Date(), to: Date()).day ?? 0
         achievementManager.checkAchievements(

@@ -3,10 +3,13 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8F17D5682F05745C005AC193 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F17D5672F05745C005AC193 /* WidgetKit.framework */; };
+		8F17D56A2F05745C005AC193 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F17D5692F05745C005AC193 /* SwiftUI.framework */; };
+		8F17D5772F057461005AC193 /* StepPetWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8F17D5662F05745C005AC193 /* StepPetWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E81A00012D5E00000001 /* StepPetApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010001 /* StepPetApp.swift */; };
 		E81A00012D5E00000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010002 /* ContentView.swift */; };
 		E81A00012D5E00000003 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010003 /* TodayView.swift */; };
@@ -53,9 +56,38 @@
 		E81A00012D5E0000005F /* ChallengesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001005F /* ChallengesView.swift */; };
 		E81A00012D5E00000060 /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010060 /* ActivityView.swift */; };
 		E81A00012D5E00000061 /* PetActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010061 /* PetActivity.swift */; };
+		E81A00012D5E00000062 /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010062 /* WorkoutActivityAttributes.swift */; };
+		E81A00012D5E00000063 /* WidgetDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010063 /* WidgetDataManager.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		8F17D5752F057461005AC193 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E81A00012D5E00070001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8F17D5652F05745C005AC193;
+			remoteInfo = StepPetWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8F17D5782F057461005AC193 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8F17D5772F057461005AC193 /* StepPetWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		8F17D5662F05745C005AC193 /* StepPetWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StepPetWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		8F17D5672F05745C005AC193 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		8F17D5692F05745C005AC193 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		E81A00012D5E00010000 /* StepPet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StepPet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E81A00012D5E00010001 /* StepPetApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepPetApp.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -85,10 +117,10 @@
 		E81A00012D5E00010013 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010020 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E81A00012D5E00010021 /* AnimationGIF */ = {isa = PBXFileReference; lastKnownFileType = folder; path = AnimationGIF; sourceTree = "<group>"; };
-		E81A00012D5E00010024 /* PlayGIF */ = {isa = PBXFileReference; lastKnownFileType = folder; path = PlayGIF; sourceTree = "<group>"; };
-		E81A00012D5E00010025 /* Animation */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Animation; sourceTree = "<group>"; };
 		E81A00012D5E00010022 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E81A00012D5E00010023 /* StepPet.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StepPet.entitlements; sourceTree = "<group>"; };
+		E81A00012D5E00010024 /* PlayGIF */ = {isa = PBXFileReference; lastKnownFileType = folder; path = PlayGIF; sourceTree = "<group>"; };
+		E81A00012D5E00010025 /* Animation */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Animation; sourceTree = "<group>"; };
 		E81A00012D5E00010030 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		E81A00012D5E00010040 /* OnboardingComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingComponents.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010041 /* StepOnboardingWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingWelcomeView.swift; sourceTree = "<group>"; };
@@ -105,9 +137,34 @@
 		E81A00012D5E0001005F /* ChallengesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengesView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010060 /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010061 /* PetActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetActivity.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010062 /* WorkoutActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivityAttributes.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010063 /* WidgetDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		8F17D57B2F057461005AC193 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8F17D5652F05745C005AC193 /* StepPetWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		8F17D56B2F05745C005AC193 /* StepPetWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (8F17D57B2F057461005AC193 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = StepPetWidget; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		8F17D5632F05745C005AC193 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8F17D56A2F05745C005AC193 /* SwiftUI.framework in Frameworks */,
+				8F17D5682F05745C005AC193 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E81A00012D5E00020001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -122,13 +179,14 @@
 		E81A00012D5E00030000 = {
 			isa = PBXGroup;
 			children = (
-				E81A00012D5E00030001,
+				E81A00012D5E00030001 /*  */,
+				8F17D56B2F05745C005AC193 /* StepPetWidget */,
 				E81A00012D5E00030002 /* Products */,
 				E81A00012D5E00030010 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
-		E81A00012D5E00030001 = {
+		E81A00012D5E00030001 /*  */ = {
 			isa = PBXGroup;
 			children = (
 				E81A00012D5E00010001 /* StepPetApp.swift */,
@@ -144,13 +202,14 @@
 				E81A00012D5E00010022 /* Info.plist */,
 				E81A00012D5E00010023 /* StepPet.entitlements */,
 			);
-			path = "";
+			name = "";
 			sourceTree = "<group>";
 		};
 		E81A00012D5E00030002 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				E81A00012D5E00010000 /* StepPet.app */,
+				8F17D5662F05745C005AC193 /* StepPetWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -187,6 +246,7 @@
 				E81A00012D5E0001000B /* StepData.swift */,
 				E81A00012D5E0001000C /* UserSettings.swift */,
 				E81A00012D5E00010061 /* PetActivity.swift */,
+				E81A00012D5E00010062 /* WorkoutActivityAttributes.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -199,6 +259,7 @@
 				E81A00012D5E0001000F /* StepDataManager.swift */,
 				E81A00012D5E00010010 /* AchievementManager.swift */,
 				E81A00012D5E00010011 /* NotificationManager.swift */,
+				E81A00012D5E00010063 /* WidgetDataManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -234,6 +295,8 @@
 			isa = PBXGroup;
 			children = (
 				E81A00012D5E00010030 /* HealthKit.framework */,
+				8F17D5672F05745C005AC193 /* WidgetKit.framework */,
+				8F17D5692F05745C005AC193 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -241,6 +304,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		8F17D5652F05745C005AC193 /* StepPetWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8F17D57C2F057461005AC193 /* Build configuration list for PBXNativeTarget "StepPetWidgetExtension" */;
+			buildPhases = (
+				8F17D5622F05745C005AC193 /* Sources */,
+				8F17D5632F05745C005AC193 /* Frameworks */,
+				8F17D5642F05745C005AC193 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				8F17D56B2F05745C005AC193 /* StepPetWidget */,
+			);
+			name = StepPetWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = StepPetWidgetExtension;
+			productReference = 8F17D5662F05745C005AC193 /* StepPetWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		E81A00012D5E00040001 /* StepPet */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = E81A00012D5E00060001 /* Build configuration list for PBXNativeTarget "StepPet" */;
@@ -248,10 +333,12 @@
 				E81A00012D5E00050001 /* Sources */,
 				E81A00012D5E00020001 /* Frameworks */,
 				E81A00012D5E00050002 /* Resources */,
+				8F17D5782F057461005AC193 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				8F17D5762F057461005AC193 /* PBXTargetDependency */,
 			);
 			name = StepPet;
 			productName = StepPet;
@@ -265,9 +352,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1500;
+				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
+					8F17D5652F05745C005AC193 = {
+						CreatedOnToolsVersion = 16.4;
+					};
 					E81A00012D5E00040001 = {
 						CreatedOnToolsVersion = 15.0;
 					};
@@ -287,11 +377,19 @@
 			projectRoot = "";
 			targets = (
 				E81A00012D5E00040001 /* StepPet */,
+				8F17D5652F05745C005AC193 /* StepPetWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		8F17D5642F05745C005AC193 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E81A00012D5E00050002 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -306,6 +404,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		8F17D5622F05745C005AC193 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E81A00012D5E00050001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -334,6 +439,7 @@
 				E81A00012D5E0000000F /* StepDataManager.swift in Sources */,
 				E81A00012D5E00000010 /* AchievementManager.swift in Sources */,
 				E81A00012D5E00000011 /* NotificationManager.swift in Sources */,
+				E81A00012D5E00000063 /* WidgetDataManager.swift in Sources */,
 				E81A00012D5E00000012 /* GIFImage.swift in Sources */,
 				E81A00012D5E00000013 /* VideoPlayerView.swift in Sources */,
 				E81A00012D5E00000040 /* OnboardingComponents.swift in Sources */,
@@ -351,12 +457,79 @@
 				E81A00012D5E0000005F /* ChallengesView.swift in Sources */,
 				E81A00012D5E00000060 /* ActivityView.swift in Sources */,
 				E81A00012D5E00000061 /* PetActivity.swift in Sources */,
+				E81A00012D5E00000062 /* WorkoutActivityAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		8F17D5762F057461005AC193 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8F17D5652F05745C005AC193 /* StepPetWidgetExtension */;
+			targetProxy = 8F17D5752F057461005AC193 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		8F17D5792F057461005AC193 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = StepPetWidget/StepPetWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3KCUWMGF4F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StepPetWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StepPetWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.StepPet.StepPetWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8F17D57A2F057461005AC193 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = StepPetWidget/StepPetWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3KCUWMGF4F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StepPetWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StepPetWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.StepPet.StepPetWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		E81A00012D5E00080001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -549,6 +722,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		8F17D57C2F057461005AC193 /* Build configuration list for PBXNativeTarget "StepPetWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8F17D5792F057461005AC193 /* Debug */,
+				8F17D57A2F057461005AC193 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		E81A00012D5E00060001 /* Build configuration list for PBXNativeTarget "StepPet" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

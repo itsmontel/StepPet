@@ -17,29 +17,46 @@ struct GIFImage: UIViewRepresentable {
         self._isAnimating = isAnimating
     }
     
-    func makeUIView(context: Context) -> UIImageView {
+    func makeUIView(context: Context) -> UIView {
+        let containerView = UIView()
+        containerView.backgroundColor = .clear
+        
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         imageView.backgroundColor = .clear
+        imageView.tag = 100 // Tag to find it later
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        
+        containerView.addSubview(imageView)
+        
+        // Pin imageView to all edges of container
+        NSLayoutConstraint.activate([
+            imageView.topAnchor.constraint(equalTo: containerView.topAnchor),
+            imageView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            imageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor)
+        ])
         
         loadGIF(into: imageView)
         
-        return imageView
+        return containerView
     }
     
-    func updateUIView(_ uiView: UIImageView, context: Context) {
+    func updateUIView(_ uiView: UIView, context: Context) {
+        guard let imageView = uiView.viewWithTag(100) as? UIImageView else { return }
+        
         if isAnimating {
-            if !uiView.isAnimating {
-                uiView.startAnimating()
+            if !imageView.isAnimating {
+                imageView.startAnimating()
             }
         } else {
-            uiView.stopAnimating()
+            imageView.stopAnimating()
         }
         
         // Check if GIF name changed
         if context.coordinator.currentGIFName != gifName {
-            loadGIF(into: uiView)
+            loadGIF(into: imageView)
             context.coordinator.currentGIFName = gifName
         }
     }
@@ -69,17 +86,17 @@ struct GIFImage: UIViewRepresentable {
                 let images = createImagesFromGIF(source: source)
                 let duration = getGIFDuration(source: source)
                 
+                // Important: Set image first so contentMode works
+                if let firstImage = images.first {
+                    imageView.image = firstImage
+                }
+                
                 imageView.animationImages = images
                 imageView.animationDuration = duration
                 imageView.animationRepeatCount = 0 // Infinite loop
                 
                 if isAnimating {
                     imageView.startAnimating()
-                }
-                
-                // Set first frame as static image
-                if let firstImage = images.first {
-                    imageView.image = firstImage
                 }
                 
                 gifLoaded = true
