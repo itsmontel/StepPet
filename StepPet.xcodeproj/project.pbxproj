@@ -18,6 +18,7 @@
 		E81A00012D5E00000005D /* BubblePopGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010005D /* BubblePopGameView.swift */; };
 		E81A00012D5E00000005E /* PatternMatchGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010005E /* PatternMatchGameView.swift */; };
 		E81A00012D5E00000005F1 /* StreakMilestoneCelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010005F1 /* StreakMilestoneCelebrationView.swift */; };
+		E81A00012D5E00000005G /* SkyDashGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010005G /* SkyDashGameView.swift */; };
 		E81A00012D5E00000006 /* AchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010006 /* AchievementsView.swift */; };
 		E81A00012D5E00000007 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010007 /* SettingsView.swift */; };
 		E81A00012D5E00000008 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010008 /* OnboardingView.swift */; };
@@ -67,6 +68,7 @@
 		E81A00012D5E00010005D /* BubblePopGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BubblePopGameView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010005E /* PatternMatchGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatternMatchGameView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010005F1 /* StreakMilestoneCelebrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakMilestoneCelebrationView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010005G /* SkyDashGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyDashGameView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010006 /* AchievementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementsView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010007 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010008 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -166,6 +168,7 @@
 				E81A00012D5E00010005D /* BubblePopGameView.swift */,
 				E81A00012D5E00010005E /* PatternMatchGameView.swift */,
 				E81A00012D5E00010005F1 /* StreakMilestoneCelebrationView.swift */,
+				E81A00012D5E00010005G /* SkyDashGameView.swift */,
 				E81A00012D5E00010006 /* AchievementsView.swift */,
 				E81A00012D5E0001005F /* ChallengesView.swift */,
 				E81A00012D5E00010060 /* ActivityView.swift */,
@@ -318,6 +321,7 @@
 				E81A00012D5E00000005D /* BubblePopGameView.swift in Sources */,
 				E81A00012D5E00000005E /* PatternMatchGameView.swift in Sources */,
 				E81A00012D5E00000005F1 /* StreakMilestoneCelebrationView.swift in Sources */,
+				E81A00012D5E00000005G /* SkyDashGameView.swift in Sources */,
 				E81A00012D5E00000006 /* AchievementsView.swift in Sources */,
 				E81A00012D5E00000007 /* SettingsView.swift in Sources */,
 				E81A00012D5E00000008 /* OnboardingView.swift in Sources */,

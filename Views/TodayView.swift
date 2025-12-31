@@ -745,31 +745,86 @@ struct WeeklyStepsGraph: View {
             let width = geometry.size.width
             let height = geometry.size.height - 30 // Leave space for labels
             let spacing = width / CGFloat(weekDays.count)
+            let goalY = height - (CGFloat(goalSteps) / CGFloat(maxSteps) * height)
             
             ZStack {
-                // Goal line
-                Path { path in
-                    let goalY = height - (CGFloat(goalSteps) / CGFloat(maxSteps) * height)
-                    path.move(to: CGPoint(x: 0, y: goalY))
-                    path.addLine(to: CGPoint(x: width, y: goalY))
+                // Goal line with gradient glow
+                ZStack {
+                    // Glow effect
+                    Path { path in
+                        path.move(to: CGPoint(x: 0, y: goalY))
+                        path.addLine(to: CGPoint(x: width, y: goalY))
+                    }
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.green.opacity(0.0),
+                                Color.green.opacity(0.3),
+                                Color.green.opacity(0.3),
+                                Color.green.opacity(0.0)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        style: StrokeStyle(lineWidth: 6)
+                    )
+                    .blur(radius: 3)
+                    
+                    // Main dashed line
+                    Path { path in
+                        path.move(to: CGPoint(x: 0, y: goalY))
+                        path.addLine(to: CGPoint(x: width, y: goalY))
+                    }
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.green.opacity(0.4), Color.green.opacity(0.7), Color.green.opacity(0.4)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        style: StrokeStyle(lineWidth: 1.5, dash: [8, 6])
+                    )
+                    
+                    // Goal label on right side
+                    HStack(spacing: 3) {
+                        Image(systemName: "flag.fill")
+                            .font(.system(size: 8))
+                        Text("Goal")
+                            .font(.system(size: 9, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundColor(.green.opacity(0.8))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule()
+                            .fill(Color.green.opacity(0.15))
+                    )
+                    .position(x: width - 28, y: goalY - 12)
                 }
-                .stroke(style: StrokeStyle(lineWidth: 1, dash: [5, 5]))
-                .foregroundColor(themeManager.secondaryTextColor.opacity(0.3))
                 
-                // Area fill
+                // Area fill with smooth curve
                 Path { path in
                     path.move(to: CGPoint(x: spacing / 2, y: height))
                     
-                    for (index, day) in weekDays.enumerated() {
+                    let points = weekDays.enumerated().map { (index, day) -> CGPoint in
                         let x = spacing / 2 + CGFloat(index) * spacing
                         let steps = stepsForDay(day)
                         let y = height - (CGFloat(steps) / CGFloat(maxSteps) * height)
-                        
-                        if index == 0 {
-                            path.addLine(to: CGPoint(x: x, y: y))
-                        } else {
-                            path.addLine(to: CGPoint(x: x, y: y))
-                        }
+                        return CGPoint(x: x, y: y)
+                    }
+                    
+                    // First point
+                    path.addLine(to: points[0])
+                    
+                    // Smooth curve through points
+                    for i in 1..<points.count {
+                        let prev = points[i - 1]
+                        let curr = points[i]
+                        let controlX = (prev.x + curr.x) / 2
+                        path.addCurve(
+                            to: curr,
+                            control1: CGPoint(x: controlX, y: prev.y),
+                            control2: CGPoint(x: controlX, y: curr.y)
+                        )
                     }
                     
                     path.addLine(to: CGPoint(x: spacing / 2 + CGFloat(weekDays.count - 1) * spacing, y: height))
@@ -777,40 +832,85 @@ struct WeeklyStepsGraph: View {
                 }
                 .fill(
                     LinearGradient(
-                        colors: [themeManager.accentColor.opacity(0.3), themeManager.accentColor.opacity(0.05)],
+                        colors: [
+                            themeManager.accentColor.opacity(0.35),
+                            themeManager.accentColor.opacity(0.15),
+                            themeManager.accentColor.opacity(0.02)
+                        ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
                 
-                // Line
+                // Line glow effect
                 Path { path in
-                    for (index, day) in weekDays.enumerated() {
+                    let points = weekDays.enumerated().map { (index, day) -> CGPoint in
                         let x = spacing / 2 + CGFloat(index) * spacing
                         let steps = stepsForDay(day)
                         let y = height - (CGFloat(steps) / CGFloat(maxSteps) * height)
-                        
-                        if index == 0 {
-                            path.move(to: CGPoint(x: x, y: y))
-                        } else {
-                            path.addLine(to: CGPoint(x: x, y: y))
-                        }
+                        return CGPoint(x: x, y: y)
+                    }
+                    
+                    path.move(to: points[0])
+                    
+                    for i in 1..<points.count {
+                        let prev = points[i - 1]
+                        let curr = points[i]
+                        let controlX = (prev.x + curr.x) / 2
+                        path.addCurve(
+                            to: curr,
+                            control1: CGPoint(x: controlX, y: prev.y),
+                            control2: CGPoint(x: controlX, y: curr.y)
+                        )
                     }
                 }
-                .stroke(themeManager.accentColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+                .stroke(themeManager.accentColor.opacity(0.4), style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
+                .blur(radius: 4)
                 
-                // Interactive dots
+                // Main line with smooth curve
+                Path { path in
+                    let points = weekDays.enumerated().map { (index, day) -> CGPoint in
+                        let x = spacing / 2 + CGFloat(index) * spacing
+                        let steps = stepsForDay(day)
+                        let y = height - (CGFloat(steps) / CGFloat(maxSteps) * height)
+                        return CGPoint(x: x, y: y)
+                    }
+                    
+                    path.move(to: points[0])
+                    
+                    for i in 1..<points.count {
+                        let prev = points[i - 1]
+                        let curr = points[i]
+                        let controlX = (prev.x + curr.x) / 2
+                        path.addCurve(
+                            to: curr,
+                            control1: CGPoint(x: controlX, y: prev.y),
+                            control2: CGPoint(x: controlX, y: curr.y)
+                        )
+                    }
+                }
+                .stroke(
+                    LinearGradient(
+                        colors: [themeManager.accentColor.opacity(0.8), themeManager.accentColor, themeManager.accentColor.opacity(0.8)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
+                )
+                
+                // Interactive dots with improved styling
                 ForEach(Array(weekDays.enumerated()), id: \.offset) { index, day in
                     let x = spacing / 2 + CGFloat(index) * spacing
                     let steps = stepsForDay(day)
                     let y = height - (CGFloat(steps) / CGFloat(maxSteps) * height)
                     let isSelected = selectedDay != nil && Calendar.current.isDate(selectedDay!, inSameDayAs: day)
                     let isToday = Calendar.current.isDateInToday(day)
+                    let metGoal = steps >= goalSteps
                     
                     VStack(spacing: 4) {
                         // Dot
                         Button(action: {
-                            withAnimation(.spring(response: 0.3)) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                 if isToday {
                                     selectedDay = nil
                                 } else {
@@ -820,15 +920,43 @@ struct WeeklyStepsGraph: View {
                             HapticFeedback.light.trigger()
                         }) {
                             ZStack {
-                                Circle()
-                                    .fill(isSelected || isToday ? themeManager.accentColor : themeManager.cardBackgroundColor)
-                                    .frame(width: isSelected ? 16 : 12, height: isSelected ? 16 : 12)
-                                    .shadow(color: themeManager.accentColor.opacity(0.3), radius: isSelected ? 6 : 0)
-                                
-                                if !isSelected && !isToday {
+                                // Outer glow for selected/today
+                                if isSelected || isToday {
                                     Circle()
-                                        .stroke(themeManager.accentColor, lineWidth: 2)
-                                        .frame(width: 12, height: 12)
+                                        .fill(themeManager.accentColor.opacity(0.3))
+                                        .frame(width: 22, height: 22)
+                                        .blur(radius: 4)
+                                }
+                                
+                                // Achievement indicator (met goal)
+                                if metGoal && !isSelected {
+                                    Circle()
+                                        .fill(Color.green.opacity(0.2))
+                                        .frame(width: 18, height: 18)
+                                }
+                                
+                                // Main dot
+                                Circle()
+                                    .fill(
+                                        isSelected || isToday 
+                                            ? themeManager.accentColor 
+                                            : (metGoal ? Color.green.opacity(0.8) : themeManager.cardBackgroundColor)
+                                    )
+                                    .frame(width: isSelected ? 14 : 10, height: isSelected ? 14 : 10)
+                                    .shadow(color: (isSelected || isToday ? themeManager.accentColor : (metGoal ? Color.green : Color.clear)).opacity(0.5), radius: 4)
+                                
+                                // Border for non-selected, non-today dots
+                                if !isSelected && !isToday && !metGoal {
+                                    Circle()
+                                        .stroke(themeManager.accentColor.opacity(0.6), lineWidth: 2)
+                                        .frame(width: 10, height: 10)
+                                }
+                                
+                                // Checkmark for goal achieved
+                                if metGoal && !isSelected && !isToday {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 6, weight: .bold))
+                                        .foregroundColor(.white)
                                 }
                             }
                         }

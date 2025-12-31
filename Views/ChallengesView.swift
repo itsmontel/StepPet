@@ -26,6 +26,7 @@ struct ChallengesView: View {
     @State private var showMemoryMatch = false
     @State private var showBubblePop = false
     @State private var showPatternMatch = false
+    @State private var showSkyDash = false
     
     private var filteredChallenges: [Achievement] {
         var challenges = achievementManager.achievements
@@ -129,6 +130,11 @@ struct ChallengesView: View {
                 .environmentObject(themeManager)
                 .environmentObject(userSettings)
         }
+        .fullScreenCover(isPresented: $showSkyDash) {
+            SkyDashGameView(onComplete: handleMinigameComplete)
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
+        }
         .onAppear {
             userSettings.checkAndResetDailyBoost()
         }
@@ -144,6 +150,7 @@ struct ChallengesView: View {
         showMemoryMatch = false
         showBubblePop = false
         showPatternMatch = false
+        showSkyDash = false
         HapticFeedback.success.trigger()
     }
     
@@ -268,17 +275,20 @@ struct ChallengesView: View {
                     showMemoryMatch = true
                 }
                 
-                // Bubble Pop Game
+                // Pet Jump Game - Hidden for now (still in development)
+                // GameCard for Pet Jump removed from UI but code remains
+                
+                // Sky Dash Game
                 GameCard(
-                    title: "Bubble Pop",
-                    description: "Pop bubbles before they float away!",
-                    icon: "bubble.left.and.bubble.right.fill",
-                    color: .cyan,
-                    gradient: [Color.cyan, Color.blue],
-                    emoji: "🫧"
+                    title: "Sky Dash",
+                    description: "Dodge walls and rise to the top!",
+                    icon: "arrow.up.forward.circle.fill",
+                    color: .purple,
+                    gradient: [Color(hex: "667eea"), Color(hex: "764ba2")],
+                    emoji: "🌟"
                 ) {
                     HapticFeedback.medium.trigger()
-                    showBubblePop = true
+                    showSkyDash = true
                 }
                 
                 // Pattern Match Game
