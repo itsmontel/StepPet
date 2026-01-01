@@ -158,29 +158,6 @@ struct TodayView: View {
             
             Spacer()
             
-            // Test Tutorial Button (for testing)
-            Button(action: {
-                HapticFeedback.medium.trigger()
-                tutorialManager.start()
-            }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "questionmark.circle.fill")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(themeManager.accentColor)
-                    
-                    Text("Tutorial")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(themeManager.accentColor)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(themeManager.accentColor.opacity(0.15))
-                )
-            }
-            .buttonStyle(PlainButtonStyle())
-            
             // Credits (clickable - navigates to Pet section)
             Button(action: {
                 HapticFeedback.light.trigger()

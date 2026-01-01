@@ -9,6 +9,7 @@ struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
     @EnvironmentObject var achievementManager: AchievementManager
+    @EnvironmentObject var tutorialManager: TutorialManager
     
     @State private var showRenameSheet = false
     @State private var showGoalSheet = false
@@ -273,6 +274,22 @@ struct SettingsView: View {
                     showChevron: true,
                     action: {
                         showFAQSheet = true
+                    }
+                )
+                
+                Divider()
+                    .padding(.leading, 60)
+                
+                // Tutorial
+                SettingsRow(
+                    icon: "book.fill",
+                    iconColor: .purple,
+                    iconBackground: Color.purple.opacity(0.15),
+                    title: "Tutorial",
+                    subtitle: "Learn how to use the app",
+                    showChevron: true,
+                    action: {
+                        tutorialManager.start()
                     }
                 )
                 
