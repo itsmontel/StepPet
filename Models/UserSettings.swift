@@ -56,6 +56,9 @@ class UserSettings: ObservableObject {
     @Published var lastPlayBoostDate: Date? {
         didSet { save() }
     }
+    @Published var hasCompletedAppTutorial: Bool {
+        didSet { save() }
+    }
     
     private let userDefaultsKey = "StepPetUserSettings"
     
@@ -78,6 +81,7 @@ class UserSettings: ObservableObject {
             self.playCredits = savedSettings.playCredits
             self.todayPlayHealthBoost = savedSettings.todayPlayHealthBoost
             self.lastPlayBoostDate = savedSettings.lastPlayBoostDate
+            self.hasCompletedAppTutorial = savedSettings.hasCompletedAppTutorial ?? false
             
             // Reset daily boost if it's a new day
             if let lastDate = lastPlayBoostDate, !Calendar.current.isDateInToday(lastDate) {
@@ -101,6 +105,7 @@ class UserSettings: ObservableObject {
             self.playCredits = 3 // Welcome bonus!
             self.todayPlayHealthBoost = 0
             self.lastPlayBoostDate = nil
+            self.hasCompletedAppTutorial = false
         }
         
         // Sync haptics setting with global HapticFeedback
@@ -143,7 +148,8 @@ class UserSettings: ObservableObject {
             hasCompletedOnboarding: hasCompletedOnboarding,
             playCredits: playCredits,
             todayPlayHealthBoost: todayPlayHealthBoost,
-            lastPlayBoostDate: lastPlayBoostDate
+            lastPlayBoostDate: lastPlayBoostDate,
+            hasCompletedAppTutorial: hasCompletedAppTutorial
         )
         
         if let data = try? JSONEncoder().encode(settings) {
@@ -210,6 +216,7 @@ struct SavedUserSettings: Codable {
     var playCredits: Int
     var todayPlayHealthBoost: Int
     var lastPlayBoostDate: Date?
+    var hasCompletedAppTutorial: Bool?
 }
 
 // MARK: - Activity Level

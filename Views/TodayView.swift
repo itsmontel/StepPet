@@ -31,6 +31,9 @@ struct TodayView: View {
     @State private var showMilestoneCelebration = false
     @State private var milestoneStreakValue: Int = 0
     
+    // App tutorial state
+    @State private var showAppTutorial = false
+    
     private var stepBasedHealth: Int {
         guard userSettings.dailyStepGoal > 0 else { return 0 }
         return Int((Double(healthKitManager.todaySteps) / Double(userSettings.dailyStepGoal)) * 100)
@@ -96,6 +99,13 @@ struct TodayView: View {
         .onAppear {
             refreshData()
             animateValues()
+            
+            // Show app tutorial for first-time users after onboarding
+            if userSettings.hasCompletedOnboarding && !userSettings.hasCompletedAppTutorial {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showAppTutorial = true
+                }
+            }
         }
         .onChange(of: healthKitManager.todaySteps) { _, newValue in
             updateData(steps: newValue)
@@ -105,6 +115,13 @@ struct TodayView: View {
             if newValue >= 100 && oldValue < 100 {
                 triggerCelebration()
             }
+        }
+        .fullScreenCover(isPresented: $showAppTutorial) {
+            AppTutorialView(onComplete: {
+                showAppTutorial = false
+            })
+            .environmentObject(themeManager)
+            .environmentObject(userSettings)
         }
         .overlay {
             if showCelebration {
