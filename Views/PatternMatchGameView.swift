@@ -1,6 +1,6 @@
 //
 //  PatternMatchGameView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

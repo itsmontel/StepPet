@@ -1,6 +1,6 @@
 //
 //  ChallengesView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

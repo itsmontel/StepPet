@@ -1,6 +1,6 @@
 //
 //  TreatCatchGameView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

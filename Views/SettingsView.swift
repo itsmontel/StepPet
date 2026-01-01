@@ -1,6 +1,6 @@
 //
 //  SettingsView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI
@@ -1181,7 +1181,7 @@ struct PrivacyPolicyView: View {
                     PrivacySection(
                         icon: "doc.text",
                         title: "Introduction",
-                        content: "Welcome to StepPet! Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information when you use our app. By using StepPet, you agree to the collection and use of information in accordance with this policy."
+                        content: "Welcome to VirtuPet: Step Tracker! Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information when you use our app. By using VirtuPet: Step Tracker, you agree to the collection and use of information in accordance with this policy."
                     )
                     
                     PrivacySection(

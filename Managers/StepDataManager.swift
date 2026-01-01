@@ -1,6 +1,6 @@
 //
 //  StepDataManager.swift
-//  StepPet
+//  VirtuPet
 //
 
 import Foundation

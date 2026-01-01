@@ -1,6 +1,6 @@
 //
 //  NotificationManager.swift
-//  StepPet
+//  VirtuPet
 //
 
 import Foundation

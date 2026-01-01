@@ -1,6 +1,6 @@
 //
 //  PetActivity.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

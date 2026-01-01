@@ -1,6 +1,6 @@
 //
 //  StepOnboardingWelcomeView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI
@@ -53,13 +53,13 @@ struct StepOnboardingWelcomeView: View {
                     .opacity(petAnimation ? 1.0 : 0.0)
                     
                     VStack(spacing: 12) {
-                        Text("Welcome to StepPet")
+                        Text("Welcome to VirtuPet: Step Tracker")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                             .multilineTextAlignment(.center)
                             .opacity(textAnimation ? 1.0 : 0.0)
                         
-                        Text("Your personal companion for healthier habits through walking")
+                        Text("Care for your VirtuPet by caring for yourself")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                             .multilineTextAlignment(.center)

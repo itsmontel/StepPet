@@ -1,6 +1,6 @@
 //
 //  OnboardingComponents.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

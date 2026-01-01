@@ -1,6 +1,6 @@
 //
 //  MinigamesView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

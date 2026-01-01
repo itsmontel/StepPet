@@ -1,6 +1,6 @@
 //
 //  UserSettings.swift
-//  StepPet
+//  VirtuPet
 //
 
 import Foundation

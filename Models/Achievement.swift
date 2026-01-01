@@ -1,6 +1,6 @@
 //
 //  Achievement.swift
-//  StepPet
+//  VirtuPet
 //
 
 import Foundation

@@ -1,6 +1,6 @@
 //
 //  MemoryMatchGameView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

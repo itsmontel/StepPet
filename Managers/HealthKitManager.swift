@@ -1,6 +1,6 @@
 //
 //  HealthKitManager.swift
-//  StepPet
+//  VirtuPet
 //
 
 import Foundation

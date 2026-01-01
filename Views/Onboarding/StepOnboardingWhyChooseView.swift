@@ -1,6 +1,6 @@
 //
 //  StepOnboardingWhyChooseView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

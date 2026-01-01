@@ -1,6 +1,6 @@
 //
 //  StepOnboardingNotificationView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

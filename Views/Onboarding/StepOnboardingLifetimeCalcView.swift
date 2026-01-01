@@ -1,6 +1,6 @@
 //
 //  StepOnboardingLifetimeCalcView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

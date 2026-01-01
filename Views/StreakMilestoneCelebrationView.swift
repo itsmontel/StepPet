@@ -1,6 +1,6 @@
 //
 //  StreakMilestoneCelebrationView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

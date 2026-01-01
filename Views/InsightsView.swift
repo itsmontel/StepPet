@@ -1,6 +1,6 @@
 //
 //  InsightsView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

@@ -1,6 +1,6 @@
 //
 //  Pet.swift
-//  StepPet
+//  VirtuPet
 //
 
 import Foundation

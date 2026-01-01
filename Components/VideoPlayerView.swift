@@ -1,6 +1,6 @@
 //
 //  VideoPlayerView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

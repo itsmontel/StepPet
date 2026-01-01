@@ -1,6 +1,6 @@
 //
 //  AchievementsView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

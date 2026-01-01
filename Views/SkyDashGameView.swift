@@ -1,6 +1,6 @@
 //
 //  SkyDashGameView.swift
-//  StepPet
+//  VirtuPet
 //
 //  Sky Dash - Dodge walls and rise to the top!
 //

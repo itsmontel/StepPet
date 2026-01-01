@@ -1,6 +1,6 @@
 //
 //  ActivityView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

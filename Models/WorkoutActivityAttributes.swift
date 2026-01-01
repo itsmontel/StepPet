@@ -1,6 +1,6 @@
 //
 //  WorkoutActivityAttributes.swift
-//  StepPet
+//  VirtuPet
 //
 //  Activity Attributes for Live Activities during workouts
 //

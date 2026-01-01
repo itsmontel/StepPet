@@ -1,6 +1,6 @@
 //
 //  TodayView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

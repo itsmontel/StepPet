@@ -1,6 +1,6 @@
 //
 //  HistoryView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

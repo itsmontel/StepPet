@@ -1,6 +1,6 @@
 //
 //  GIFImage.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI

@@ -1,6 +1,6 @@
 //
 //  WidgetDataManager.swift
-//  StepPet
+//  VirtuPet
 //
 //  Manages data sharing between the main app and widgets via App Groups
 //
@@ -12,7 +12,7 @@ class WidgetDataManager {
     static let shared = WidgetDataManager()
     
     // App Group identifier - must match in both targets
-    private let appGroupIdentifier = "group.com.yourcompany.StepPet"
+    private let appGroupIdentifier = "group.com.yourcompany.VirtuPet"
     
     private var sharedDefaults: UserDefaults? {
         UserDefaults(suiteName: appGroupIdentifier)

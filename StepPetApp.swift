@@ -1,15 +1,15 @@
 //
-//  StepPetApp.swift
-//  StepPet
+//  VirtuPetApp.swift
+//  VirtuPet
 //
-//  Your steps keep your pet healthy.
+//  Care for your VirtuPet by caring for yourself
 //
 
 import SwiftUI
 import SwiftData
 
 @main
-struct StepPetApp: App {
+struct VirtuPetApp: App {
     @StateObject private var themeManager = ThemeManager()
     @StateObject private var healthKitManager = HealthKitManager()
     @StateObject private var userSettings = UserSettings()

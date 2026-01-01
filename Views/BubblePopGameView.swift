@@ -1,6 +1,6 @@
 //
 //  BubblePopGameView.swift
-//  StepPet
+//  VirtuPet
 //
 //  "Pet Jump" - Tilt-controlled endless jumping game
 //

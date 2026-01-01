@@ -1,6 +1,6 @@
 //
-//  StepPetWidgetLiveActivity.swift
-//  StepPetWidget
+//  VirtuPetWidgetLiveActivity.swift
+//  VirtuPetWidget
 //
 //  Premium Live Activity for workout tracking on Lock Screen and Dynamic Island
 //
@@ -72,7 +72,7 @@ struct LiveActivityPetImage: View {
 }
 
 // MARK: - Live Activity Widget
-struct StepPetWidgetLiveActivity: Widget {
+struct VirtuPetWidgetLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: WorkoutActivityAttributes.self) { context in
             // Lock Screen UI - Premium Design
@@ -100,7 +100,7 @@ struct StepPetWidgetLiveActivity: Widget {
             } minimal: {
                 PremiumMinimal(context: context)
             }
-            .widgetURL(URL(string: "steppet://activity"))
+            .widgetURL(URL(string: "virtupet://activity"))
             .keylineTint(WidgetTheme.accent)
         }
     }
@@ -488,7 +488,7 @@ extension WorkoutActivityAttributes.ContentState {
 }
 
 #Preview("Lock Screen", as: .content, using: WorkoutActivityAttributes.preview) {
-    StepPetWidgetLiveActivity()
+    VirtuPetWidgetLiveActivity()
 } contentStates: {
     WorkoutActivityAttributes.ContentState.starting
     WorkoutActivityAttributes.ContentState.active

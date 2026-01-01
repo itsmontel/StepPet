@@ -5,7 +5,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>StepPet</string>
+    <string>VirtuPet: Step Tracker</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -48,13 +48,13 @@
         <string>UIInterfaceOrientationPortraitUpsideDown</string>
     </array>
     <key>NSHealthShareUsageDescription</key>
-    <string>StepPet needs access to your step count to track your daily walking activity and keep your virtual pet healthy.</string>
+    <string>VirtuPet: Step Tracker needs access to your step count to track your daily walking activity and keep your virtual pet healthy.</string>
     <key>NSHealthUpdateUsageDescription</key>
-    <string>StepPet would like to record your step data to help you achieve your fitness goals.</string>
+    <string>VirtuPet: Step Tracker would like to record your step data to help you achieve your fitness goals.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>StepPet needs your location to track your walks and show your pet accompanying you on the map.</string>
+    <string>VirtuPet: Step Tracker needs your location to track your walks and show your pet accompanying you on the map.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>StepPet needs your location even when the app is in the background to accurately track your walks and runs with your pet.</string>
+    <string>VirtuPet: Step Tracker needs your location even when the app is in the background to accurately track your walks and runs with your pet.</string>
     <key>UIBackgroundModes</key>
     <array>
         <string>fetch</string>
