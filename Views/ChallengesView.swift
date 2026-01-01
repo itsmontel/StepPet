@@ -9,6 +9,7 @@ struct ChallengesView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var achievementManager: AchievementManager
     @EnvironmentObject var userSettings: UserSettings
+    @EnvironmentObject var tutorialManager: TutorialManager
     
     @State private var selectedCategory: AchievementCategory? = nil
     @State private var showCompletedOnly = false
@@ -95,6 +96,14 @@ struct ChallengesView: View {
                 selectedSegment = targetSegment
                 // Clear the target so it doesn't trigger again
                 UserDefaults.standard.removeObject(forKey: "challengesTargetSegment")
+            }
+        }
+        .onChange(of: tutorialManager.challengesSegment) { _, newSegment in
+            // Switch segment when tutorial requires it
+            if tutorialManager.isActive {
+                withAnimation {
+                    selectedSegment = newSegment
+                }
             }
         }
         .sheet(item: $selectedChallenge) { challenge in

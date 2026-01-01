@@ -1409,6 +1409,7 @@ struct ActivityStyle {
 struct ActivityView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
+    @EnvironmentObject var tutorialManager: TutorialManager
     
     @StateObject private var locationManager = ActivityLocationManager()
     @StateObject private var walkHistory = WalkHistoryManager()
@@ -1554,6 +1555,7 @@ struct ActivityView: View {
                 )
                 .shadow(color: themeManager.accentColor.opacity(0.3), radius: 6, x: 0, y: 3)
             }
+            .tutorialHighlight("tutorial_history_button")
         }
         .padding(.top, 12)
     }

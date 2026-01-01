@@ -2,416 +2,732 @@
 //  AppTutorialView.swift
 //  VirtuPet
 //
-//  Comprehensive app tutorial for first-time users
+//  Light, non-intrusive coach marks tutorial with arrows
 //
 
 import SwiftUI
 
-// MARK: - Tutorial Step Model
-struct TutorialStep: Identifiable {
-    let id = UUID()
-    let icon: String
-    let iconColor: Color
-    let title: String
-    let subtitle: String
-    let features: [TutorialFeature]
-    let backgroundGradient: [Color]
+// MARK: - Tutorial Step
+enum TutorialStep: Int, CaseIterable {
+    case welcome
+    case petHero
+    case stepProgress
+    case streakBadge
+    case creditsBadge
+    case weeklyGraph
+    case tabInsights
+    case tabActivity
+    case tabHistory
+    case tabChallenges
+    case challengesAchievements
+    case challengesPetCare
+    case challengesGames
+    case tabSettings
+    case complete
+    
+    var tabIndex: Int {
+        switch self {
+        case .welcome, .petHero, .stepProgress, .streakBadge, .creditsBadge, .weeklyGraph:
+            return 2 // Today (center)
+        case .tabInsights:
+            return 1 // Insights
+        case .tabActivity, .tabHistory:
+            return 0 // Activity
+        case .tabChallenges, .challengesGames, .challengesPetCare, .challengesAchievements:
+            return 3 // Challenges
+        case .tabSettings:
+            return 4 // Settings
+        case .complete:
+            return 2
+        }
+    }
+    
+    var title: String {
+        switch self {
+        case .welcome: return "Welcome to VirtuPet"
+        case .petHero: return "Meet Your Pet"
+        case .stepProgress: return "Step Counter"
+        case .streakBadge: return "Streak Tracker"
+        case .creditsBadge: return "Play Credits"
+        case .weeklyGraph: return "Weekly Progress"
+        case .tabInsights: return "Insights"
+        case .tabActivity: return "Activity Tracking"
+        case .tabHistory: return "Activity History"
+        case .tabChallenges: return "Challenges Hub"
+        case .challengesAchievements: return "Achievements"
+        case .challengesPetCare: return "Pet Care"
+        case .challengesGames: return "Minigames"
+        case .tabSettings: return "Settings"
+        case .complete: return "You're All Set!"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .welcome:
+            return "Care for your VirtuPet by caring for yourself. Let's take a quick tour!"
+        case .petHero:
+            return "This is your virtual pet! Their health reflects your daily steps. Keep walking to keep them happy and healthy!"
+        case .stepProgress:
+            return "Your live step count updates in real-time. Watch the progress ring fill up as you walk towards your daily goal!"
+        case .streakBadge:
+            return "Tap here to see your awards! Build streaks by hitting your daily step goal. 🔥"
+        case .creditsBadge:
+            return "Tap to use play credits! Feed, play ball, or watch TV with your pet for an instant +20 health boost."
+        case .weeklyGraph:
+            return "See your last 7 days at a glance. Tap any day to view that day's detailed stats!"
+        case .tabInsights:
+            return "Deep analytics! See weekly trends, monthly patterns, and detailed statistics about your activity."
+        case .tabActivity:
+            return "Start tracked walks here! Beautiful maps, real-time weather, calories, pace - everything you need."
+        case .tabHistory:
+            return "Your activity journal! View all your previous walks, see your routes, and track your progress over time."
+        case .tabChallenges:
+            return "Your one-stop hub for achievements, pet care, and games. Swipe to explore each section!"
+        case .challengesAchievements:
+            return "See your journey through VirtuPet! Unlock achievements, earn badges, and track your milestones. 🏆"
+        case .challengesPetCare:
+            return "Having a low step day? No worries! Use credits to Feed, Play Ball, or Watch TV with your pet. Each gives +20 health instantly! ⚡"
+        case .challengesGames:
+            return "Play fun minigames with your pet! Bubble Pop, Memory Match, Pattern Match and more. Great for bonding! 🎮"
+        case .tabSettings:
+            return "Customize everything! Switch themes, rename your pet, adjust goals, and manage notifications."
+        case .complete:
+            return "You're ready to start your journey! Remember: Care for your VirtuPet by caring for yourself."
+        }
+    }
+    
+    var highlightID: String {
+        switch self {
+        case .welcome: return ""
+        case .petHero: return "tutorial_pet_hero"
+        case .stepProgress: return "tutorial_step_count"
+        case .streakBadge: return "tutorial_streak_badge"
+        case .creditsBadge: return "tutorial_credits_badge"
+        case .weeklyGraph: return "tutorial_weekly_graph"
+        case .tabInsights: return "tutorial_tab_insights"
+        case .tabActivity: return "tutorial_tab_activity"
+        case .tabHistory: return "tutorial_history_button"
+        case .tabChallenges: return "tutorial_tab_challenges"
+        case .challengesAchievements: return "tutorial_tab_challenges"
+        case .challengesPetCare: return "tutorial_tab_challenges"
+        case .challengesGames: return "tutorial_tab_challenges"
+        case .tabSettings: return "tutorial_tab_settings"
+        case .complete: return ""
+        }
+    }
+    
+    var arrowDirection: ArrowDirection {
+        switch self {
+        case .welcome, .complete: return .none
+        case .petHero, .stepProgress: return .up
+        case .streakBadge, .creditsBadge: return .up
+        case .weeklyGraph: return .up
+        case .tabHistory: return .up // History button is at top right
+        case .tabInsights, .tabActivity, .tabChallenges, .challengesAchievements, .challengesPetCare, .challengesGames, .tabSettings: return .down
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .welcome: return "sparkles"
+        case .petHero: return "pawprint.fill"
+        case .stepProgress: return "figure.walk"
+        case .streakBadge: return "flame.fill"
+        case .creditsBadge: return "bolt.heart.fill"
+        case .weeklyGraph: return "chart.bar.fill"
+        case .tabInsights: return "chart.line.uptrend.xyaxis"
+        case .tabActivity: return "map.fill"
+        case .tabHistory: return "book.fill"
+        case .tabChallenges: return "star.fill"
+        case .challengesAchievements: return "trophy.fill"
+        case .challengesPetCare: return "heart.circle.fill"
+        case .challengesGames: return "gamecontroller.fill"
+        case .tabSettings: return "gearshape.fill"
+        case .complete: return "checkmark.circle.fill"
+        }
+    }
+    
+    var iconColor: Color {
+        switch self {
+        case .welcome: return Color(red: 0.4, green: 0.8, blue: 0.6)
+        case .petHero: return Color(red: 0.95, green: 0.6, blue: 0.4)
+        case .stepProgress: return Color(red: 0.4, green: 0.8, blue: 0.6)
+        case .streakBadge: return Color.orange
+        case .creditsBadge: return Color.yellow
+        case .weeklyGraph: return Color(red: 0.5, green: 0.7, blue: 0.9)
+        case .tabInsights: return Color(red: 0.6, green: 0.5, blue: 0.9)
+        case .tabActivity: return Color(red: 0.3, green: 0.8, blue: 0.7)
+        case .tabHistory: return Color(red: 0.7, green: 0.5, blue: 0.4)
+        case .tabChallenges: return Color(red: 0.9, green: 0.6, blue: 0.3)
+        case .challengesAchievements: return Color(red: 0.8, green: 0.5, blue: 0.9)
+        case .challengesPetCare: return Color(red: 0.95, green: 0.7, blue: 0.3)
+        case .challengesGames: return Color(red: 0.9, green: 0.4, blue: 0.5)
+        case .tabSettings: return Color(red: 0.5, green: 0.5, blue: 0.55)
+        case .complete: return Color(red: 0.4, green: 0.8, blue: 0.6)
+        }
+    }
 }
 
-struct TutorialFeature: Identifiable {
-    let id = UUID()
-    let icon: String
-    let text: String
+enum ArrowDirection {
+    case up, down, left, right, none
 }
 
-// MARK: - App Tutorial View
-struct AppTutorialView: View {
+// MARK: - Tutorial Manager
+class TutorialManager: ObservableObject {
+    @Published var isActive: Bool = false
+    @Published var currentStep: TutorialStep = .welcome
+    @Published var showTooltip: Bool = false
+    @Published var scrollToWeekly: Bool = false
+    @Published var challengesSegment: Int = 0 // 0 = Minigames, 1 = Pet Care, 2 = Awards
+    
+    func start() {
+        isActive = true
+        currentStep = .welcome
+        showTooltip = false
+        scrollToWeekly = false
+        challengesSegment = 0
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                self.showTooltip = true
+            }
+        }
+    }
+    
+    func nextStep() {
+        withAnimation(.easeOut(duration: 0.15)) {
+            showTooltip = false
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            if let nextIndex = TutorialStep.allCases.firstIndex(of: self.currentStep)?.advanced(by: 1),
+               nextIndex < TutorialStep.allCases.count {
+                self.currentStep = TutorialStep.allCases[nextIndex]
+                
+                // Handle special navigation
+                self.handleStepNavigation()
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        self.showTooltip = true
+                    }
+                }
+            }
+        }
+    }
+    
+    private func handleStepNavigation() {
+        switch currentStep {
+        case .weeklyGraph:
+            // Scroll down to weekly graph
+            scrollToWeekly = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.scrollToWeekly = false
+            }
+        case .tabHistory:
+            // Just point to the history button, don't open it
+            break
+        case .challengesAchievements:
+            challengesSegment = 2
+        case .challengesPetCare:
+            challengesSegment = 1
+        case .challengesGames:
+            challengesSegment = 0
+        default:
+            break
+        }
+    }
+    
+    func skip() {
+        withAnimation(.easeOut(duration: 0.2)) {
+            showTooltip = false
+            isActive = false
+        }
+    }
+    
+    func complete() {
+        withAnimation(.easeOut(duration: 0.2)) {
+            showTooltip = false
+            isActive = false
+        }
+    }
+}
+
+// MARK: - Tutorial Highlight Preference Key
+struct TutorialHighlightKey: PreferenceKey {
+    static var defaultValue: [String: Anchor<CGRect>] = [:]
+    
+    static func reduce(value: inout [String: Anchor<CGRect>], nextValue: () -> [String: Anchor<CGRect>]) {
+        value.merge(nextValue()) { $1 }
+    }
+}
+
+// MARK: - Tutorial Highlight Modifier
+struct TutorialHighlight: ViewModifier {
+    let id: String
+    
+    func body(content: Content) -> some View {
+        content
+            .anchorPreference(key: TutorialHighlightKey.self, value: .bounds) { anchor in
+                [id: anchor]
+            }
+    }
+}
+
+extension View {
+    func tutorialHighlight(_ id: String) -> some View {
+        modifier(TutorialHighlight(id: id))
+    }
+}
+
+// MARK: - Tutorial Overlay View
+struct TutorialOverlay: View {
+    @EnvironmentObject var tutorialManager: TutorialManager
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
-    @Environment(\.dismiss) var dismiss
     
-    @State private var currentStep = 0
-    @State private var showContent = false
-    @State private var featureAnimations: [Bool] = []
-    @State private var iconBounce = false
-    @State private var progressAnimation = false
+    let highlightAnchors: [String: Anchor<CGRect>]
     
-    let onComplete: () -> Void
-    
-    private let tutorialSteps: [TutorialStep] = [
-        // Welcome
-        TutorialStep(
-            icon: "sparkles",
-            iconColor: Color(red: 0.4, green: 0.8, blue: 0.6),
-            title: "Welcome to VirtuPet!",
-            subtitle: "Let me guide you through how to use this app most efficiently",
-            features: [
-                TutorialFeature(icon: "heart.fill", text: "Care for your virtual pet by staying active"),
-                TutorialFeature(icon: "figure.walk", text: "Your daily steps keep your pet healthy & happy"),
-                TutorialFeature(icon: "star.fill", text: "Unlock achievements and build streaks")
-            ],
-            backgroundGradient: [Color(red: 0.4, green: 0.8, blue: 0.6), Color(red: 0.3, green: 0.7, blue: 0.5)]
-        ),
-        
-        // Today Page
-        TutorialStep(
-            icon: "house.fill",
-            iconColor: Color(red: 0.95, green: 0.6, blue: 0.3),
-            title: "Today",
-            subtitle: "Your daily command center at a glance",
-            features: [
-                TutorialFeature(icon: "pawprint.fill", text: "See your pet's current health and mood"),
-                TutorialFeature(icon: "flame.fill", text: "Track your daily step progress in real-time"),
-                TutorialFeature(icon: "chart.bar.fill", text: "View your streak and daily achievements"),
-                TutorialFeature(icon: "bolt.fill", text: "Quick access to play credits for bad days")
-            ],
-            backgroundGradient: [Color(red: 0.95, green: 0.6, blue: 0.3), Color(red: 0.9, green: 0.5, blue: 0.2)]
-        ),
-        
-        // Insights Page
-        TutorialStep(
-            icon: "chart.line.uptrend.xyaxis",
-            iconColor: Color(red: 0.5, green: 0.6, blue: 0.9),
-            title: "Insights",
-            subtitle: "Deep dive into your activity patterns",
-            features: [
-                TutorialFeature(icon: "calendar", text: "View weekly and monthly step trends"),
-                TutorialFeature(icon: "chart.pie.fill", text: "Analyze your activity distribution"),
-                TutorialFeature(icon: "target", text: "See how often you hit your goals"),
-                TutorialFeature(icon: "arrow.up.right", text: "Track your progress over time")
-            ],
-            backgroundGradient: [Color(red: 0.5, green: 0.6, blue: 0.9), Color(red: 0.4, green: 0.5, blue: 0.8)]
-        ),
-        
-        // Activity Page
-        TutorialStep(
-            icon: "figure.run",
-            iconColor: Color(red: 0.3, green: 0.75, blue: 0.85),
-            title: "Activity",
-            subtitle: "Track your walks with precision",
-            features: [
-                TutorialFeature(icon: "map.fill", text: "Beautiful maps that track your routes"),
-                TutorialFeature(icon: "cloud.sun.fill", text: "Real-time weather for your walks"),
-                TutorialFeature(icon: "flame.fill", text: "Calories burned during activities"),
-                TutorialFeature(icon: "timer", text: "Duration, pace, and distance tracking")
-            ],
-            backgroundGradient: [Color(red: 0.3, green: 0.75, blue: 0.85), Color(red: 0.2, green: 0.65, blue: 0.75)]
-        ),
-        
-        // Challenges - Games
-        TutorialStep(
-            icon: "gamecontroller.fill",
-            iconColor: Color(red: 0.9, green: 0.45, blue: 0.55),
-            title: "Minigames",
-            subtitle: "Play games with your pet to build your bond",
-            features: [
-                TutorialFeature(icon: "bubble.left.and.bubble.right.fill", text: "Bubble Pop - Tap bubbles for points"),
-                TutorialFeature(icon: "brain.head.profile", text: "Memory Match - Test your memory"),
-                TutorialFeature(icon: "square.grid.3x3.fill", text: "Pattern Match - Follow the sequence"),
-                TutorialFeature(icon: "gift.fill", text: "Earn rewards and strengthen your bond")
-            ],
-            backgroundGradient: [Color(red: 0.9, green: 0.45, blue: 0.55), Color(red: 0.8, green: 0.35, blue: 0.45)]
-        ),
-        
-        // Pet Care Credits
-        TutorialStep(
-            icon: "bolt.heart.fill",
-            iconColor: Color(red: 0.95, green: 0.75, blue: 0.3),
-            title: "Pet Care Credits",
-            subtitle: "Having a bad step day? No worries!",
-            features: [
-                TutorialFeature(icon: "fork.knife", text: "Feed your pet a delicious treat"),
-                TutorialFeature(icon: "tennisball.fill", text: "Play ball together for fun"),
-                TutorialFeature(icon: "tv.fill", text: "Watch TV and relax with your pet"),
-                TutorialFeature(icon: "plus.circle.fill", text: "Each activity adds +20 health instantly!")
-            ],
-            backgroundGradient: [Color(red: 0.95, green: 0.75, blue: 0.3), Color(red: 0.9, green: 0.65, blue: 0.2)]
-        ),
-        
-        // Awards & Achievements
-        TutorialStep(
-            icon: "trophy.fill",
-            iconColor: Color(red: 0.85, green: 0.55, blue: 0.9),
-            title: "Awards & Achievements",
-            subtitle: "Stay motivated and reach your goals",
-            features: [
-                TutorialFeature(icon: "medal.fill", text: "Unlock achievements as you progress"),
-                TutorialFeature(icon: "flame.fill", text: "Build streaks for consecutive goal days"),
-                TutorialFeature(icon: "star.circle.fill", text: "Earn badges for milestones"),
-                TutorialFeature(icon: "crown.fill", text: "Become a VirtuPet champion!")
-            ],
-            backgroundGradient: [Color(red: 0.85, green: 0.55, blue: 0.9), Color(red: 0.75, green: 0.45, blue: 0.8)]
-        ),
-        
-        // Settings
-        TutorialStep(
-            icon: "gearshape.fill",
-            iconColor: Color(red: 0.6, green: 0.6, blue: 0.65),
-            title: "Settings",
-            subtitle: "Customize your VirtuPet experience",
-            features: [
-                TutorialFeature(icon: "moon.fill", text: "Switch between light and dark mode"),
-                TutorialFeature(icon: "pawprint.fill", text: "Change or rename your pet anytime"),
-                TutorialFeature(icon: "target", text: "Adjust your daily step goals"),
-                TutorialFeature(icon: "bell.fill", text: "Configure reminders and notifications")
-            ],
-            backgroundGradient: [Color(red: 0.6, green: 0.6, blue: 0.65), Color(red: 0.5, green: 0.5, blue: 0.55)]
-        )
-    ]
+    // Steps that should show a circle highlight around the element
+    private var shouldShowCircleHighlight: Bool {
+        [.streakBadge, .creditsBadge, .tabHistory].contains(tutorialManager.currentStep)
+    }
     
     var body: some View {
         GeometryReader { geo in
+            let currentHighlightID = tutorialManager.currentStep.highlightID
+            let highlightRect: CGRect? = {
+                if let anchor = highlightAnchors[currentHighlightID] {
+                    return geo[anchor]
+                }
+                return nil
+            }()
+            
             ZStack {
-                // Animated background
-                LinearGradient(
-                    colors: tutorialSteps[currentStep].backgroundGradient,
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                .animation(.easeInOut(duration: 0.5), value: currentStep)
+                // Full screen tap catcher - tapping ANYWHERE continues tutorial
+                Color.black.opacity(0.01)
+                    .ignoresSafeArea()
+                    .contentShape(Rectangle())
                 
-                // Decorative circles
-                Circle()
-                    .fill(Color.white.opacity(0.1))
-                    .frame(width: 300, height: 300)
-                    .offset(x: -100, y: -200)
-                    .blur(radius: 30)
-                
-                Circle()
-                    .fill(Color.white.opacity(0.08))
-                    .frame(width: 200, height: 200)
-                    .offset(x: 150, y: 300)
-                    .blur(radius: 20)
-                
-                VStack(spacing: 0) {
-                    // Progress indicator
-                    HStack(spacing: 6) {
-                        ForEach(0..<tutorialSteps.count, id: \.self) { index in
-                            Capsule()
-                                .fill(index <= currentStep ? Color.white : Color.white.opacity(0.3))
-                                .frame(width: index == currentStep ? 24 : 8, height: 8)
-                                .animation(.spring(response: 0.3), value: currentStep)
-                        }
-                    }
-                    .padding(.top, 20)
-                    .padding(.bottom, 10)
+                // Circle highlight for certain elements
+                if shouldShowCircleHighlight, let rect = highlightRect, tutorialManager.showTooltip {
+                    Circle()
+                        .stroke(tutorialManager.currentStep.iconColor, lineWidth: 3)
+                        .frame(width: rect.width + 20, height: rect.height + 20)
+                        .position(x: rect.midX, y: rect.midY)
                     
-                    // Skip button
-                    HStack {
+                    // Pulsing outer circle
+                    Circle()
+                        .stroke(tutorialManager.currentStep.iconColor.opacity(0.4), lineWidth: 2)
+                        .frame(width: rect.width + 30, height: rect.height + 30)
+                        .position(x: rect.midX, y: rect.midY)
+                }
+                
+                // Tooltip with arrow
+                if tutorialManager.showTooltip {
+                    tooltipView(highlightRect: highlightRect, in: geo)
+                        .transition(.scale(scale: 0.9).combined(with: .opacity))
+                }
+                
+                // Progress indicator at top
+                if tutorialManager.currentStep != .welcome && tutorialManager.currentStep != .complete {
+                    VStack {
+                        progressBar
+                            .padding(.top, 60)
                         Spacer()
-                        Button(action: completeTutorial) {
-                            Text("Skip")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(Color.white.opacity(0.15))
-                                .cornerRadius(20)
-                        }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 10)
-                    
-                    Spacer()
-                    
-                    // Main content
-                    VStack(spacing: 24) {
-                        // Icon
-                        ZStack {
-                            Circle()
-                                .fill(Color.white.opacity(0.2))
-                                .frame(width: 120, height: 120)
-                            
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 100, height: 100)
-                                .shadow(color: Color.black.opacity(0.1), radius: 10, y: 5)
-                            
-                            Image(systemName: tutorialSteps[currentStep].icon)
-                                .font(.system(size: 44, weight: .semibold))
-                                .foregroundColor(tutorialSteps[currentStep].iconColor)
-                                .scaleEffect(iconBounce ? 1.1 : 1.0)
-                        }
-                        .opacity(showContent ? 1 : 0)
-                        .scaleEffect(showContent ? 1 : 0.5)
-                        
-                        // Title and subtitle
-                        VStack(spacing: 12) {
-                            Text(tutorialSteps[currentStep].title)
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.center)
-                            
-                            Text(tutorialSteps[currentStep].subtitle)
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white.opacity(0.85))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 20)
-                        }
-                        .opacity(showContent ? 1 : 0)
-                        .offset(y: showContent ? 0 : 20)
-                        
-                        // Features list
-                        VStack(spacing: 12) {
-                            ForEach(Array(tutorialSteps[currentStep].features.enumerated()), id: \.element.id) { index, feature in
-                                HStack(spacing: 14) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.white.opacity(0.2))
-                                            .frame(width: 44, height: 44)
-                                        
-                                        Image(systemName: feature.icon)
-                                            .font(.system(size: 18, weight: .semibold))
-                                            .foregroundColor(.white)
-                                    }
-                                    
-                                    Text(feature.text)
-                                        .font(.system(size: 15, weight: .medium))
-                                        .foregroundColor(.white)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-                                .background(Color.white.opacity(0.15))
-                                .cornerRadius(16)
-                                .opacity(index < featureAnimations.count && featureAnimations[index] ? 1 : 0)
-                                .offset(x: index < featureAnimations.count && featureAnimations[index] ? 0 : -30)
-                            }
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.top, 8)
-                    }
-                    
-                    Spacer()
-                    
-                    // Navigation buttons
-                    HStack(spacing: 16) {
-                        // Back button
-                        if currentStep > 0 {
-                            Button(action: previousStep) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "chevron.left")
-                                        .font(.system(size: 14, weight: .semibold))
-                                    Text("Back")
-                                        .font(.system(size: 16, weight: .semibold))
-                                }
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 16)
-                                .background(Color.white.opacity(0.2))
-                                .cornerRadius(30)
-                            }
-                            .transition(.opacity)
-                        }
-                        
-                        Spacer()
-                        
-                        // Next/Finish button
-                        Button(action: {
-                            if currentStep == tutorialSteps.count - 1 {
-                                completeTutorial()
-                            } else {
-                                nextStep()
-                            }
-                        }) {
-                            HStack(spacing: 6) {
-                                Text(currentStep == tutorialSteps.count - 1 ? "Let's Go!" : "Next")
-                                    .font(.system(size: 16, weight: .bold))
-                                Image(systemName: currentStep == tutorialSteps.count - 1 ? "checkmark" : "chevron.right")
-                                    .font(.system(size: 14, weight: .bold))
-                            }
-                            .foregroundColor(tutorialSteps[currentStep].iconColor)
-                            .padding(.horizontal, 32)
-                            .padding(.vertical, 16)
-                            .background(Color.white)
-                            .cornerRadius(30)
-                            .shadow(color: Color.black.opacity(0.15), radius: 10, y: 5)
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 40)
                 }
             }
-        }
-        .onAppear {
-            animateContent()
+            .contentShape(Rectangle())
+            .onTapGesture {
+                handleTap()
+            }
         }
     }
     
-    private func animateContent() {
-        // Reset animations
-        showContent = false
-        featureAnimations = Array(repeating: false, count: tutorialSteps[currentStep].features.count)
-        iconBounce = false
-        
-        // Animate content appearing
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-            showContent = true
-        }
-        
-        // Bounce icon
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.5).delay(0.2)) {
-            iconBounce = true
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
-                iconBounce = false
-            }
-        }
-        
-        // Animate features one by one
-        for index in 0..<tutorialSteps[currentStep].features.count {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3 + Double(index) * 0.1) {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                    if index < featureAnimations.count {
-                        featureAnimations[index] = true
-                    }
-                }
-            }
-        }
-        
+    private func handleTap() {
         HapticFeedback.light.trigger()
-    }
-    
-    private func nextStep() {
-        guard currentStep < tutorialSteps.count - 1 else { return }
-        
-        withAnimation(.easeOut(duration: 0.2)) {
-            showContent = false
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            currentStep += 1
-            animateContent()
+        if tutorialManager.currentStep == .complete {
+            userSettings.hasCompletedAppTutorial = true
+            tutorialManager.complete()
+        } else {
+            tutorialManager.nextStep()
         }
     }
     
-    private func previousStep() {
-        guard currentStep > 0 else { return }
+    @ViewBuilder
+    private func tooltipView(highlightRect: CGRect?, in geo: GeometryProxy) -> some View {
+        let step = tutorialManager.currentStep
+        let isFullScreen = step == .welcome || step == .complete
         
-        withAnimation(.easeOut(duration: 0.2)) {
-            showContent = false
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            currentStep -= 1
-            animateContent()
+        if isFullScreen {
+            // Centered card for welcome/complete
+            fullScreenCard(step: step, in: geo)
+        } else {
+            // Positioned tooltip with arrow
+            positionedTooltip(step: step, highlightRect: highlightRect, in: geo)
         }
     }
     
-    private func completeTutorial() {
-        HapticFeedback.success.trigger()
-        userSettings.hasCompletedAppTutorial = true
-        onComplete()
-        dismiss()
+    private func fullScreenCard(step: TutorialStep, in geo: GeometryProxy) -> some View {
+        VStack(spacing: 20) {
+            // Pet Animation instead of emoji
+            ZStack {
+                // Glow background
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [themeManager.accentColor.opacity(0.3), themeManager.accentColor.opacity(0)],
+                            center: .center,
+                            startRadius: 20,
+                            endRadius: 80
+                        )
+                    )
+                    .frame(width: 140, height: 140)
+                
+                // Pet Animation
+                AnimatedPetVideoView(
+                    petType: userSettings.pet.type,
+                    moodState: .fullHealth
+                )
+                .frame(width: 100, height: 100)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            }
+            
+            // Title
+            VStack(spacing: 8) {
+                Text(step.title)
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+                    .multilineTextAlignment(.center)
+                
+                if step == .welcome {
+                    Text("Step Tracker")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(themeManager.accentColor)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(themeManager.accentColor.opacity(0.15))
+                        )
+                }
+            }
+            
+            Text(step.description)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(themeManager.secondaryTextColor)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+                .padding(.horizontal, 16)
+            
+            // Button
+            Button(action: handleTap) {
+                HStack(spacing: 8) {
+                    Text(step == .complete ? "Start Exploring" : "Let's Go")
+                        .font(.system(size: 16, weight: .bold))
+                    
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 14, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 14)
+                .background(
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
+                )
+            }
+            .padding(.top, 4)
+            
+            if step == .welcome {
+                Button(action: {
+                    userSettings.hasCompletedAppTutorial = true
+                    tutorialManager.skip()
+                }) {
+                    Text("Skip Tutorial")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(themeManager.tertiaryTextColor)
+                }
+                .padding(.top, 2)
+            }
+        }
+        .padding(28)
+        .background(
+            RoundedRectangle(cornerRadius: 28)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.15), radius: 25, y: 12)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28)
+                .stroke(themeManager.accentColor.opacity(0.1), lineWidth: 1)
+        )
+        .frame(maxWidth: 340)
+        .position(x: geo.size.width / 2, y: geo.size.height / 2 - 20)
+    }
+    
+    private func positionedTooltip(step: TutorialStep, highlightRect: CGRect?, in geo: GeometryProxy) -> some View {
+        let tooltipWidth: CGFloat = min(320, geo.size.width - 32)
+        let tooltipHeight: CGFloat = 160
+        let padding: CGFloat = 16
+        
+        // Calculate position
+        let position = calculateTooltipPosition(
+            highlightRect: highlightRect,
+            tooltipSize: CGSize(width: tooltipWidth, height: tooltipHeight),
+            arrowDirection: step.arrowDirection,
+            geo: geo,
+            padding: padding,
+            step: step
+        )
+        
+        return ZStack {
+            // Tooltip card
+            VStack(alignment: .leading, spacing: 10) {
+                // Header with icon and title
+                HStack(spacing: 12) {
+                    // Icon circle
+                    ZStack {
+                        Circle()
+                            .fill(step.iconColor.opacity(0.15))
+                            .frame(width: 40, height: 40)
+                        
+                        Image(systemName: step.icon)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(step.iconColor)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(step.title)
+                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                        
+                        // Step counter
+                        Text("Step \(step.rawValue) of \(TutorialStep.allCases.count - 2)")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(themeManager.tertiaryTextColor)
+                    }
+                    
+                    Spacer()
+                }
+                
+                Text(step.description)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(themeManager.secondaryTextColor)
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+                
+                // Tap hint
+                HStack {
+                    Spacer()
+                    
+                    HStack(spacing: 4) {
+                        Text("Tap to continue")
+                            .font(.system(size: 12, weight: .semibold))
+                        
+                        Image(systemName: "hand.tap.fill")
+                            .font(.system(size: 11))
+                    }
+                    .foregroundColor(themeManager.accentColor)
+                }
+                .padding(.top, 2)
+            }
+            .padding(18)
+            .frame(width: tooltipWidth)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(themeManager.cardBackgroundColor)
+                    .shadow(color: Color.black.opacity(0.12), radius: 20, y: 8)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(step.iconColor.opacity(0.2), lineWidth: 1.5)
+            )
+            .overlay(
+                // Arrow pointer
+                arrowPointer(direction: step.arrowDirection, highlightRect: highlightRect, tooltipRect: CGRect(origin: position, size: CGSize(width: tooltipWidth, height: tooltipHeight)), color: step.iconColor, in: geo)
+            )
+        }
+        .position(x: position.x + tooltipWidth / 2, y: position.y + tooltipHeight / 2)
+    }
+    
+    @ViewBuilder
+    private func arrowPointer(direction: ArrowDirection, highlightRect: CGRect?, tooltipRect: CGRect, color: Color, in geo: GeometryProxy) -> some View {
+        if let highlight = highlightRect, direction != .none {
+            GeometryReader { tooltipGeo in
+                let tooltipFrame = tooltipGeo.frame(in: .global)
+                
+                // Calculate arrow position pointing to highlight center
+                let highlightCenterX = highlight.midX
+                let arrowOffsetX = highlightCenterX - tooltipFrame.minX
+                let clampedX = max(40, min(arrowOffsetX, tooltipFrame.width - 40))
+                
+                switch direction {
+                case .up:
+                    // Arrow pointing up (highlight is above tooltip)
+                    // Just the arrow, no long line
+                    ArrowShape(direction: .up)
+                        .fill(color)
+                        .frame(width: 16, height: 10)
+                        .position(x: clampedX, y: -8)
+                    
+                case .down:
+                    // Arrow pointing down (highlight is below tooltip)
+                    // Just the arrow, no long line
+                    ArrowShape(direction: .down)
+                        .fill(color)
+                        .frame(width: 16, height: 10)
+                        .position(x: clampedX, y: tooltipGeo.size.height + 8)
+                    
+                default:
+                    EmptyView()
+                }
+            }
+        }
+    }
+    
+    private func calculateTooltipPosition(highlightRect: CGRect?, tooltipSize: CGSize, arrowDirection: ArrowDirection, geo: GeometryProxy, padding: CGFloat, step: TutorialStep) -> CGPoint {
+        guard let highlight = highlightRect else {
+            // Center if no highlight
+            return CGPoint(
+                x: (geo.size.width - tooltipSize.width) / 2,
+                y: (geo.size.height - tooltipSize.height) / 2
+            )
+        }
+        
+        var x: CGFloat
+        var y: CGFloat
+        
+        // Center horizontally relative to highlight
+        x = highlight.midX - tooltipSize.width / 2
+        // Clamp to screen bounds
+        x = max(padding, min(x, geo.size.width - tooltipSize.width - padding))
+        
+        switch arrowDirection {
+        case .up:
+            // Tooltip below highlight
+            // Weekly graph needs to be higher up
+            if step == .weeklyGraph {
+                y = highlight.maxY + 20
+            } else {
+                y = highlight.maxY + 35
+            }
+        case .down:
+            // Tooltip above highlight
+            y = highlight.minY - tooltipSize.height - 35
+        default:
+            y = geo.size.height / 2 - tooltipSize.height / 2
+        }
+        
+        // Clamp Y to screen
+        y = max(100, min(y, geo.size.height - tooltipSize.height - 120))
+        
+        return CGPoint(x: x, y: y)
+    }
+    
+    private var progressBar: some View {
+        HStack(spacing: 16) {
+            // Skip button
+            Button(action: {
+                userSettings.hasCompletedAppTutorial = true
+                tutorialManager.skip()
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Skip")
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                .foregroundColor(themeManager.secondaryTextColor)
+            }
+            
+            Spacer()
+            
+            // Progress dots
+            HStack(spacing: 3) {
+                ForEach(1..<TutorialStep.allCases.count - 1, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(index <= tutorialManager.currentStep.rawValue ? themeManager.accentColor : Color.gray.opacity(0.25))
+                        .frame(width: index == tutorialManager.currentStep.rawValue ? 16 : 6, height: 6)
+                        .animation(.spring(response: 0.3), value: tutorialManager.currentStep)
+                }
+            }
+            
+            Spacer()
+            
+            // Step counter text
+            Text("\(tutorialManager.currentStep.rawValue)/\(TutorialStep.allCases.count - 2)")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundColor(themeManager.accentColor)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.08), radius: 10, y: 3)
+        )
+        .padding(.horizontal, 20)
+    }
+}
+
+// MARK: - Arrow Shape
+struct ArrowShape: Shape {
+    let direction: ArrowDirection
+    
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        
+        switch direction {
+        case .up:
+            path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+            path.closeSubpath()
+        case .down:
+            path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+            path.closeSubpath()
+        case .left:
+            path.move(to: CGPoint(x: rect.minX, y: rect.midY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+            path.closeSubpath()
+        case .right:
+            path.move(to: CGPoint(x: rect.maxX, y: rect.midY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+            path.closeSubpath()
+        case .none:
+            break
+        }
+        
+        return path
     }
 }
 
 // MARK: - Preview
 #Preview {
-    AppTutorialView(onComplete: {})
-        .environmentObject(ThemeManager())
-        .environmentObject(UserSettings())
+    ZStack {
+        Color(red: 1, green: 0.98, blue: 0.9)
+        
+        TutorialOverlay(highlightAnchors: [:])
+            .environmentObject({
+                let tm = TutorialManager()
+                tm.isActive = true
+                tm.showTooltip = true
+                return tm
+            }())
+            .environmentObject(ThemeManager())
+            .environmentObject(UserSettings())
+    }
 }
-

@@ -31,8 +31,8 @@ struct TodayView: View {
     @State private var showMilestoneCelebration = false
     @State private var milestoneStreakValue: Int = 0
     
-    // App tutorial state
-    @State private var showAppTutorial = false
+    // Tutorial manager
+    @EnvironmentObject var tutorialManager: TutorialManager
     
     private var stepBasedHealth: Int {
         guard userSettings.dailyStepGoal > 0 else { return 0 }
@@ -79,16 +79,27 @@ struct TodayView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        headerSection
-                        heroCardSection
-                        weeklyGraphSection
-                        encouragementSection
-                        dashboardSection
-                        Spacer(minLength: 120)
+                ScrollViewReader { scrollProxy in
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            headerSection
+                            heroCardSection
+                            weeklyGraphSection
+                                .tutorialHighlight("tutorial_weekly_graph")
+                                .id("weeklyGraph")
+                            encouragementSection
+                            dashboardSection
+                            Spacer(minLength: 120)
+                        }
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.horizontal, 20)
+                    .onChange(of: tutorialManager.scrollToWeekly) { _, shouldScroll in
+                        if shouldScroll {
+                            withAnimation {
+                                scrollProxy.scrollTo("weeklyGraph", anchor: .top)
+                            }
+                        }
+                    }
                 }
                 
                 // Streak animation overlay
@@ -99,13 +110,6 @@ struct TodayView: View {
         .onAppear {
             refreshData()
             animateValues()
-            
-            // Show app tutorial for first-time users after onboarding
-            if userSettings.hasCompletedOnboarding && !userSettings.hasCompletedAppTutorial {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    showAppTutorial = true
-                }
-            }
         }
         .onChange(of: healthKitManager.todaySteps) { _, newValue in
             updateData(steps: newValue)
@@ -115,13 +119,6 @@ struct TodayView: View {
             if newValue >= 100 && oldValue < 100 {
                 triggerCelebration()
             }
-        }
-        .fullScreenCover(isPresented: $showAppTutorial) {
-            AppTutorialView(onComplete: {
-                showAppTutorial = false
-            })
-            .environmentObject(themeManager)
-            .environmentObject(userSettings)
         }
         .overlay {
             if showCelebration {
@@ -161,6 +158,29 @@ struct TodayView: View {
             
             Spacer()
             
+            // Test Tutorial Button (for testing)
+            Button(action: {
+                HapticFeedback.medium.trigger()
+                tutorialManager.start()
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "questionmark.circle.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(themeManager.accentColor)
+                    
+                    Text("Tutorial")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.accentColor)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(themeManager.accentColor.opacity(0.15))
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            
             // Credits (clickable - navigates to Pet section)
             Button(action: {
                 HapticFeedback.light.trigger()
@@ -185,6 +205,7 @@ struct TodayView: View {
                 )
             }
             .buttonStyle(PlainButtonStyle())
+            .tutorialHighlight("tutorial_credits_badge")
             
             // Streak (small) with animation target (clickable - navigates to Awards section)
             ZStack {
@@ -211,6 +232,7 @@ struct TodayView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 .scaleEffect(streakBadgeScale)
+                .tutorialHighlight("tutorial_streak_badge")
                 .overlay(
                     GeometryReader { geo in
                         Color.clear
@@ -271,6 +293,7 @@ struct TodayView: View {
                 .frame(width: 140, height: 140)
                 .clipShape(RoundedRectangle(cornerRadius: 20))
             }
+            .tutorialHighlight("tutorial_pet_hero")
             
             // Steps Display
             VStack(spacing: 6) {
@@ -293,6 +316,7 @@ struct TodayView: View {
                         .foregroundColor(themeManager.secondaryTextColor)
                 }
             }
+            .tutorialHighlight("tutorial_step_count")
             
             // Health Bar (no number)
             VStack(spacing: 8) {

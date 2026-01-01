@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  StepPet
+//  VirtuPet
 //
 
 import SwiftUI
@@ -9,6 +9,7 @@ struct ContentView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var achievementManager: AchievementManager
     @EnvironmentObject var userSettings: UserSettings
+    @StateObject private var tutorialManager = TutorialManager()
     @State private var selectedTab = 2 // Start on Today (center)
     @State private var visitedTabs: Set<Int> = [2] // Start with Today visited
     
@@ -39,9 +40,11 @@ struct ContentView: View {
                     .tag(4)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
+            .disabled(tutorialManager.isActive) // Disable swiping during tutorial
             
             // Custom Tab Bar with Center Highlight
-            CenteredTabBar(selectedTab: $selectedTab)
+            CenteredTabBar(selectedTab: $selectedTab, tutorialManager: tutorialManager)
+                .allowsHitTesting(!tutorialManager.isActive) // Disable tab bar during tutorial
         }
         .onChange(of: selectedTab) { _, newValue in
             visitedTabs.insert(newValue)
@@ -49,8 +52,10 @@ struct ContentView: View {
             HapticFeedback.light.trigger()
         }
         .onReceive(navigateToChallengesNotification) { _ in
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                selectedTab = 3 // Navigate to Challenges tab
+            if !tutorialManager.isActive {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    selectedTab = 3 // Navigate to Challenges tab
+                }
             }
         }
         .overlay {
@@ -60,7 +65,34 @@ struct ContentView: View {
                     .zIndex(100)
             }
         }
+        .overlayPreferenceValue(TutorialHighlightKey.self) { anchors in
+            if tutorialManager.isActive {
+                TutorialOverlay(highlightAnchors: anchors)
+                    .environmentObject(tutorialManager)
+                    .environmentObject(themeManager)
+                    .environmentObject(userSettings)
+                    .zIndex(200)
+            }
+        }
+        .environmentObject(tutorialManager)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: achievementManager.showUnlockAnimation)
+        .onAppear {
+            // Check if tutorial should start
+            if userSettings.hasCompletedOnboarding && !userSettings.hasCompletedAppTutorial {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    tutorialManager.start()
+                }
+            }
+        }
+        .onChange(of: tutorialManager.currentStep) { _, newStep in
+            // Automatically switch tabs based on tutorial step
+            let targetTab = newStep.tabIndex
+            if selectedTab != targetTab {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    selectedTab = targetTab
+                }
+            }
+        }
     }
 }
 
@@ -68,14 +100,15 @@ struct ContentView: View {
 struct CenteredTabBar: View {
     @Binding var selectedTab: Int
     @EnvironmentObject var themeManager: ThemeManager
+    var tutorialManager: TutorialManager? = nil
     
     // Tab order: Activity, Insights, TODAY (center), Challenges, Settings
-    let tabs: [(icon: String, selectedIcon: String, title: String)] = [
-        ("figure.walk.motion", "figure.walk.motion", "Activity"),
-        ("chart.line.uptrend.xyaxis", "chart.line.uptrend.xyaxis", "Insights"),
-        ("house", "house.fill", "Today"),
-        ("trophy", "trophy.fill", "Challenges"),
-        ("gearshape", "gearshape.fill", "Settings")
+    let tabs: [(icon: String, selectedIcon: String, title: String, tutorialID: String)] = [
+        ("figure.walk.motion", "figure.walk.motion", "Activity", "tutorial_tab_activity"),
+        ("chart.line.uptrend.xyaxis", "chart.line.uptrend.xyaxis", "Insights", "tutorial_tab_insights"),
+        ("house", "house.fill", "Today", "tutorial_tab_today"),
+        ("trophy", "trophy.fill", "Challenges", "tutorial_tab_challenges"),
+        ("gearshape", "gearshape.fill", "Settings", "tutorial_tab_settings")
     ]
     
     var body: some View {
@@ -92,6 +125,7 @@ struct CenteredTabBar: View {
                             selectedTab = index
                         }
                     }
+                    .tutorialHighlight(tabs[index].tutorialID)
                 } else {
                     // Regular tabs
                     TabBarButton(
@@ -103,6 +137,7 @@ struct CenteredTabBar: View {
                             selectedTab = index
                         }
                     }
+                    .tutorialHighlight(tabs[index].tutorialID)
                 }
             }
         }
