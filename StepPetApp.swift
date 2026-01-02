@@ -18,7 +18,7 @@ struct VirtuPetApp: App {
     
     var body: some Scene {
         WindowGroup {
-            Group {
+            ZStack {
                 if userSettings.hasCompletedOnboarding {
                     ContentView()
                 } else {

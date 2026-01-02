@@ -158,9 +158,11 @@ struct OnboardingView: View {
     }
     
     private func completeOnboarding() {
-        // Mark onboarding as complete
-        userSettings.hasCompletedOnboarding = true
+        // Immediately transition to app home page
         HapticFeedback.success.trigger()
+        withAnimation(.easeInOut(duration: 0.4)) {
+            userSettings.hasCompletedOnboarding = true
+        }
     }
 }
 

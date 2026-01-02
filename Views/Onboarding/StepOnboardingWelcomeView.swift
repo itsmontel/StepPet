@@ -43,7 +43,7 @@ struct StepOnboardingWelcomeView: View {
                             .blur(radius: 20)
                         
                         AnimatedPetVideoView(
-                            petType: .cat,
+                            petType: .dog,
                             moodState: .fullHealth
                         )
                         .frame(width: 160, height: 160)
@@ -53,10 +53,22 @@ struct StepOnboardingWelcomeView: View {
                     .opacity(petAnimation ? 1.0 : 0.0)
                     
                     VStack(spacing: 12) {
-                        Text("Welcome to VirtuPet: Step Tracker")
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                        Text("Welcome to VirtuPet")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                             .multilineTextAlignment(.center)
+                            .opacity(textAnimation ? 1.0 : 0.0)
+                        
+                        // Step Tracker badge
+                        Text("Step Tracker")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(themeManager.accentColor)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 8)
+                            .background(
+                                Capsule()
+                                    .fill(themeManager.accentColor.opacity(0.15))
+                            )
                             .opacity(textAnimation ? 1.0 : 0.0)
                         
                         Text("Care for your VirtuPet by caring for yourself")

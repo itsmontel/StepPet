@@ -84,7 +84,7 @@ struct StepOnboardingHealthKitView: View {
                             .multilineTextAlignment(.center)
                             .opacity(animateContent ? 1.0 : 0.0)
                         
-                        Text("StepPet needs access to your step data to track \(petName)'s health")
+                        Text("VirtuPet needs access to your step data to track \(petName)'s health")
                             .font(.system(size: 17, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                             .multilineTextAlignment(.center)
@@ -159,7 +159,7 @@ struct StepOnboardingHealthKitView: View {
                     .opacity(animateContent ? 1.0 : 0.0)
                     
                     // Info text
-                    Text("StepPet only reads your step count data.\nWe never share your health information.")
+                    Text("VirtuPet only reads your step count data.\nWe never share your health information.")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(themeManager.secondaryTextColor)
                         .multilineTextAlignment(.center)
@@ -196,19 +196,17 @@ struct StepOnboardingHealthKitView: View {
         isRequesting = true
         HapticFeedback.medium.trigger()
         
-        healthKitManager.requestAuthorization()
-        
-        // Give time for the system dialog to appear and user to respond
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            isRequesting = false
-            
-            // Check if authorized
-            if healthKitManager.isAuthorized {
-                HapticFeedback.success.trigger()
-                onContinue()
-            } else {
-                // Still continue but show info if not authorized
-                HapticFeedback.warning.trigger()
+        healthKitManager.requestAuthorization { success in
+            DispatchQueue.main.async {
+                isRequesting = false
+                
+                if success {
+                    HapticFeedback.success.trigger()
+                } else {
+                    HapticFeedback.warning.trigger()
+                }
+                
+                // Continue regardless of authorization result
                 onContinue()
             }
         }

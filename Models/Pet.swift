@@ -40,8 +40,8 @@ enum PetType: String, CaseIterable, Codable {
     
     var isPremium: Bool {
         switch self {
-        case .cat: return false // Cat is free (main pet)
-        case .dog, .bunny, .hamster, .horse: return true
+        case .dog: return false // Dog is free (main pet)
+        case .cat, .bunny, .hamster, .horse: return true
         }
     }
     

@@ -1,17 +1,20 @@
 //
-//  VirtuPetWidgetBundle.swift
-//  VirtuPetWidget
+//  StepPetWidgetBundle.swift
+//  StepPetWidget
 //
-//  Widget Bundle for VirtuPet
+//  Widget Bundle for StepPet
 //
 
 import WidgetKit
 import SwiftUI
 
 @main
-struct VirtuPetWidgetBundle: WidgetBundle {
+struct StepPetWidgetBundle: WidgetBundle {
     var body: some Widget {
-        VirtuPetWidget()
-        VirtuPetWidgetLiveActivity()
+        StepPetWidget()
+        StepPetWidgetLiveActivity()
     }
 }
+
+// Keep old name for backward compatibility
+typealias VirtuPetWidgetBundle = StepPetWidgetBundle

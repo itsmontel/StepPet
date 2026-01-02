@@ -63,7 +63,7 @@ struct StepOnboardingWhyChooseView: View {
                         .padding(.top, 20)
                         
                         VStack(spacing: 16) {
-                            Text("Why choose StepPet?")
+                            Text("Why choose VirtuPet?")
                                 .font(.system(size: 32, weight: .bold, design: .rounded))
                                 .foregroundColor(themeManager.primaryTextColor)
                                 .multilineTextAlignment(.center)

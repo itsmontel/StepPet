@@ -289,6 +289,12 @@ struct TutorialOverlay: View {
     
     let highlightAnchors: [String: Anchor<CGRect>]
     
+    // Entrance animation states
+    @State private var showEntrance = false
+    @State private var sparkleOpacity: [Double] = [0, 0, 0, 0, 0, 0, 0, 0]
+    @State private var sparkleScale: [CGFloat] = [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
+    @State private var sparkleOffset: [CGFloat] = [0, 0, 0, 0, 0, 0, 0, 0]
+    
     // Steps that should show a circle highlight around the element
     private var shouldShowCircleHighlight: Bool {
         [.streakBadge, .creditsBadge, .tabHistory].contains(tutorialManager.currentStep)
@@ -310,6 +316,11 @@ struct TutorialOverlay: View {
                     .ignoresSafeArea()
                     .contentShape(Rectangle())
                 
+                // Sparkle entrance animation (only on welcome step)
+                if tutorialManager.currentStep == .welcome && showEntrance {
+                    sparkleEntranceView(in: geo)
+                }
+                
                 // Circle highlight for certain elements
                 if shouldShowCircleHighlight, let rect = highlightRect, tutorialManager.showTooltip {
                     Circle()
@@ -327,14 +338,15 @@ struct TutorialOverlay: View {
                 // Tooltip with arrow
                 if tutorialManager.showTooltip {
                     tooltipView(highlightRect: highlightRect, in: geo)
-                        .transition(.scale(scale: 0.9).combined(with: .opacity))
+                        .scaleEffect(showEntrance ? 1.0 : 0.5)
+                        .opacity(showEntrance ? 1.0 : 0.0)
                 }
                 
                 // Progress indicator at top
                 if tutorialManager.currentStep != .welcome && tutorialManager.currentStep != .complete {
                     VStack {
                         progressBar
-                            .padding(.top, 60)
+                            .padding(.top, 50)
                         Spacer()
                     }
                 }
@@ -344,6 +356,73 @@ struct TutorialOverlay: View {
                 handleTap()
             }
         }
+        .onChange(of: tutorialManager.showTooltip) { oldValue, newValue in
+            // Trigger entrance animation when tooltip first appears (after HealthKit permission is granted)
+            if newValue && !oldValue && tutorialManager.currentStep == .welcome {
+                // Small delay to ensure UI is ready
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    // Trigger entrance animation
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                        showEntrance = true
+                    }
+                    
+                    // Animate sparkles with staggered timing
+                    for i in 0..<8 {
+                        let delay = Double(i) * 0.08
+                        withAnimation(.easeOut(duration: 0.5).delay(delay)) {
+                            sparkleOpacity[i] = 1.0
+                            sparkleScale[i] = 1.0
+                            sparkleOffset[i] = CGFloat.random(in: 20...60)
+                        }
+                        withAnimation(.easeIn(duration: 0.4).delay(delay + 0.5)) {
+                            sparkleOpacity[i] = 0.0
+                        }
+                    }
+                }
+            } else if newValue && !showEntrance {
+                // For non-welcome steps, just show entrance without sparkles
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    showEntrance = true
+                }
+            }
+        }
+    }
+    
+    // MARK: - Sparkle Entrance Animation
+    @ViewBuilder
+    private func sparkleEntranceView(in geo: GeometryProxy) -> some View {
+        let centerX = geo.size.width / 2
+        let centerY = geo.size.height / 2 - 50
+        
+        // 8 sparkles radiating outward
+        ForEach(0..<8, id: \.self) { index in
+            let angle = Double(index) * (360.0 / 8.0) * .pi / 180.0
+            let offsetX = cos(angle) * Double(sparkleOffset[index])
+            let offsetY = sin(angle) * Double(sparkleOffset[index])
+            
+            Image(systemName: "sparkle")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(themeManager.accentColor)
+                .scaleEffect(sparkleScale[index])
+                .opacity(sparkleOpacity[index])
+                .position(x: centerX + CGFloat(offsetX), y: centerY + CGFloat(offsetY))
+        }
+        
+        // Central glow
+        Circle()
+            .fill(
+                RadialGradient(
+                    colors: [themeManager.accentColor.opacity(0.3), Color.clear],
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: 100
+                )
+            )
+            .frame(width: 200, height: 200)
+            .position(x: centerX, y: centerY)
+            .scaleEffect(showEntrance ? 1.2 : 0.5)
+            .opacity(showEntrance ? 0.0 : 0.8)
+            .animation(.easeOut(duration: 0.8), value: showEntrance)
     }
     
     private func handleTap() {

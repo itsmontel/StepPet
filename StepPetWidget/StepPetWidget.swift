@@ -1,31 +1,71 @@
 //
-//  VirtuPetWidget.swift
-//  VirtuPetWidget
+//  StepPetWidget.swift
+//  StepPetWidget
 //
-//  Premium Home Screen Widget for VirtuPet
+//  Beautiful iOS Widget for StepPet - Matching VirtuPet Design
 //
 
 import WidgetKit
 import SwiftUI
 
-// MARK: - Theme
-struct VirtuPetWidgetTheme {
-    static let background = Color(red: 1.0, green: 0.98, blue: 0.89)
-    static let accent = Color(red: 0.4, green: 0.8, blue: 0.6)
-    static let accentDark = Color(red: 0.3, green: 0.7, blue: 0.5)
-    static let textPrimary = Color(red: 0.15, green: 0.15, blue: 0.15)
-    static let textSecondary = Color(red: 0.5, green: 0.5, blue: 0.5)
+// MARK: - Theme Colors
+struct StepPetTheme {
+    // Warm cream background like VirtuPet
+    static let background = Color(red: 1.0, green: 0.98, blue: 0.92)
+    static let backgroundAccent = Color(red: 0.99, green: 0.96, blue: 0.88)
+    
+    // Teal/Green accent colors
+    static let accent = Color(red: 0.15, green: 0.68, blue: 0.55) // Teal green
+    static let accentLight = Color(red: 0.2, green: 0.75, blue: 0.6)
+    
+    // Text colors
+    static let textPrimary = Color(red: 0.15, green: 0.15, blue: 0.2)
+    static let textSecondary = Color(red: 0.45, green: 0.45, blue: 0.5)
+    
+    // Mood badge colors
+    static let moodGreen = Color(red: 0.2, green: 0.7, blue: 0.5)
+    static let moodYellow = Color(red: 0.95, green: 0.75, blue: 0.3)
+    static let moodOrange = Color(red: 0.95, green: 0.55, blue: 0.3)
+    static let moodRed = Color(red: 0.9, green: 0.35, blue: 0.35)
+    
+    // Streak orange
+    static let streak = Color(red: 0.95, green: 0.5, blue: 0.2)
 }
 
-// MARK: - Pet Image Helper
-struct WidgetPetImage: View {
+// MARK: - Mood Display Helper
+struct MoodDisplay {
+    let text: String
+    let color: Color
+    
+    static func from(mood: String, health: Int) -> MoodDisplay {
+        switch mood.lowercased() {
+        case "fullhealth":
+            return MoodDisplay(text: "Full Health", color: StepPetTheme.moodGreen)
+        case "happy":
+            return MoodDisplay(text: "Happy", color: StepPetTheme.moodGreen)
+        case "content":
+            return MoodDisplay(text: "Content", color: StepPetTheme.moodYellow)
+        case "sad":
+            return MoodDisplay(text: "Sad", color: StepPetTheme.moodOrange)
+        case "sick":
+            return MoodDisplay(text: "Sick", color: StepPetTheme.moodRed)
+        default:
+            return MoodDisplay(text: "Full Health", color: StepPetTheme.moodGreen)
+        }
+    }
+}
+
+// MARK: - Pet Image View (Uses actual assets with fallback)
+struct WidgetPetImageView: View {
     let petType: String
     let petMood: String
     let size: CGFloat
-    let healthColor: Color
     
     private var imageName: String {
-        "\(petType)\(petMood)"
+        // Asset name format: "doghappy", "catfullhealth", etc.
+        let type = petType.lowercased()
+        let mood = petMood.lowercased()
+        return "\(type)\(mood)"
     }
     
     private var emoji: String {
@@ -40,45 +80,38 @@ struct WidgetPetImage: View {
     }
     
     var body: some View {
-        // Show emoji with colored background - simple and always works
-        ZStack {
-            // Background circle with pet color
-            Circle()
-                .fill(healthColor.opacity(0.15))
-                .frame(width: size, height: size)
-            
-            // Emoji - always visible
-            Text(emoji)
-                .font(.system(size: size * 0.55))
-        }
+        Image(imageName)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: size, height: size)
     }
 }
 
 // MARK: - Timeline Provider
 struct Provider: TimelineProvider {
-    func placeholder(in context: Context) -> VirtuPetEntry {
-        VirtuPetEntry(
+    func placeholder(in context: Context) -> StepPetEntry {
+        StepPetEntry(
             date: Date(),
-            petType: "cat",
+            petType: "dog",
             petMood: "fullhealth",
-            petName: "Whiskers",
-            todaySteps: 5432,
+            petName: "Buddy",
+            todaySteps: 7500,
             goalSteps: 10000,
             health: 75,
-            streak: 7
+            streak: 5
         )
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (VirtuPetEntry) -> ()) {
-        let entry = VirtuPetEntry(
+    func getSnapshot(in context: Context, completion: @escaping (StepPetEntry) -> ()) {
+        let entry = StepPetEntry(
             date: Date(),
-            petType: "cat",
+            petType: "dog",
             petMood: "fullhealth",
-            petName: "Whiskers",
-            todaySteps: 5432,
+            petName: "Buddy",
+            todaySteps: 7500,
             goalSteps: 10000,
             health: 75,
-            streak: 7
+            streak: 5
         )
         completion(entry)
     }
@@ -87,15 +120,15 @@ struct Provider: TimelineProvider {
         // Read from shared UserDefaults (App Group)
         let sharedDefaults = UserDefaults(suiteName: "group.com.yourcompany.VirtuPet")
         
-        let petType = sharedDefaults?.string(forKey: "widgetPetType") ?? "cat"
+        let petType = sharedDefaults?.string(forKey: "widgetPetType") ?? "dog"
         let petMood = sharedDefaults?.string(forKey: "widgetPetMood") ?? "fullhealth"
-        let petName = sharedDefaults?.string(forKey: "widgetPetName") ?? "Pet"
+        let petName = sharedDefaults?.string(forKey: "widgetPetName") ?? "Buddy"
         let todaySteps = sharedDefaults?.integer(forKey: "widgetTodaySteps") ?? 0
         let goalSteps = sharedDefaults?.integer(forKey: "widgetGoalSteps") ?? 10000
-        let health = sharedDefaults?.integer(forKey: "widgetHealth") ?? 50
+        let health = sharedDefaults?.integer(forKey: "widgetHealth") ?? 100
         let streak = sharedDefaults?.integer(forKey: "widgetStreak") ?? 0
         
-        let entry = VirtuPetEntry(
+        let entry = StepPetEntry(
             date: Date(),
             petType: petType,
             petMood: petMood,
@@ -114,7 +147,7 @@ struct Provider: TimelineProvider {
 }
 
 // MARK: - Timeline Entry
-struct VirtuPetEntry: TimelineEntry {
+struct StepPetEntry: TimelineEntry {
     let date: Date
     let petType: String
     let petMood: String
@@ -125,8 +158,8 @@ struct VirtuPetEntry: TimelineEntry {
     let streak: Int
 }
 
-// MARK: - Widget View
-struct VirtuPetWidgetEntryView: View {
+// MARK: - Main Widget Entry View
+struct StepPetWidgetEntryView: View {
     var entry: Provider.Entry
     @Environment(\.widgetFamily) var family
     
@@ -135,381 +168,430 @@ struct VirtuPetWidgetEntryView: View {
         return min(Double(entry.todaySteps) / Double(entry.goalSteps), 1.0)
     }
     
-    private var healthColor: Color {
-        switch entry.health {
-        case 0...20: return .red
-        case 21...39: return .orange
-        case 40...59: return .yellow
-        default: return VirtuPetWidgetTheme.accent
-        }
+    private var remainingSteps: Int {
+        max(0, entry.goalSteps - entry.todaySteps)
+    }
+    
+    private var moodDisplay: MoodDisplay {
+        MoodDisplay.from(mood: entry.petMood, health: entry.health)
     }
     
     var body: some View {
         switch family {
         case .systemSmall:
-            SmallWidgetView(entry: entry, progress: progress, healthColor: healthColor)
+            SmallWidgetView(entry: entry, progress: progress, moodDisplay: moodDisplay)
         case .systemMedium:
-            MediumWidgetView(entry: entry, progress: progress, healthColor: healthColor)
+            MediumWidgetView(entry: entry, progress: progress, remainingSteps: remainingSteps, moodDisplay: moodDisplay)
+        case .systemLarge:
+            LargeWidgetView(entry: entry, progress: progress, remainingSteps: remainingSteps, moodDisplay: moodDisplay)
         default:
-            SmallWidgetView(entry: entry, progress: progress, healthColor: healthColor)
+            MediumWidgetView(entry: entry, progress: progress, remainingSteps: remainingSteps, moodDisplay: moodDisplay)
         }
     }
 }
 
-// MARK: - Small Widget (Completely Redesigned)
+// MARK: - Small Widget
 struct SmallWidgetView: View {
-    let entry: VirtuPetEntry
+    let entry: StepPetEntry
     let progress: Double
-    let healthColor: Color
+    let moodDisplay: MoodDisplay
+    
+    private var imageName: String {
+        "\(entry.petType.lowercased())\(entry.petMood.lowercased())"
+    }
     
     var body: some View {
-        ZStack {
-            // Beautiful gradient background
-            LinearGradient(
-                colors: [
-                    VirtuPetWidgetTheme.background,
-                    VirtuPetWidgetTheme.background.opacity(0.95),
-                    healthColor.opacity(0.1)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+        VStack(spacing: 8) {
+            Image(imageName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 60, height: 60)
             
-            VStack(spacing: 6) {
-                // Top: Pet name + streak
-                HStack {
-                    Text(entry.petName)
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(VirtuPetWidgetTheme.textPrimary)
-                    
-                    Spacer()
-                    
-                    if entry.streak > 0 {
-                        HStack(spacing: 2) {
-                            Image(systemName: "flame.fill")
-                                .font(.system(size: 9))
-                            Text("\(entry.streak)")
-                                .font(.system(size: 10, weight: .bold))
-                        }
-                        .foregroundColor(.orange)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(
-                            Capsule()
-                                .fill(Color.orange.opacity(0.15))
-                        )
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 10)
+            Text(moodDisplay.text)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(moodDisplay.color)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(moodDisplay.color.opacity(0.15)))
+            
+            Text("\(entry.todaySteps) steps")
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundColor(StepPetTheme.textPrimary)
+        }
+    }
+}
+
+// MARK: - Medium Widget (VirtuPet Style)
+struct MediumWidgetView: View {
+    let entry: StepPetEntry
+    let progress: Double
+    let remainingSteps: Int
+    let moodDisplay: MoodDisplay
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                // Background
+                StepPetTheme.background
                 
-                // Center: Pet with health ring - HERO
-                ZStack {
-                    // Outer glow
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [healthColor.opacity(0.3), healthColor.opacity(0.0)],
-                                center: .center,
-                                startRadius: 20,
-                                endRadius: 50
-                            )
+                HStack(spacing: 0) {
+                    // Left side - Pet section
+                    VStack(spacing: 6) {
+                        // Pet image
+                        WidgetPetImageView(
+                            petType: entry.petType,
+                            petMood: entry.petMood,
+                            size: min(geometry.size.height * 0.55, 80)
                         )
-                        .frame(width: 85, height: 85)
-                    
-                    // Health ring background
-                    Circle()
-                        .stroke(healthColor.opacity(0.15), lineWidth: 5)
-                        .frame(width: 65, height: 65)
-                    
-                    // Health ring progress
-                    Circle()
-                        .trim(from: 0, to: Double(entry.health) / 100)
-                        .stroke(
-                            LinearGradient(
-                                colors: [healthColor, healthColor.opacity(0.6)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            style: StrokeStyle(lineWidth: 5, lineCap: .round)
-                        )
-                        .frame(width: 65, height: 65)
-                        .rotationEffect(.degrees(-90))
-                    
-                    // Pet image - THE HERO
-                    WidgetPetImage(
-                        petType: entry.petType,
-                        petMood: entry.petMood,
-                        size: 45,
-                        healthColor: healthColor
-                    )
-                }
-                
-                // Bottom: Steps + Progress
-                VStack(spacing: 4) {
-                    // Steps count - big and bold
-                    HStack(alignment: .lastTextBaseline, spacing: 2) {
-                        Text("\(entry.todaySteps)")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(VirtuPetWidgetTheme.textPrimary)
                         
-                        Text("steps")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(VirtuPetWidgetTheme.textSecondary)
+                        // Pet name
+                        Text(entry.petName)
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundColor(StepPetTheme.textPrimary)
+                            .lineLimit(1)
+                        
+                        // Mood badge
+                        Text(moodDisplay.text)
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundColor(moodDisplay.color)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(
+                                Capsule()
+                                    .fill(moodDisplay.color.opacity(0.12))
+                            )
                     }
+                    .frame(width: geometry.size.width * 0.42)
                     
-                    // Progress bar
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            // Background
-                            Capsule()
-                                .fill(Color.gray.opacity(0.15))
+                    // Right side - Stats section
+                    VStack(alignment: .leading, spacing: 10) {
+                        // Health section
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack {
+                                Text("❤️")
+                                    .font(.system(size: 11))
+                                Text("Health")
+                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                    .foregroundColor(StepPetTheme.textSecondary)
+                            }
                             
-                            // Progress
-                            Capsule()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [VirtuPetWidgetTheme.accent, VirtuPetWidgetTheme.accentDark],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: max(5, geo.size.width * progress))
+                            HStack(spacing: 8) {
+                                // Progress bar
+                                GeometryReader { geo in
+                                    ZStack(alignment: .leading) {
+                                        Capsule()
+                                            .fill(Color.gray.opacity(0.15))
+                                        Capsule()
+                                            .fill(StepPetTheme.accent)
+                                            .frame(width: max(4, geo.size.width * (Double(entry.health) / 100)))
+                                    }
+                                }
+                                .frame(height: 8)
+                                
+                                Text("\(entry.health)%")
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                                    .foregroundColor(StepPetTheme.accent)
+                                    .frame(width: 40, alignment: .trailing)
+                            }
+                        }
+                        
+                        // Today's steps section
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack {
+                                Text("⏳")
+                                    .font(.system(size: 11))
+                                Text("Today")
+                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                    .foregroundColor(StepPetTheme.textSecondary)
+                            }
+                            
+                            HStack(alignment: .lastTextBaseline, spacing: 4) {
+                                Text(formatStepsCompact(entry.todaySteps))
+                                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                                    .foregroundColor(StepPetTheme.textPrimary)
+                                    .minimumScaleFactor(0.8)
+                                    .lineLimit(1)
+                                
+                                Text("steps")
+                                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                                    .foregroundColor(StepPetTheme.textSecondary)
+                            }
+                        }
+                        
+                        // Streak badge at bottom right
+                        HStack {
+                            Spacer()
+                            if entry.streak > 0 {
+                                HStack(spacing: 4) {
+                                    Text("🔥")
+                                        .font(.system(size: 12))
+                                    Text("\(entry.streak) day streak")
+                                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                }
+                                .foregroundColor(StepPetTheme.streak)
+                            }
                         }
                     }
-                    .frame(height: 5)
-                    .padding(.horizontal, 14)
-                    
-                    // Percentage
-                    Text("\(Int(progress * 100))%")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(VirtuPetWidgetTheme.accent)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
                 }
-                .padding(.bottom, 10)
             }
         }
     }
+    
+    private func formatStepsCompact(_ steps: Int) -> String {
+        if steps >= 100000 {
+            return String(format: "%.0fk", Double(steps) / 1000)
+        } else if steps >= 10000 {
+            return String(format: "%.1fk", Double(steps) / 1000)
+        }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: steps)) ?? "\(steps)"
+    }
 }
 
-// MARK: - Medium Widget
-struct MediumWidgetView: View {
-    let entry: VirtuPetEntry
+// MARK: - Large Widget (Full Featured)
+struct LargeWidgetView: View {
+    let entry: StepPetEntry
     let progress: Double
-    let healthColor: Color
+    let remainingSteps: Int
+    let moodDisplay: MoodDisplay
     
     var body: some View {
-        ZStack {
-            // Background gradient
-            LinearGradient(
-                colors: [
-                    VirtuPetWidgetTheme.background,
-                    VirtuPetWidgetTheme.background.opacity(0.95),
-                    healthColor.opacity(0.08)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            
-            HStack(spacing: 0) {
-                // Left: Pet Hero
-                VStack(spacing: 6) {
-                    ZStack {
-                        // Glow
-                        Circle()
-                            .fill(
-                                RadialGradient(
-                                    colors: [healthColor.opacity(0.35), healthColor.opacity(0.0)],
-                                    center: .center,
-                                    startRadius: 15,
-                                    endRadius: 55
-                                )
-                            )
-                            .frame(width: 100, height: 100)
-                        
-                        // Health ring background
-                        Circle()
-                            .stroke(healthColor.opacity(0.15), lineWidth: 6)
-                            .frame(width: 80, height: 80)
-                        
-                        // Health ring progress
-                        Circle()
-                            .trim(from: 0, to: Double(entry.health) / 100)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [healthColor, healthColor.opacity(0.6)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                style: StrokeStyle(lineWidth: 6, lineCap: .round)
-                            )
-                            .frame(width: 80, height: 80)
-                            .rotationEffect(.degrees(-90))
-                        
-                        // Pet - HERO
-                        WidgetPetImage(
-                            petType: entry.petType,
-                            petMood: entry.petMood,
-                            size: 52,
-                            healthColor: healthColor
-                        )
-                    }
-                    
-                    // Pet name
-                    Text(entry.petName)
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .foregroundColor(VirtuPetWidgetTheme.textPrimary)
-                        .lineLimit(1)
-                    
-                    // Health badge
-                    HStack(spacing: 3) {
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 8))
-                        Text("\(entry.health)%")
-                            .font(.system(size: 10, weight: .bold))
-                    }
-                    .foregroundColor(healthColor)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(
-                        Capsule()
-                            .fill(healthColor.opacity(0.12))
-                    )
-                }
-                .frame(width: 130)
+        GeometryReader { geometry in
+            ZStack {
+                // Background
+                StepPetTheme.background
                 
-                // Divider
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.clear, Color.gray.opacity(0.2), Color.clear],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(width: 1)
-                    .padding(.vertical, 20)
-                
-                // Right: Stats
-                VStack(alignment: .leading, spacing: 10) {
-                    // Header with streak
+                VStack(spacing: 0) {
+                    // Header
                     HStack {
-                        Text("Today")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(VirtuPetWidgetTheme.textSecondary)
+                        Text("StepPet")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundColor(StepPetTheme.accent)
                         
                         Spacer()
                         
-                        // Streak badge
                         if entry.streak > 0 {
-                            HStack(spacing: 3) {
-                                Image(systemName: "flame.fill")
-                                    .font(.system(size: 10))
+                            HStack(spacing: 4) {
+                                Text("🔥")
+                                    .font(.system(size: 14))
                                 Text("\(entry.streak)")
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(.system(size: 15, weight: .bold, design: .rounded))
                             }
-                            .foregroundColor(.orange)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 4)
+                            .foregroundColor(StepPetTheme.streak)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
                             .background(
                                 Capsule()
-                                    .fill(Color.orange.opacity(0.12))
+                                    .fill(StepPetTheme.streak.opacity(0.12))
                             )
                         }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
                     
-                    // Steps - Big number
-                    HStack(alignment: .lastTextBaseline, spacing: 4) {
-                        Text("\(entry.todaySteps)")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                            .foregroundColor(VirtuPetWidgetTheme.textPrimary)
-                            .minimumScaleFactor(0.7)
-                            .lineLimit(1)
+                    // Pet section - prominent
+                    VStack(spacing: 8) {
+                        // Large pet image
+                        WidgetPetImageView(
+                            petType: entry.petType,
+                            petMood: entry.petMood,
+                            size: min(geometry.size.width * 0.4, 130)
+                        )
                         
-                        Text("/ \(entry.goalSteps)")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(VirtuPetWidgetTheme.textSecondary)
+                        // Pet name
+                        Text(entry.petName)
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundColor(StepPetTheme.textPrimary)
+                        
+                        // Mood badge
+                        Text(moodDisplay.text)
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundColor(moodDisplay.color)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                            .background(
+                                Capsule()
+                                    .fill(moodDisplay.color.opacity(0.12))
+                            )
                     }
+                    .padding(.vertical, 12)
                     
-                    // Progress section
-                    VStack(alignment: .leading, spacing: 5) {
-                        // Progress bar
+                    // Stats cards
+                    HStack(spacing: 12) {
+                        // Health card
+                        StatCard(
+                            icon: "❤️",
+                            title: "Pet Health",
+                            value: "\(entry.health)%",
+                            progress: Double(entry.health) / 100,
+                            accentColor: StepPetTheme.accent
+                        )
+                        
+                        // Steps card
+                        StatCard(
+                            icon: "👟",
+                            title: "Steps Today",
+                            value: formatStepsLarge(entry.todaySteps),
+                            progress: progress,
+                            accentColor: StepPetTheme.accent
+                        )
+                    }
+                    .padding(.horizontal, 16)
+                    
+                    // Bottom section - Goal progress
+                    VStack(spacing: 8) {
+                        // Full-width progress bar
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
-                                Capsule()
+                                RoundedRectangle(cornerRadius: 6)
                                     .fill(Color.gray.opacity(0.12))
-                                
-                                Capsule()
+                                RoundedRectangle(cornerRadius: 6)
                                     .fill(
                                         LinearGradient(
-                                            colors: [VirtuPetWidgetTheme.accent, VirtuPetWidgetTheme.accentDark],
+                                            colors: [StepPetTheme.accent, StepPetTheme.accentLight],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
                                     )
                                     .frame(width: max(8, geo.size.width * progress))
-                                    .shadow(color: VirtuPetWidgetTheme.accent.opacity(0.3), radius: 2, y: 1)
                             }
                         }
-                        .frame(height: 8)
+                        .frame(height: 10)
+                        .padding(.horizontal, 20)
                         
                         // Progress text
                         HStack {
-                            Text("\(Int(progress * 100))% complete")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(VirtuPetWidgetTheme.accent)
+                            Text("\(Int(progress * 100))% of daily goal")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundColor(StepPetTheme.accent)
                             
                             Spacer()
                             
-                            if progress >= 1.0 {
-                                HStack(spacing: 2) {
+                            if remainingSteps > 0 {
+                                Text("\(formatStepsLarge(remainingSteps)) to go")
+                                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                                    .foregroundColor(StepPetTheme.textSecondary)
+                            } else {
+                                HStack(spacing: 4) {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: 10))
-                                    Text("Done!")
-                                        .font(.system(size: 10, weight: .bold))
+                                        .font(.system(size: 12))
+                                    Text("Goal reached!")
+                                        .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 }
-                                .foregroundColor(VirtuPetWidgetTheme.accent)
+                                .foregroundColor(StepPetTheme.accent)
                             }
                         }
+                        .padding(.horizontal, 20)
                     }
+                    .padding(.top, 12)
+                    .padding(.bottom, 16)
                 }
-                .padding(.horizontal, 14)
-                .frame(maxWidth: .infinity)
             }
         }
+    }
+    
+    private func formatStepsLarge(_ steps: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: steps)) ?? "\(steps)"
+    }
+}
+
+// MARK: - Stat Card Component (for Large Widget)
+struct StatCard: View {
+    let icon: String
+    let title: String
+    let value: String
+    let progress: Double
+    let accentColor: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 4) {
+                Text(icon)
+                    .font(.system(size: 12))
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundColor(StepPetTheme.textSecondary)
+            }
+            
+            Text(value)
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundColor(StepPetTheme.textPrimary)
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+            
+            // Mini progress bar
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.gray.opacity(0.12))
+                    Capsule()
+                        .fill(accentColor)
+                        .frame(width: max(4, geo.size.width * progress))
+                }
+            }
+            .frame(height: 5)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.5))
+        )
     }
 }
 
 // MARK: - Widget Configuration
-struct VirtuPetWidget: Widget {
-    let kind: String = "VirtuPetWidget"
+struct StepPetWidget: Widget {
+    let kind: String = "StepPetWidget"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             if #available(iOS 17.0, *) {
-                VirtuPetWidgetEntryView(entry: entry)
-                    .containerBackground(VirtuPetWidgetTheme.background, for: .widget)
+                StepPetWidgetEntryView(entry: entry)
+                    .containerBackground(for: .widget) {
+                        StepPetTheme.background
+                    }
             } else {
-                VirtuPetWidgetEntryView(entry: entry)
-                    .background(VirtuPetWidgetTheme.background)
+                StepPetWidgetEntryView(entry: entry)
+                    .padding()
+                    .background(StepPetTheme.background)
             }
         }
-        .configurationDisplayName("VirtuPet: Step Tracker")
-        .description("Care for your VirtuPet by caring for yourself")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .configurationDisplayName("StepPet")
+        .description("Track your steps and care for your pet!")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
+// Keep old name for backward compatibility
+typealias VirtuPetWidget = StepPetWidget
+typealias VirtuPetEntry = StepPetEntry
+
 // MARK: - Previews
 #Preview(as: .systemSmall) {
-    VirtuPetWidget()
+    StepPetWidget()
 } timeline: {
-    VirtuPetEntry(date: .now, petType: "cat", petMood: "fullhealth", petName: "Whiskers", todaySteps: 5432, goalSteps: 10000, health: 75, streak: 7)
-    VirtuPetEntry(date: .now, petType: "dog", petMood: "happy", petName: "Buddy", todaySteps: 10000, goalSteps: 10000, health: 100, streak: 30)
+    StepPetEntry(date: .now, petType: "dog", petMood: "fullhealth", petName: "Buddy", todaySteps: 7500, goalSteps: 10000, health: 100, streak: 5)
+    StepPetEntry(date: .now, petType: "cat", petMood: "happy", petName: "Whiskers", todaySteps: 3200, goalSteps: 10000, health: 65, streak: 0)
 }
 
 #Preview(as: .systemMedium) {
-    VirtuPetWidget()
+    StepPetWidget()
 } timeline: {
-    VirtuPetEntry(date: .now, petType: "cat", petMood: "fullhealth", petName: "Whiskers", todaySteps: 5432, goalSteps: 10000, health: 75, streak: 7)
-    VirtuPetEntry(date: .now, petType: "bunny", petMood: "content", petName: "Fluffy", todaySteps: 12500, goalSteps: 10000, health: 100, streak: 14)
+    StepPetEntry(date: .now, petType: "dog", petMood: "fullhealth", petName: "Buddy", todaySteps: 7500, goalSteps: 10000, health: 100, streak: 1)
+    StepPetEntry(date: .now, petType: "bunny", petMood: "content", petName: "Fluffy", todaySteps: 12500, goalSteps: 10000, health: 100, streak: 14)
+}
+
+#Preview(as: .systemLarge) {
+    StepPetWidget()
+} timeline: {
+    StepPetEntry(date: .now, petType: "dog", petMood: "fullhealth", petName: "Buddy", todaySteps: 7500, goalSteps: 10000, health: 100, streak: 5)
+    StepPetEntry(date: .now, petType: "hamster", petMood: "happy", petName: "Nibbles", todaySteps: 15000, goalSteps: 10000, health: 100, streak: 30)
 }

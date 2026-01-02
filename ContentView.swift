@@ -77,10 +77,12 @@ struct ContentView: View {
         .environmentObject(tutorialManager)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: achievementManager.showUnlockAnimation)
         .onAppear {
-            // Check if tutorial should start
+            // Check if tutorial should start - wait 0.5s after app loads, then show tutorial
             if userSettings.hasCompletedOnboarding && !userSettings.hasCompletedAppTutorial {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    tutorialManager.start()
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        tutorialManager.start()
+                    }
                 }
             }
         }

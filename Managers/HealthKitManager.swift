@@ -25,8 +25,13 @@ class HealthKitManager: ObservableObject {
     
     // MARK: - Authorization
     func requestAuthorization() {
+        requestAuthorization { _ in }
+    }
+    
+    func requestAuthorization(completion: @escaping (Bool) -> Void) {
         guard HKHealthStore.isHealthDataAvailable() else {
             print("HealthKit is not available on this device")
+            completion(false)
             return
         }
         
@@ -41,8 +46,12 @@ class HealthKitManager: ObservableObject {
                     self?.fetchTodaySteps()
                     self?.fetchWeeklySteps()
                     self?.fetchMonthlySteps()
-                } else if let error = error {
-                    print("HealthKit authorization failed: \(error.localizedDescription)")
+                    completion(true)
+                } else {
+                    if let error = error {
+                        print("HealthKit authorization failed: \(error.localizedDescription)")
+                    }
+                    completion(false)
                 }
             }
         }

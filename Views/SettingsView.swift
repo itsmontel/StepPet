@@ -1076,7 +1076,7 @@ struct FAQView: View {
         ("How is pet health calculated?", "Pet health = (Current Steps / Daily Goal) × 100. If your goal is 10,000 steps and you walk 6,700, your pet will be at 67% health. Your pet has 5 mood states: Sick (0-20%), Sad (21-40%), Content (41-60%), Happy (61-80%), and Full Health (81-100%)."),
         ("What happens at midnight?", "Your pet's health resets at midnight local time. Each day is a fresh start—no punishment carried over from bad days! Daily achievements also reset if not completed."),
         ("How do streaks work?", "Streaks track consecutive days where your pet ends the day at 100% health. This can be achieved by hitting your step goal or by playing pet activities. Break a streak by missing a day."),
-        ("What pets are available?", "There are 5 pets: Cat (free), Dog, Bunny, Hamster, and Horse (premium). Each has unique moods and animations!"),
+        ("What pets are available?", "There are 5 pets: Dog (free), Cat, Bunny, Hamster, and Horse (premium). Each has unique moods and animations!"),
         ("What are play credits?", "Play credits let you interact with your pet through activities like Feed, Play Ball, or Watch TV. Each activity costs 1 credit and boosts your pet's health by 20%. You can purchase more credits in the Challenges tab."),
         ("Are minigames free?", "Yes! All minigames (Mood Catch, Memory Match, Bubble Pop, Pattern Match) are completely free to play. They don't cost credits and are just for fun with your pet."),
         ("How do achievements work?", "Complete various challenges to unlock achievements! Some are daily (like step goals), some are cumulative (like total steps walked), and some are one-time accomplishments. Track your progress in the Challenges tab."),
