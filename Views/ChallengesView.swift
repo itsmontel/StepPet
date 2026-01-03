@@ -237,13 +237,24 @@ struct ChallengesView: View {
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(themeManager.primaryTextColor)
                     
-                    HStack(spacing: 6) {
-                        Image(systemName: "gift.fill")
-                            .font(.system(size: 12))
-                            .foregroundColor(.green)
-                        Text("All games are FREE to play")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.green)
+                    if userSettings.isPremium {
+                        HStack(spacing: 6) {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(.yellow)
+                            Text("Premium - All games unlocked")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.yellow)
+                        }
+                    } else {
+                        HStack(spacing: 6) {
+                            Image(systemName: "gift.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(.green)
+                            Text("Mood Catch is FREE to play")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.green)
+                        }
                     }
                 }
                 
@@ -258,56 +269,57 @@ struct ChallengesView: View {
             
             // Game Cards
             VStack(spacing: 14) {
-                // Mood Catch Game
+                // Mood Catch Game - FREE for all users
                 GameCard(
                     title: "Mood Catch",
                     description: "Catch happy moods, avoid sad ones!",
                     icon: "heart.circle.fill",
                     color: .orange,
                     gradient: [Color.orange, Color.yellow],
-                    emoji: ""
+                    emoji: "",
+                    isFree: true
                 ) {
                     HapticFeedback.medium.trigger()
                     showTreatCatch = true
                 }
                 
-                // Memory Match Game
-                GameCard(
+                // Memory Match Game - PREMIUM
+                PremiumGameCard(
                     title: "Memory Match",
                     description: "Match pairs to test your memory!",
                     icon: "square.grid.2x2.fill",
                     color: .purple,
                     gradient: [Color.purple, Color.pink],
-                    emoji: "🧠"
+                    emoji: "🧠",
+                    isPremium: userSettings.isPremium
                 ) {
                     HapticFeedback.medium.trigger()
                     showMemoryMatch = true
                 }
                 
-                // Pet Jump Game - Hidden for now (still in development)
-                // GameCard for Pet Jump removed from UI but code remains
-                
-                // Sky Dash Game
-                GameCard(
+                // Sky Dash Game - PREMIUM
+                PremiumGameCard(
                     title: "Sky Dash",
                     description: "Dodge walls and rise to the top!",
                     icon: "arrow.up.forward.circle.fill",
                     color: .purple,
                     gradient: [Color(hex: "667eea"), Color(hex: "764ba2")],
-                    emoji: "🌟"
+                    emoji: "🌟",
+                    isPremium: userSettings.isPremium
                 ) {
                     HapticFeedback.medium.trigger()
                     showSkyDash = true
                 }
                 
-                // Pattern Match Game
-                GameCard(
+                // Pattern Match Game - PREMIUM
+                PremiumGameCard(
                     title: "Pattern Match",
                     description: "Remember the pattern, beat 5 levels!",
                     icon: "brain.head.profile",
                     color: Color(hex: "11998e"),
                     gradient: [Color(hex: "11998e"), Color(hex: "38ef7d")],
-                    emoji: "🧩"
+                    emoji: "🧩",
+                    isPremium: userSettings.isPremium
                 ) {
                     HapticFeedback.medium.trigger()
                     showPatternMatch = true
@@ -1394,6 +1406,7 @@ struct GameCard: View {
     let color: Color
     let gradient: [Color]
     let emoji: String
+    var isFree: Bool = false
     let action: () -> Void
     
     @EnvironmentObject var themeManager: ThemeManager
@@ -1435,17 +1448,19 @@ struct GameCard: View {
                         .foregroundColor(themeManager.secondaryTextColor)
                         .lineLimit(2)
                     
-                    // Free badge
-                    HStack(spacing: 4) {
-                        Image(systemName: "gift.fill")
-                            .font(.system(size: 10))
-                        Text("Free to Play")
-                            .font(.system(size: 10, weight: .bold))
+                    // Free badge (only show if isFree)
+                    if isFree {
+                        HStack(spacing: 4) {
+                            Image(systemName: "gift.fill")
+                                .font(.system(size: 10))
+                            Text("Free to Play")
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                        .foregroundColor(.green)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.green.opacity(0.15)))
                     }
-                    .foregroundColor(.green)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Capsule().fill(Color.green.opacity(0.15)))
                 }
                 
                 Spacer()
@@ -1473,6 +1488,116 @@ struct GameCard: View {
             )
         }
         .buttonStyle(ScaleButtonStyle())
+    }
+}
+
+// MARK: - Premium Game Card Component (with lock for non-premium users)
+struct PremiumGameCard: View {
+    let title: String
+    let description: String
+    let icon: String
+    let color: Color
+    let gradient: [Color]
+    let emoji: String
+    let isPremium: Bool
+    let action: () -> Void
+    
+    @EnvironmentObject var themeManager: ThemeManager
+    @State private var showPremiumAlert = false
+    
+    var body: some View {
+        Button(action: {
+            if isPremium {
+                action()
+            } else {
+                HapticFeedback.warning.trigger()
+                showPremiumAlert = true
+            }
+        }) {
+            HStack(spacing: 16) {
+                // Icon with gradient background
+                ZStack {
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(
+                            LinearGradient(
+                                colors: isPremium ? gradient : [Color.gray.opacity(0.5), Color.gray.opacity(0.3)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 70, height: 70)
+                        .shadow(color: (isPremium ? color : Color.gray).opacity(0.4), radius: 8, y: 4)
+                    
+                    if isPremium {
+                        if emoji.isEmpty {
+                            Image(systemName: icon)
+                                .font(.system(size: 28, weight: .semibold))
+                                .foregroundColor(.white)
+                        } else {
+                            Text(emoji)
+                                .font(.system(size: 32))
+                        }
+                    } else {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title)
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundColor(isPremium ? themeManager.primaryTextColor : themeManager.secondaryTextColor)
+                    
+                    Text(description)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                        .lineLimit(2)
+                    
+                    // Premium badge
+                    HStack(spacing: 4) {
+                        Image(systemName: isPremium ? "crown.fill" : "lock.fill")
+                            .font(.system(size: 10))
+                        Text(isPremium ? "Premium" : "Premium Only")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .foregroundColor(isPremium ? .yellow : themeManager.accentColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill((isPremium ? Color.yellow : themeManager.accentColor).opacity(0.15)))
+                }
+                
+                Spacer()
+                
+                // Play/Lock button
+                ZStack {
+                    Circle()
+                        .fill((isPremium ? color : Color.gray).opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: isPremium ? "play.fill" : "lock.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(isPremium ? color : .gray)
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(themeManager.cardBackgroundColor)
+                    .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.06), radius: 10, y: 4)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke((isPremium ? color : Color.gray).opacity(0.2), lineWidth: 1)
+            )
+            .opacity(isPremium ? 1 : 0.8)
+        }
+        .buttonStyle(ScaleButtonStyle())
+        .alert("Premium Feature", isPresented: $showPremiumAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("\(title) is a premium game. Upgrade to unlock all games and features!")
+        }
     }
 }
 

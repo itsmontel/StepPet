@@ -64,30 +64,113 @@ struct InsightsView: View {
     }
     
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 20) {
-                headerSection
-                timePeriodPicker
-                mainStatsSection
-                
-                if selectedPeriod == .week {
-                    weeklyBarChart
+        ZStack {
+            themeManager.backgroundColor.ignoresSafeArea()
+            
+            if !userSettings.isPremium {
+                // Premium Gate for Insights
+                premiumGateView
+            } else {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        headerSection
+                        timePeriodPicker
+                        mainStatsSection
+                        
+                        if selectedPeriod == .week {
+                            weeklyBarChart
+                        }
+                        
+                        detailedStatsSection
+                        lifetimeStatsSection
+                        
+                        Spacer(minLength: 120)
+                    }
+                    .padding(.horizontal, 20)
                 }
-                
-                detailedStatsSection
-                lifetimeStatsSection
-                
-                Spacer(minLength: 120)
             }
-            .padding(.horizontal, 20)
         }
-        .background(themeManager.backgroundColor.ignoresSafeArea())
         .onAppear {
-            healthKitManager.fetchWeeklySteps()
-            loadDataForPeriod()
+            if userSettings.isPremium {
+                healthKitManager.fetchWeeklySteps()
+                loadDataForPeriod()
+            }
         }
         .onChange(of: selectedPeriod) { _, _ in
-            loadDataForPeriod()
+            if userSettings.isPremium {
+                loadDataForPeriod()
+            }
+        }
+    }
+    
+    // MARK: - Premium Gate View
+    private var premiumGateView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            
+            // Lock icon
+            ZStack {
+                Circle()
+                    .fill(themeManager.accentColor.opacity(0.1))
+                    .frame(width: 120, height: 120)
+                
+                Circle()
+                    .fill(themeManager.accentColor.opacity(0.2))
+                    .frame(width: 90, height: 90)
+                
+                Image(systemName: "chart.bar.xaxis")
+                    .font(.system(size: 50))
+                    .foregroundColor(themeManager.accentColor)
+            }
+            
+            VStack(spacing: 12) {
+                Text("Deep Insights")
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+                
+                Text("Premium Feature")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(themeManager.accentColor)
+                
+                Text("Unlock detailed analytics about your step journey, trends, and lifetime stats!")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(themeManager.secondaryTextColor)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
+            
+            // Features list
+            VStack(alignment: .leading, spacing: 12) {
+                FeatureRow(icon: "chart.line.uptrend.xyaxis", text: "Average & trend analysis", color: .blue)
+                FeatureRow(icon: "calendar", text: "7-day, 30-day, yearly views", color: .orange)
+                FeatureRow(icon: "trophy.fill", text: "Best day records", color: .yellow)
+                FeatureRow(icon: "figure.walk", text: "Lifetime step milestones", color: .green)
+            }
+            .padding(.horizontal, 40)
+            .padding(.vertical, 20)
+            
+            // Upgrade button
+            Button(action: {
+                // This would trigger the paywall
+                HapticFeedback.medium.trigger()
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("Upgrade to Premium")
+                        .font(.system(size: 17, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 32)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(LinearGradient(colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
+                        .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
+                )
+            }
+            
+            Spacer()
         }
     }
     
@@ -580,5 +663,26 @@ struct WeeklyInsightChart: View {
         .environmentObject(HealthKitManager())
         .environmentObject(UserSettings())
         .environmentObject(StepDataManager())
+}
+
+// MARK: - Feature Row Helper
+private struct FeatureRow: View {
+    let icon: String
+    let text: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(color)
+            
+            Text(text)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.primary)
+            
+            Spacer()
+        }
+    }
 }
 

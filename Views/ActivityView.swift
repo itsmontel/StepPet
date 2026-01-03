@@ -1431,7 +1431,10 @@ struct ActivityView: View {
         ZStack {
             themeManager.backgroundColor.ignoresSafeArea()
             
-            if isWorkoutActive {
+            if !userSettings.isPremium {
+                // Premium Gate for Activity
+                premiumGateView
+            } else if isWorkoutActive {
                 activeWorkoutView
             } else {
                 mainActivityView
@@ -1455,9 +1458,11 @@ struct ActivityView: View {
             }
         }
         .onAppear {
-            locationManager.requestPermission()
-            if let location = locationManager.location {
-                weatherManager.fetchWeather(for: location)
+            if userSettings.isPremium {
+                locationManager.requestPermission()
+                if let location = locationManager.location {
+                    weatherManager.fetchWeather(for: location)
+                }
             }
         }
         .onChange(of: locationManager.locationUpdateCount) { _, _ in
@@ -1512,6 +1517,77 @@ struct ActivityView: View {
                 Spacer(minLength: 100)
             }
             .padding(.horizontal, 20)
+        }
+    }
+    
+    // MARK: - Premium Gate View
+    private var premiumGateView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            
+            // Lock icon
+            ZStack {
+                Circle()
+                    .fill(themeManager.accentColor.opacity(0.1))
+                    .frame(width: 120, height: 120)
+                
+                Circle()
+                    .fill(themeManager.accentColor.opacity(0.2))
+                    .frame(width: 90, height: 90)
+                
+                Image(systemName: "figure.walk.circle.fill")
+                    .font(.system(size: 50))
+                    .foregroundColor(themeManager.accentColor)
+            }
+            
+            VStack(spacing: 12) {
+                Text("Activity Tracking")
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+                
+                Text("Premium Feature")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(themeManager.accentColor)
+                
+                Text("Track your walks with \(userSettings.pet.name), see detailed stats, route maps, and more!")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(themeManager.secondaryTextColor)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
+            
+            // Features list
+            VStack(alignment: .leading, spacing: 12) {
+                FeatureRow(icon: "map.fill", text: "GPS route tracking", color: .blue)
+                FeatureRow(icon: "clock.fill", text: "Duration & pace stats", color: .orange)
+                FeatureRow(icon: "flame.fill", text: "Calories burned", color: .red)
+                FeatureRow(icon: "photo.fill", text: "Walk photo journal", color: .purple)
+            }
+            .padding(.horizontal, 40)
+            .padding(.vertical, 20)
+            
+            // Upgrade button
+            Button(action: {
+                // This would trigger the paywall
+                HapticFeedback.medium.trigger()
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("Upgrade to Premium")
+                        .font(.system(size: 17, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 32)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(LinearGradient(colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
+                        .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
+                )
+            }
+            
+            Spacer()
         }
     }
     
@@ -4104,4 +4180,25 @@ struct HistoryStatCard: View {
     ActivityView()
         .environmentObject(ThemeManager())
         .environmentObject(UserSettings())
+}
+
+// MARK: - Feature Row Helper
+private struct FeatureRow: View {
+    let icon: String
+    let text: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(color)
+            
+            Text(text)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.primary)
+            
+            Spacer()
+        }
+    }
 }

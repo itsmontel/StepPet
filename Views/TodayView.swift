@@ -34,6 +34,9 @@ struct TodayView: View {
     // Streak calendar popup
     @State private var showStreakCalendar = false
     
+    // Test paywall popup
+    @State private var showTestPaywall = false
+    
     // Tutorial manager
     @EnvironmentObject var tutorialManager: TutorialManager
     
@@ -150,6 +153,11 @@ struct TodayView: View {
                 .environmentObject(userSettings)
                 .environmentObject(stepDataManager)
         }
+        .sheet(isPresented: $showTestPaywall) {
+            OnboardingPaywallView(isPresented: $showTestPaywall)
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
+        }
     }
     
     // MARK: - Header Section (Compact)
@@ -166,6 +174,24 @@ struct TodayView: View {
             .foregroundColor(themeManager.primaryTextColor)
             
             Spacer()
+            
+            // Test Paywall Button (for testing)
+            #if DEBUG
+            Button(action: {
+                HapticFeedback.light.trigger()
+                showTestPaywall = true
+            }) {
+                Image(systemName: "creditcard.fill")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(8)
+                    .background(
+                        Circle()
+                            .fill(themeManager.accentColor)
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+            #endif
             
             // Credits (clickable - navigates to Pet section)
             Button(action: {

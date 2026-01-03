@@ -8,6 +8,7 @@ import SwiftUI
 struct AchievementsView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var achievementManager: AchievementManager
+    @EnvironmentObject var userSettings: UserSettings
     
     @State private var selectedCategory: AchievementCategory? = nil
     @State private var showUnlockedOnly = false
@@ -73,58 +74,90 @@ struct AchievementsView: View {
                     .font(.system(size: 34, weight: .bold))
                     .foregroundColor(themeManager.primaryTextColor)
                 
-                Text("\(achievementManager.unlockedCount) of \(achievementManager.totalCount) unlocked")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(themeManager.secondaryTextColor)
-                
-                // Progress Bar
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(themeManager.isDarkMode ? Color.white.opacity(0.1) : Color.gray.opacity(0.15))
-                            .frame(height: 8)
-                        
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(
-                                LinearGradient(
-                                    colors: [themeManager.accentColor, themeManager.successColor],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
+                if userSettings.isPremium {
+                    Text("\(achievementManager.unlockedCount) of \(achievementManager.totalCount) unlocked")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                    
+                    // Progress Bar
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(themeManager.isDarkMode ? Color.white.opacity(0.1) : Color.gray.opacity(0.15))
+                                .frame(height: 8)
+                            
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [themeManager.accentColor, themeManager.successColor],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
                                 )
-                            )
-                            .frame(width: geometry.size.width * achievementManager.completionPercentage, height: 8)
-                            .animation(.spring(response: 0.5, dampingFraction: 0.7), value: achievementManager.completionPercentage)
+                                .frame(width: geometry.size.width * achievementManager.completionPercentage, height: 8)
+                                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: achievementManager.completionPercentage)
+                        }
                     }
+                    .frame(height: 8)
+                    .padding(.top, 8)
+                } else {
+                    Text("\(achievementManager.totalCount) achievements to unlock")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                    
+                    // Premium badge instead of progress
+                    HStack(spacing: 6) {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 10))
+                        Text("Upgrade to track progress")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .foregroundColor(themeManager.accentColor)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(themeManager.accentColor.opacity(0.1)))
+                    .padding(.top, 8)
                 }
-                .frame(height: 8)
-                .padding(.top, 8)
             }
             
             Spacer()
             
-            // Percentage Circle
-            ZStack {
-                Circle()
-                    .stroke(themeManager.isDarkMode ? Color.white.opacity(0.1) : Color.gray.opacity(0.15), lineWidth: 4)
-                    .frame(width: 60, height: 60)
-                
-                Circle()
-                    .trim(from: 0, to: achievementManager.completionPercentage)
-                    .stroke(
-                        LinearGradient(
-                            colors: [themeManager.accentColor, .purple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                    )
-                    .frame(width: 60, height: 60)
-                    .rotationEffect(.degrees(-90))
-                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: achievementManager.completionPercentage)
-                
-                Text("\(Int(achievementManager.completionPercentage * 100))%")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(themeManager.primaryTextColor)
+            // Percentage Circle (only show for premium)
+            if userSettings.isPremium {
+                ZStack {
+                    Circle()
+                        .stroke(themeManager.isDarkMode ? Color.white.opacity(0.1) : Color.gray.opacity(0.15), lineWidth: 4)
+                        .frame(width: 60, height: 60)
+                    
+                    Circle()
+                        .trim(from: 0, to: achievementManager.completionPercentage)
+                        .stroke(
+                            LinearGradient(
+                                colors: [themeManager.accentColor, .purple],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                        )
+                        .frame(width: 60, height: 60)
+                        .rotationEffect(.degrees(-90))
+                        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: achievementManager.completionPercentage)
+                    
+                    Text("\(Int(achievementManager.completionPercentage * 100))%")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(themeManager.primaryTextColor)
+                }
+            } else {
+                // Locked percentage circle for free users
+                ZStack {
+                    Circle()
+                        .stroke(themeManager.isDarkMode ? Color.white.opacity(0.1) : Color.gray.opacity(0.15), lineWidth: 4)
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(themeManager.accentColor.opacity(0.5))
+                }
             }
         }
         .padding(.top, 20)
@@ -172,7 +205,7 @@ struct AchievementsView: View {
             GridItem(.flexible(), spacing: 12)
         ], spacing: 12) {
             ForEach(filteredAchievements) { achievement in
-                AchievementCard(achievement: achievement)
+                AchievementCard(achievement: achievement, showProgress: userSettings.isPremium)
                     .onTapGesture {
                         selectedAchievement = achievement
                     }
@@ -233,6 +266,7 @@ struct CategoryPill: View {
 // MARK: - Achievement Card
 struct AchievementCard: View {
     let achievement: Achievement
+    var showProgress: Bool = true
     
     @EnvironmentObject var themeManager: ThemeManager
     
@@ -246,7 +280,7 @@ struct AchievementCard: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(
-                        achievement.isUnlocked 
+                        achievement.isUnlocked && showProgress
                             ? categoryColor.opacity(0.2)
                             : themeManager.isDarkMode ? Color.white.opacity(0.05) : Color.gray.opacity(0.1)
                     )
@@ -254,7 +288,7 @@ struct AchievementCard: View {
                 
                 Image(systemName: achievement.icon)
                     .font(.system(size: 32, weight: .semibold))
-                    .foregroundColor(achievement.isUnlocked ? categoryColor : themeManager.tertiaryTextColor)
+                    .foregroundColor(achievement.isUnlocked && showProgress ? categoryColor : themeManager.tertiaryTextColor)
             }
             
             // Rarity Badge
@@ -265,7 +299,7 @@ struct AchievementCard: View {
                 .padding(.vertical, 4)
                 .background(
                     Capsule()
-                        .fill(achievement.isUnlocked ? themeManager.rarityColor(for: achievement.rarity) : Color.gray)
+                        .fill(achievement.isUnlocked && showProgress ? themeManager.rarityColor(for: achievement.rarity) : Color.gray)
                 )
             
             // Title
@@ -286,32 +320,43 @@ struct AchievementCard: View {
             
             // Status
             HStack(spacing: 4) {
-                if achievement.isUnlocked {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(themeManager.successColor)
-                    
-                    Text("Unlocked")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(themeManager.successColor)
-                } else {
-                    // Progress
-                    if achievement.targetProgress > 1 {
-                        Text("\(achievement.progress)/\(achievement.targetProgress)")
+                if showProgress {
+                    if achievement.isUnlocked {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(themeManager.successColor)
+                        
+                        Text("Unlocked")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(themeManager.secondaryTextColor)
+                            .foregroundColor(themeManager.successColor)
                     } else {
-                        Text("Locked")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(themeManager.tertiaryTextColor)
+                        // Progress
+                        if achievement.targetProgress > 1 {
+                            Text("\(achievement.progress)/\(achievement.targetProgress)")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                        } else {
+                            Text("Locked")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(themeManager.tertiaryTextColor)
+                        }
                     }
+                } else {
+                    // Free users - show premium badge instead of progress
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(themeManager.accentColor.opacity(0.6))
+                    
+                    Text("Premium")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(themeManager.accentColor.opacity(0.6))
                 }
                 
                 Spacer()
                 
                 Image(systemName: achievement.icon)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(achievement.isUnlocked ? categoryColor : themeManager.tertiaryTextColor)
+                    .foregroundColor(achievement.isUnlocked && showProgress ? categoryColor : themeManager.tertiaryTextColor)
             }
         }
         .padding(14)
@@ -321,7 +366,7 @@ struct AchievementCard: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 18)
                         .stroke(
-                            achievement.isUnlocked ? categoryColor.opacity(0.3) : Color.clear,
+                            achievement.isUnlocked && showProgress ? categoryColor.opacity(0.3) : Color.clear,
                             lineWidth: 2
                         )
                 )
