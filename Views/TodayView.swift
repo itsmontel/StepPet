@@ -31,6 +31,9 @@ struct TodayView: View {
     @State private var showMilestoneCelebration = false
     @State private var milestoneStreakValue: Int = 0
     
+    // Streak calendar popup
+    @State private var showStreakCalendar = false
+    
     // Tutorial manager
     @EnvironmentObject var tutorialManager: TutorialManager
     
@@ -141,6 +144,12 @@ struct TodayView: View {
                 )
             }
         }
+        .sheet(isPresented: $showStreakCalendar) {
+            StreakCalendarView()
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
+                .environmentObject(stepDataManager)
+        }
     }
     
     // MARK: - Header Section (Compact)
@@ -184,13 +193,11 @@ struct TodayView: View {
             .buttonStyle(PlainButtonStyle())
             .tutorialHighlight("tutorial_credits_badge")
             
-            // Streak (small) with animation target (clickable - navigates to Awards section)
+            // Streak (small) with animation target (clickable - opens streak calendar)
             ZStack {
                 Button(action: {
                     HapticFeedback.light.trigger()
-                    // Set target section to Awards (2) and navigate to Challenges
-                    UserDefaults.standard.set(2, forKey: "challengesTargetSegment")
-                    NotificationCenter.default.post(name: NSNotification.Name("NavigateToChallenges"), object: nil, userInfo: ["segment": 2])
+                    showStreakCalendar = true
                 }) {
                     HStack(spacing: 4) {
                         Text("🔥")
@@ -1118,6 +1125,335 @@ struct StreakBadgePositionKey: PreferenceKey {
     static var defaultValue: CGRect = .zero
     static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
         value = nextValue()
+    }
+}
+
+// MARK: - Streak Calendar View
+struct StreakCalendarView: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var userSettings: UserSettings
+    @EnvironmentObject var stepDataManager: StepDataManager
+    @Environment(\.dismiss) private var dismiss
+    
+    @State private var currentMonth: Date = Date()
+    @State private var animateFlame = false
+    
+    private let calendar = Calendar.current
+    private let daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"]
+    
+    var body: some View {
+        ZStack {
+            // Background
+            themeManager.backgroundColor
+                .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Header with close button
+                HStack {
+                    Text("Streak")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    Spacer()
+                    
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(themeManager.secondaryTextColor)
+                            .frame(width: 32, height: 32)
+                            .background(
+                                Circle()
+                                    .fill(themeManager.cardBackgroundColor)
+                            )
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
+                .padding(.bottom, 16)
+                
+                // Streak Display Section
+                VStack(spacing: 12) {
+                    // Flame with streak number
+                    ZStack {
+                        // Glow effect
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    colors: [
+                                        Color.orange.opacity(0.3),
+                                        Color.orange.opacity(0.1),
+                                        Color.clear
+                                    ],
+                                    center: .center,
+                                    startRadius: 20,
+                                    endRadius: 70
+                                )
+                            )
+                            .frame(width: 140, height: 140)
+                            .scaleEffect(animateFlame ? 1.1 : 1.0)
+                        
+                        // Flame emoji and number
+                        VStack(spacing: 0) {
+                            Text("🔥")
+                                .font(.system(size: 50))
+                                .scaleEffect(animateFlame ? 1.05 : 1.0)
+                            
+                            Text("\(userSettings.streakData.currentStreak)")
+                                .font(.system(size: 48, weight: .black, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [Color.orange, Color.red],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        }
+                    }
+                    
+                    Text("day streak")
+                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                    
+                    // Highest streak
+                    HStack(spacing: 4) {
+                        Text("Highest streak")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(themeManager.tertiaryTextColor)
+                        
+                        Text("⭐")
+                            .font(.system(size: 12))
+                        
+                        Text("\(userSettings.streakData.longestStreak)")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                    }
+                }
+                .padding(.bottom, 24)
+                
+                // Calendar Card
+                VStack(spacing: 16) {
+                    // Month Navigation
+                    HStack {
+                        Button(action: { previousMonth() }) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(themeManager.primaryTextColor)
+                                .frame(width: 40, height: 40)
+                                .background(
+                                    Circle()
+                                        .fill(themeManager.secondaryCardColor)
+                                )
+                        }
+                        
+                        Spacer()
+                        
+                        Text(monthYearString)
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                        
+                        Spacer()
+                        
+                        Button(action: { nextMonth() }) {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(themeManager.primaryTextColor)
+                                .frame(width: 40, height: 40)
+                                .background(
+                                    Circle()
+                                        .fill(themeManager.secondaryCardColor)
+                                )
+                        }
+                        .opacity(canGoToNextMonth ? 1.0 : 0.3)
+                        .disabled(!canGoToNextMonth)
+                    }
+                    .padding(.horizontal, 8)
+                    
+                    // Days of week header
+                    HStack(spacing: 0) {
+                        ForEach(daysOfWeek, id: \.self) { day in
+                            Text(day)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(themeManager.tertiaryTextColor)
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    
+                    // Calendar grid
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
+                        ForEach(daysInMonth, id: \.self) { date in
+                            if let date = date {
+                                DayCell(
+                                    date: date,
+                                    status: dayStatus(for: date),
+                                    isToday: calendar.isDateInToday(date)
+                                )
+                            } else {
+                                Color.clear
+                                    .frame(height: 40)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                }
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(themeManager.cardBackgroundColor)
+                        .shadow(color: Color.black.opacity(0.05), radius: 10, y: 5)
+                )
+                .padding(.horizontal, 20)
+                
+                Spacer()
+            }
+        }
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                animateFlame = true
+            }
+        }
+    }
+    
+    // MARK: - Helper Properties
+    
+    private var monthYearString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: currentMonth)
+    }
+    
+    private var canGoToNextMonth: Bool {
+        let nextMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
+        return nextMonth <= Date()
+    }
+    
+    private var daysInMonth: [Date?] {
+        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth))!
+        let range = calendar.range(of: .day, in: .month, for: currentMonth)!
+        
+        // Get the weekday of the first day (0 = Sunday)
+        let firstWeekday = calendar.component(.weekday, from: startOfMonth) - 1
+        
+        var days: [Date?] = Array(repeating: nil, count: firstWeekday)
+        
+        for day in range {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: startOfMonth) {
+                days.append(date)
+            }
+        }
+        
+        return days
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func previousMonth() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            currentMonth = calendar.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
+        }
+    }
+    
+    private func nextMonth() {
+        guard canGoToNextMonth else { return }
+        withAnimation(.easeInOut(duration: 0.3)) {
+            currentMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
+        }
+    }
+    
+    private func dayStatus(for date: Date) -> DayStatus {
+        // Don't show status for future dates
+        if date > Date() {
+            return .future
+        }
+        
+        // Find record for this date
+        let record = stepDataManager.dailyRecords.first { record in
+            calendar.isDate(record.date, inSameDayAs: date)
+        }
+        
+        if let record = record {
+            return record.goalAchieved ? .achieved : .missed
+        }
+        
+        // No record exists - if it's a past date, consider it missed
+        let today = calendar.startOfDay(for: Date())
+        let checkDate = calendar.startOfDay(for: date)
+        
+        if checkDate < today {
+            return .noData
+        }
+        
+        return .future
+    }
+}
+
+// MARK: - Day Status
+enum DayStatus {
+    case achieved
+    case missed
+    case future
+    case noData
+}
+
+// MARK: - Day Cell
+struct DayCell: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    let date: Date
+    let status: DayStatus
+    let isToday: Bool
+    
+    private var dayNumber: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d"
+        return formatter.string(from: date)
+    }
+    
+    var body: some View {
+        ZStack {
+            // Background circle based on status
+            Circle()
+                .fill(backgroundColor)
+                .frame(width: 36, height: 36)
+            
+            // Today indicator ring
+            if isToday {
+                Circle()
+                    .stroke(themeManager.accentColor, lineWidth: 2)
+                    .frame(width: 40, height: 40)
+            }
+            
+            Text(dayNumber)
+                .font(.system(size: 14, weight: isToday ? .bold : .medium, design: .rounded))
+                .foregroundColor(textColor)
+        }
+        .frame(height: 44)
+    }
+    
+    private var backgroundColor: Color {
+        switch status {
+        case .achieved:
+            return Color(hex: "34C759") // Green
+        case .missed:
+            return Color(hex: "FF3B30") // Red
+        case .future:
+            return Color.clear
+        case .noData:
+            return themeManager.secondaryCardColor.opacity(0.5)
+        }
+    }
+    
+    private var textColor: Color {
+        switch status {
+        case .achieved, .missed:
+            return .white
+        case .future:
+            return themeManager.tertiaryTextColor
+        case .noData:
+            return themeManager.secondaryTextColor
+        }
     }
 }
 
