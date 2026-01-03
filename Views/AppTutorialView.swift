@@ -180,13 +180,17 @@ class TutorialManager: ObservableObject {
     @Published var showTooltip: Bool = false
     @Published var scrollToWeekly: Bool = false
     @Published var challengesSegment: Int = 0 // 0 = Minigames, 1 = Pet Care, 2 = Awards
+    @Published var canSkip: Bool = true // Controls if skip button is shown
+    @Published var isFirstTimeTutorial: Bool = false // Track if this is first-time tutorial
     
-    func start() {
+    func start(allowSkip: Bool = true, isFirstTime: Bool = false) {
         isActive = true
         currentStep = .welcome
         showTooltip = false
         scrollToWeekly = false
         challengesSegment = 0
+        canSkip = allowSkip
+        isFirstTimeTutorial = isFirstTime
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -527,7 +531,7 @@ struct TutorialOverlay: View {
             }
             .padding(.top, 4)
             
-            if step == .welcome {
+            if step == .welcome && tutorialManager.canSkip {
                 Button(action: {
                     userSettings.hasCompletedAppTutorial = true
                     tutorialManager.skip()
@@ -714,18 +718,24 @@ struct TutorialOverlay: View {
     
     private var progressBar: some View {
         HStack(spacing: 16) {
-            // Skip button
-            Button(action: {
-                userSettings.hasCompletedAppTutorial = true
-                tutorialManager.skip()
-            }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .semibold))
-                    Text("Skip")
-                        .font(.system(size: 13, weight: .semibold))
+            // Skip button (only shown if canSkip is true)
+            if tutorialManager.canSkip {
+                Button(action: {
+                    userSettings.hasCompletedAppTutorial = true
+                    tutorialManager.skip()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("Skip")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(themeManager.secondaryTextColor)
                 }
-                .foregroundColor(themeManager.secondaryTextColor)
+            } else {
+                // Placeholder to maintain layout
+                Text("")
+                    .frame(width: 50)
             }
             
             Spacer()

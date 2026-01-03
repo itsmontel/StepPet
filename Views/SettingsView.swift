@@ -289,7 +289,8 @@ struct SettingsView: View {
                     subtitle: "Learn how to use the app",
                     showChevron: true,
                     action: {
-                        tutorialManager.start()
+                        // Tutorial from settings CAN be skipped
+                        tutorialManager.start(allowSkip: true, isFirstTime: false)
                     }
                 )
                 
@@ -1692,5 +1693,392 @@ struct QuickActionButton: View {
         .environmentObject(ThemeManager())
         .environmentObject(UserSettings())
         .environmentObject(AchievementManager())
+}
+
+// MARK: - Onboarding Paywall View
+struct OnboardingPaywallView: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var userSettings: UserSettings
+    @Binding var isPresented: Bool
+    
+    @State private var selectedPlan: String = "monthly"
+    @State private var showSparkle = false
+    @State private var pulseAnimation = false
+    
+    var body: some View {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                colors: [
+                    themeManager.backgroundColor,
+                    themeManager.accentColor.opacity(0.05),
+                    themeManager.backgroundColor
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+                    // Close button
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            userSettings.hasSeenPaywall = true
+                            isPresented = false
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                                .padding(12)
+                                .background(Circle().fill(themeManager.cardBackgroundColor))
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                    
+                    // Hero Section with Pet
+                    VStack(spacing: 16) {
+                        ZStack {
+                            // Glowing background
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [
+                                            themeManager.accentColor.opacity(0.3),
+                                            themeManager.accentColor.opacity(0.1),
+                                            Color.clear
+                                        ],
+                                        center: .center,
+                                        startRadius: 30,
+                                        endRadius: 100
+                                    )
+                                )
+                                .frame(width: 180, height: 180)
+                                .scaleEffect(pulseAnimation ? 1.1 : 1.0)
+                            
+                            // Pet animation
+                            AnimatedPetVideoView(
+                                petType: userSettings.pet.type,
+                                moodState: .fullHealth
+                            )
+                            .frame(width: 120, height: 120)
+                            .clipShape(RoundedRectangle(cornerRadius: 24))
+                        }
+                        
+                        // FREE badge
+                        HStack(spacing: 6) {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 14, weight: .bold))
+                            Text("START FREE")
+                                .font(.system(size: 14, weight: .heavy, design: .rounded))
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 14, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [themeManager.accentColor, Color.green],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
+                        )
+                    }
+                    .padding(.bottom, 8)
+                    
+                    // Title
+                    VStack(spacing: 8) {
+                        Text("Unlock Premium")
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                        
+                        Text("Try it FREE - Cancel anytime")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(themeManager.accentColor)
+                    }
+                    
+                    // Features Grid
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            PaywallFeatureCard(
+                                icon: "pawprint.fill",
+                                title: "All 5 Pets",
+                                subtitle: "Dog, Cat, Bunny & more",
+                                color: .orange
+                            )
+                            PaywallFeatureCard(
+                                icon: "chart.line.uptrend.xyaxis",
+                                title: "Deep Analytics",
+                                subtitle: "Track your progress",
+                                color: .purple
+                            )
+                        }
+                        
+                        HStack(spacing: 12) {
+                            PaywallFeatureCard(
+                                icon: "square.grid.2x2.fill",
+                                title: "Home Widget",
+                                subtitle: "Pet on your screen",
+                                color: .blue
+                            )
+                            PaywallFeatureCard(
+                                icon: "gamecontroller.fill",
+                                title: "All Minigames",
+                                subtitle: "Unlimited fun",
+                                color: .pink
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    // Plan Selection
+                    VStack(spacing: 10) {
+                        Text("Choose Your Plan")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(themeManager.secondaryTextColor)
+                        
+                        // Weekly Plan
+                        PaywallPlanButton(
+                            title: "Weekly",
+                            price: "$3.99",
+                            period: "/week",
+                            subtitle: "Flexible billing",
+                            isSelected: selectedPlan == "weekly",
+                            action: { selectedPlan = "weekly" }
+                        )
+                        
+                        // Monthly Plan
+                        PaywallPlanButton(
+                            title: "Monthly",
+                            price: "$9.99",
+                            period: "/month",
+                            subtitle: "SAVE 37%",
+                            isSelected: selectedPlan == "monthly",
+                            isBestValue: true,
+                            action: { selectedPlan = "monthly" }
+                        )
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    
+                    // Free Trial Info
+                    VStack(spacing: 6) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.shield.fill")
+                                .foregroundColor(.green)
+                            Text("3-Day FREE Trial")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(themeManager.primaryTextColor)
+                        }
+                        
+                        Text("No charge until trial ends • Cancel anytime")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(themeManager.secondaryTextColor)
+                    }
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.green.opacity(0.1))
+                    )
+                    .padding(.horizontal, 20)
+                    
+                    // CTA Button
+                    Button(action: {
+                        // Handle subscription
+                        userSettings.isPremium = true
+                        userSettings.hasSeenPaywall = true
+                        isPresented = false
+                    }) {
+                        HStack(spacing: 8) {
+                            Text("Start Free Trial")
+                                .font(.system(size: 18, weight: .bold))
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 16, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 18)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .shadow(color: themeManager.accentColor.opacity(0.4), radius: 15, y: 8)
+                        )
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    
+                    // Continue without premium
+                    Button(action: {
+                        userSettings.hasSeenPaywall = true
+                        isPresented = false
+                    }) {
+                        Text("Continue with Free Version")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(themeManager.tertiaryTextColor)
+                    }
+                    .padding(.top, 4)
+                    
+                    // Legal links
+                    HStack(spacing: 20) {
+                        Button("Terms") {}
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(themeManager.tertiaryTextColor)
+                        
+                        Button("Privacy") {}
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(themeManager.tertiaryTextColor)
+                        
+                        Button("Restore") {}
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(themeManager.tertiaryTextColor)
+                    }
+                    .padding(.top, 8)
+                    .padding(.bottom, 30)
+                }
+            }
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+                pulseAnimation = true
+            }
+        }
+    }
+}
+
+// MARK: - Paywall Feature Card
+struct PaywallFeatureCard: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let color: Color
+    
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 40, height: 40)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(color)
+            }
+            
+            Text(title)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundColor(themeManager.primaryTextColor)
+            
+            Text(subtitle)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(themeManager.secondaryTextColor)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(0.05), radius: 8, y: 4)
+        )
+    }
+}
+
+// MARK: - Paywall Plan Button
+struct PaywallPlanButton: View {
+    let title: String
+    let price: String
+    let period: String
+    let subtitle: String
+    let isSelected: Bool
+    var isBestValue: Bool = false
+    let action: () -> Void
+    
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                // Radio button
+                ZStack {
+                    Circle()
+                        .stroke(isSelected ? themeManager.accentColor : Color.gray.opacity(0.3), lineWidth: 2)
+                        .frame(width: 24, height: 24)
+                    
+                    if isSelected {
+                        Circle()
+                            .fill(themeManager.accentColor)
+                            .frame(width: 14, height: 14)
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 8) {
+                        Text(title)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(themeManager.primaryTextColor)
+                        
+                        if isBestValue {
+                            Text("BEST VALUE")
+                                .font(.system(size: 9, weight: .heavy))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(
+                                    Capsule()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [.orange, .red],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                )
+                        }
+                    }
+                    
+                    Text(subtitle)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(isBestValue && !isSelected ? Color.green : themeManager.secondaryTextColor)
+                }
+                
+                Spacer()
+                
+                // Price
+                HStack(alignment: .lastTextBaseline, spacing: 2) {
+                    Text(price)
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    Text(period)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(themeManager.cardBackgroundColor)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(isSelected ? themeManager.accentColor : Color.gray.opacity(0.2), lineWidth: isSelected ? 2 : 1)
+                    )
+                    .shadow(color: isSelected ? themeManager.accentColor.opacity(0.15) : Color.clear, radius: 8, y: 4)
+            )
+        }
+    }
 }
 

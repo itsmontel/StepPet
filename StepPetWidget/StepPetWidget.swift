@@ -81,9 +81,11 @@ struct WidgetPetImageView: View {
     
     var body: some View {
         Image(imageName)
+            .renderingMode(.original)
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: size, height: size)
+            .clipped()
     }
 }
 
@@ -196,28 +198,45 @@ struct SmallWidgetView: View {
     let progress: Double
     let moodDisplay: MoodDisplay
     
-    private var imageName: String {
-        "\(entry.petType.lowercased())\(entry.petMood.lowercased())"
-    }
-    
     var body: some View {
         VStack(spacing: 8) {
-            Image(imageName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 60, height: 60)
-            
+            // Mood text
             Text(moodDisplay.text)
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(moodDisplay.color)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Capsule().fill(moodDisplay.color.opacity(0.15)))
-            
-            Text("\(entry.todaySteps) steps")
                 .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundColor(StepPetTheme.textPrimary)
+                .foregroundColor(moodDisplay.color)
+            
+            // Health bar
+            VStack(spacing: 2) {
+                Text("Health")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(StepPetTheme.textSecondary)
+                
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(height: 6)
+                    
+                    Capsule()
+                        .fill(StepPetTheme.accent)
+                        .frame(width: max(6, 70 * (Double(entry.health) / 100)), height: 6)
+                }
+                .frame(width: 70)
+                
+                Text("\(entry.health)%")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundColor(StepPetTheme.accent)
+            }
+            
+            // Steps
+            VStack(spacing: 2) {
+                Text("\(entry.todaySteps)")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(StepPetTheme.textPrimary)
+                
+                Text("steps")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(StepPetTheme.textSecondary)
+            }
         }
     }
 }

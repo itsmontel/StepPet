@@ -12,6 +12,7 @@ struct ContentView: View {
     @StateObject private var tutorialManager = TutorialManager()
     @State private var selectedTab = 2 // Start on Today (center)
     @State private var visitedTabs: Set<Int> = [2] // Start with Today visited
+    @State private var showPaywall = false // Show paywall after tutorial
     
     // Listen for navigation to Challenges
     private let navigateToChallengesNotification = NotificationCenter.default.publisher(for: NSNotification.Name("NavigateToChallenges"))
@@ -78,10 +79,11 @@ struct ContentView: View {
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: achievementManager.showUnlockAnimation)
         .onAppear {
             // Check if tutorial should start - wait 0.5s after app loads, then show tutorial
+            // First-time tutorial cannot be skipped
             if userSettings.hasCompletedOnboarding && !userSettings.hasCompletedAppTutorial {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     withAnimation(.easeInOut(duration: 0.3)) {
-                        tutorialManager.start()
+                        tutorialManager.start(allowSkip: false, isFirstTime: true)
                     }
                 }
             }
@@ -94,6 +96,20 @@ struct ContentView: View {
                     selectedTab = targetTab
                 }
             }
+        }
+        .onChange(of: tutorialManager.isActive) { oldValue, newValue in
+            // When tutorial ends (becomes inactive) and it was a first-time tutorial
+            // and user hasn't seen paywall yet, show it
+            if oldValue && !newValue && tutorialManager.isFirstTimeTutorial && !userSettings.hasSeenPaywall {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showPaywall = true
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showPaywall) {
+            OnboardingPaywallView(isPresented: $showPaywall)
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
         }
     }
 }
