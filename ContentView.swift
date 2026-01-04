@@ -114,146 +114,405 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Centered Tab Bar (Today in middle, prominent) 🎨
+// MARK: - Ultra Premium Dock-Style Tab Bar ✨
 struct CenteredTabBar: View {
     @Binding var selectedTab: Int
     @EnvironmentObject var themeManager: ThemeManager
     var tutorialManager: TutorialManager? = nil
+    @State private var animationTrigger = false
     
-    // Tab order: Activity, Insights, TODAY (center), Challenges, Settings
-    // Each tab gets its own cute color! 🌈
-    var tabs: [(icon: String, selectedIcon: String, title: String, tutorialID: String, color: Color)] {
+    // Tab configuration
+    var tabs: [(icon: String, selectedIcon: String, title: String, tutorialID: String)] {
         [
-            ("figure.walk.motion", "figure.walk.motion", "Activity", "tutorial_tab_activity", themeManager.activityTabColor),
-            ("chart.line.uptrend.xyaxis", "chart.line.uptrend.xyaxis", "Insights", "tutorial_tab_insights", themeManager.insightsTabColor),
-            ("house", "house.fill", "Today", "tutorial_tab_today", themeManager.todayTabColor),
-            ("trophy", "trophy.fill", "Challenges", "tutorial_tab_challenges", themeManager.challengesTabColor),
-            ("gearshape", "gearshape.fill", "Settings", "tutorial_tab_settings", themeManager.settingsTabColor)
+            ("figure.walk.motion", "figure.walk.motion", "Activity", "tutorial_tab_activity"),
+            ("chart.line.uptrend.xyaxis", "chart.line.uptrend.xyaxis", "Insights", "tutorial_tab_insights"),
+            ("pawprint.fill", "pawprint.fill", "Pet", "tutorial_tab_today"),
+            ("trophy", "trophy.fill", "Games", "tutorial_tab_challenges"),
+            ("gearshape", "gearshape.fill", "Settings", "tutorial_tab_settings")
         ]
     }
     
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(0..<tabs.count, id: \.self) { index in
-                if index == 2 {
-                    // Center tab (Today) - Prominent with gradient!
-                    CenterTabButton(
-                        icon: tabs[index].selectedIcon,
-                        title: tabs[index].title,
-                        isSelected: selectedTab == index,
-                        tabColor: tabs[index].color
-                    ) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedTab = index
+        ZStack {
+            // Animated glow under selected tab
+            GeometryReader { geo in
+                let tabWidth = (geo.size.width - 32) / CGFloat(tabs.count)
+                
+                // Moving glow indicator
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                themeManager.primaryColor.opacity(0.6),
+                                themeManager.primaryColor.opacity(0.2),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 50
+                        )
+                    )
+                    .frame(width: 80, height: 80)
+                    .blur(radius: 20)
+                    .offset(
+                        x: tabWidth * CGFloat(selectedTab) + tabWidth / 2 - 40 + 16,
+                        y: selectedTab == 2 ? -30 : 0
+                    )
+                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: selectedTab)
+            }
+            .frame(height: 60)
+            
+            // Main tab bar content
+            HStack(spacing: 0) {
+                ForEach(0..<tabs.count, id: \.self) { index in
+                    if index == 2 {
+                        // Center tab - Premium floating orb
+                        PremiumCenterOrb(
+                            icon: tabs[index].selectedIcon,
+                            isSelected: selectedTab == index
+                        ) {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.65)) {
+                                selectedTab = index
+                            }
+                            HapticFeedback.medium.trigger()
                         }
-                        HapticFeedback.light.trigger()
-                    }
-                    .tutorialHighlight(tabs[index].tutorialID)
-                } else {
-                    // Regular tabs with colorful accents
-                    ColorfulTabBarButton(
-                        icon: selectedTab == index ? tabs[index].selectedIcon : tabs[index].icon,
-                        title: tabs[index].title,
-                        isSelected: selectedTab == index,
-                        tabColor: tabs[index].color
-                    ) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedTab = index
+                        .tutorialHighlight(tabs[index].tutorialID)
+                    } else {
+                        // Side tabs - Premium glass buttons
+                        PremiumTabItem(
+                            icon: selectedTab == index ? tabs[index].selectedIcon : tabs[index].icon,
+                            title: tabs[index].title,
+                            isSelected: selectedTab == index,
+                            index: index,
+                            selectedIndex: selectedTab
+                        ) {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                                selectedTab = index
+                            }
+                            HapticFeedback.light.trigger()
                         }
-                        HapticFeedback.light.trigger()
+                        .tutorialHighlight(tabs[index].tutorialID)
                     }
-                    .tutorialHighlight(tabs[index].tutorialID)
                 }
             }
-        }
-        .padding(.horizontal, 4)
-        .padding(.top, 8)
-        .padding(.bottom, 2)
-        .background(
-            ZStack {
-                // Glass morphism effect
-                RoundedRectangle(cornerRadius: 24)
+            .padding(.horizontal, 8)
+            .padding(.top, 2)
+            .padding(.bottom, 0)
+            .background(
+                // Full-width opaque dock
+                ZStack {
+                    // Base opaque layer - extends to edges and bottom
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 24,
+                        bottomLeadingRadius: 0,
+                        bottomTrailingRadius: 0,
+                        topTrailingRadius: 24
+                    )
                     .fill(themeManager.cardBackgroundColor)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24)
+                    
+                    // Inner highlight gradient
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 24,
+                        bottomLeadingRadius: 0,
+                        bottomTrailingRadius: 0,
+                        topTrailingRadius: 24
+                    )
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(themeManager.isDarkMode ? 0.08 : 0.3),
+                                Color.clear,
+                                themeManager.primaryColor.opacity(0.02)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    
+                    // Top border line only
+                    VStack {
+                        Rectangle()
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        themeManager.primaryColor.opacity(0.03),
-                                        Color.clear,
-                                        themeManager.primaryColor.opacity(0.02)
+                                        themeManager.primaryColor.opacity(0.1),
+                                        Color.white.opacity(themeManager.isDarkMode ? 0.15 : 0.4),
+                                        themeManager.primaryColor.opacity(0.1)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(height: 1)
+                        Spacer()
+                    }
+                }
+                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0.4 : 0.1), radius: 20, x: 0, y: -8)
+                .shadow(color: themeManager.primaryColor.opacity(0.1), radius: 15, x: 0, y: -4)
+                .ignoresSafeArea(edges: .bottom)
+            )
+            .ignoresSafeArea(edges: .bottom)
+        }
+    }
+}
+
+// MARK: - Premium Center Orb (Floating Pet Button) 🐾
+struct PremiumCenterOrb: View {
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+    @EnvironmentObject var themeManager: ThemeManager
+    @State private var isPulsing = false
+    
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                // Outer pulsing ring (always visible, pulses when selected)
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                themeManager.primaryColor.opacity(0.4),
+                                themeManager.primaryColor.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 2
+                    )
+                    .frame(width: 74, height: 74)
+                    .scaleEffect(isPulsing && isSelected ? 1.15 : 1.0)
+                    .opacity(isPulsing && isSelected ? 0 : 0.8)
+                    .animation(
+                        isSelected ?
+                            .easeInOut(duration: 1.5).repeatForever(autoreverses: false) :
+                            .default,
+                        value: isPulsing
+                    )
+                
+                // Glow backdrop
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                themeManager.primaryColor.opacity(0.5),
+                                themeManager.primaryColor.opacity(0.2),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 20,
+                            endRadius: 50
+                        )
+                    )
+                    .frame(width: 90, height: 90)
+                    .blur(radius: 10)
+                    .opacity(isSelected ? 1 : 0.5)
+                
+                // Main orb with 3D effect
+                ZStack {
+                    // Shadow layer
+                    Circle()
+                        .fill(themeManager.primaryColor.opacity(0.8))
+                        .frame(width: 64, height: 64)
+                        .offset(y: 2)
+                        .blur(radius: 4)
+                    
+                    // Main gradient fill
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    themeManager.primaryColor.opacity(1.0),
+                                    themeManager.primaryColor.opacity(0.75),
+                                    themeManager.primaryColor.opacity(0.9)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 64, height: 64)
+                    
+                    // Inner shine (top-left highlight)
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.5),
+                                    Color.white.opacity(0.1),
+                                    Color.clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .center
+                            )
+                        )
+                        .frame(width: 64, height: 64)
+                    
+                    // Glass reflection
+                    Ellipse()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.4),
+                                    Color.white.opacity(0.0)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: 40, height: 20)
+                        .offset(y: -16)
+                    
+                    // Border ring
+                    Circle()
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.6),
+                                    Color.white.opacity(0.1),
+                                    themeManager.primaryColor.opacity(0.3)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 2.5
+                        )
+                        .frame(width: 64, height: 64)
+                }
+                
+                // Icon
+                Image(systemName: icon)
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(.white)
+                    .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
+            }
+            .offset(y: -14)
+            .scaleEffect(isSelected ? 1.08 : 0.95)
+            .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isSelected)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .frame(maxWidth: .infinity)
+        .onAppear { isPulsing = true }
+    }
+}
+
+// MARK: - Premium Tab Item (Side Buttons)
+struct PremiumTabItem: View {
+    let icon: String
+    let title: String
+    let isSelected: Bool
+    let index: Int
+    let selectedIndex: Int
+    let action: () -> Void
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    // Calculate if this tab is adjacent to center (for spacing)
+    var isNearCenter: Bool {
+        index == 1 || index == 3
+    }
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                ZStack {
+                    // Selection background with animated reveal
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        themeManager.primaryColor.opacity(0.2),
+                                        themeManager.primaryColor.opacity(0.08)
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
-                    )
-                    .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0.3 : 0.08), radius: 20, x: 0, y: -5)
-                    .shadow(color: themeManager.primaryColor.opacity(0.05), radius: 15, x: 0, y: -3)
-            }
-            .padding(.horizontal, 8)
-        )
-        .padding(.bottom, 0)
-    }
-}
-
-// MARK: - Center Tab Button (Prominent) 🏠
-struct CenterTabButton: View {
-    let icon: String
-    let title: String
-    let isSelected: Bool
-    var tabColor: Color = .orange
-    let action: () -> Void
-    @EnvironmentObject var themeManager: ThemeManager
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 3) {
-                ZStack {
-                    // Enhanced glowing background with multiple layers
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [tabColor, tabColor.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                            .frame(width: 44, height: 34)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(themeManager.primaryColor.opacity(0.3), lineWidth: 1)
                             )
-                        )
-                        .frame(width: 56, height: 56)
-                        .shadow(color: tabColor.opacity(isSelected ? 0.7 : 0.5), radius: isSelected ? 16 : 12, x: 0, y: 4)
-                        .shadow(color: tabColor.opacity(isSelected ? 0.4 : 0.2), radius: isSelected ? 24 : 18, x: 0, y: 8)
-                        .overlay(
-                            Circle()
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 2.5
-                                )
-                        )
+                            .transition(.scale.combined(with: .opacity))
+                    }
                     
+                    // Icon with glow when selected
                     Image(systemName: icon)
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
+                        .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
+                        .foregroundStyle(
+                            isSelected
+                                ? AnyShapeStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            themeManager.primaryColor,
+                                            themeManager.primaryColor.opacity(0.8)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                : AnyShapeStyle(themeManager.secondaryTextColor.opacity(0.6))
+                        )
+                        .shadow(
+                            color: isSelected ? themeManager.primaryColor.opacity(0.4) : .clear,
+                            radius: 6,
+                            x: 0,
+                            y: 2
+                        )
+                        .symbolEffect(.bounce.byLayer, value: isSelected)
                 }
-                .offset(y: -8)
-                .scaleEffect(isSelected ? 1.08 : 1.0)
-                .animation(.spring(response: 0.35, dampingFraction: 0.65), value: isSelected)
+                .frame(height: 34)
                 
+                // Label
                 Text(title)
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundColor(isSelected ? tabColor : themeManager.secondaryTextColor)
-                    .offset(y: -4)
+                    .font(.system(size: 10, weight: isSelected ? .bold : .medium, design: .rounded))
+                    .foregroundColor(
+                        isSelected
+                            ? themeManager.primaryColor
+                            : themeManager.secondaryTextColor.opacity(0.5)
+                    )
             }
             .frame(maxWidth: .infinity)
+            .scaleEffect(isSelected ? 1.05 : 1.0)
+            .opacity(isSelected ? 1.0 : 0.8)
+            .animation(.spring(response: 0.35, dampingFraction: 0.7), value: isSelected)
         }
         .buttonStyle(PlainButtonStyle())
     }
 }
 
-// MARK: - Colorful Tab Bar Button 🎨
+// MARK: - Legacy Support Wrappers
+struct FloatingCenterTab: View {
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        PremiumCenterOrb(icon: icon, isSelected: isSelected, action: action)
+            .environmentObject(themeManager)
+    }
+}
+
+struct ModernTabButton: View {
+    let icon: String
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        PremiumTabItem(
+            icon: icon,
+            title: title,
+            isSelected: isSelected,
+            index: 0,
+            selectedIndex: isSelected ? 0 : 1,
+            action: action
+        )
+        .environmentObject(themeManager)
+    }
+}
+
 struct ColorfulTabBarButton: View {
     let icon: String
     let title: String
@@ -263,45 +522,32 @@ struct ColorfulTabBarButton: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
-        Button(action: action) {
-            VStack(spacing: 5) {
-                ZStack {
-                    // Enhanced background when selected
-                    if isSelected {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [tabColor.opacity(0.18), tabColor.opacity(0.12)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                            .frame(width: 40, height: 40)
-                            .overlay(
-                                Circle()
-                                    .stroke(tabColor.opacity(0.2), lineWidth: 1.5)
-                            )
-                    }
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 21, weight: isSelected ? .bold : .semibold))
-                        .foregroundColor(isSelected ? tabColor : themeManager.secondaryTextColor)
-                }
-                .frame(height: 40)
-                .scaleEffect(isSelected ? 1.12 : 1.0)
-                .animation(.spring(response: 0.35, dampingFraction: 0.65), value: isSelected)
-                
-                Text(title)
-                    .font(.system(size: 11, weight: isSelected ? .bold : .semibold, design: .rounded))
-                    .foregroundColor(isSelected ? tabColor : themeManager.secondaryTextColor)
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(PlainButtonStyle())
+        PremiumTabItem(
+            icon: icon,
+            title: title,
+            isSelected: isSelected,
+            index: 0,
+            selectedIndex: isSelected ? 0 : 1,
+            action: action
+        )
+        .environmentObject(themeManager)
     }
 }
 
-// MARK: - Legacy Tab Bar Button (for compatibility)
+struct CenterTabButton: View {
+    let icon: String
+    let title: String
+    let isSelected: Bool
+    var tabColor: Color = .orange
+    let action: () -> Void
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        PremiumCenterOrb(icon: icon, isSelected: isSelected, action: action)
+            .environmentObject(themeManager)
+    }
+}
+
 struct TabBarButton: View {
     let icon: String
     let title: String
@@ -310,11 +556,12 @@ struct TabBarButton: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
-        ColorfulTabBarButton(
+        PremiumTabItem(
             icon: icon,
             title: title,
             isSelected: isSelected,
-            tabColor: themeManager.accentColor,
+            index: 0,
+            selectedIndex: isSelected ? 0 : 1,
             action: action
         )
         .environmentObject(themeManager)

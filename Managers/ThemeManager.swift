@@ -6,6 +6,84 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Accent Color Theme Enum
+enum AccentColorTheme: String, CaseIterable, Codable {
+    case indigoBlue = "Indigo Blue"
+    case sunsetGlow = "Sunset Glow"
+    case mintTeal = "Mint Teal"
+    case lavenderDream = "Lavender"
+    case rosePink = "Rose Pink"
+    case forestGreen = "Forest"
+    case oceanBlue = "Ocean Blue"
+    case coralRed = "Coral"
+    
+    var primaryHex: String {
+        switch self {
+        case .indigoBlue: return "4A6CF7"
+        case .sunsetGlow: return "FF8E53"  // Middle of the gradient
+        case .mintTeal: return "5CD9C5"
+        case .lavenderDream: return "B58FFF"
+        case .rosePink: return "FF85B3"
+        case .forestGreen: return "34C759"
+        case .oceanBlue: return "007AFF"
+        case .coralRed: return "FF6B6B"
+        }
+    }
+    
+    var darkHex: String {
+        switch self {
+        case .indigoBlue: return "3D5BD9"
+        case .sunsetGlow: return "FF6B4A"
+        case .mintTeal: return "4CC9B5"
+        case .lavenderDream: return "9B6FFF"
+        case .rosePink: return "FF5C99"
+        case .forestGreen: return "28A745"
+        case .oceanBlue: return "0056B3"
+        case .coralRed: return "FF4757"
+        }
+    }
+    
+    var lightHex: String {
+        switch self {
+        case .indigoBlue: return "6B8AFF"
+        case .sunsetGlow: return "FFD93D"
+        case .mintTeal: return "8FEDE0"
+        case .lavenderDream: return "D4BDFF"
+        case .rosePink: return "FFB3D1"
+        case .forestGreen: return "5DD879"
+        case .oceanBlue: return "4DA3FF"
+        case .coralRed: return "FF9F9F"
+        }
+    }
+    
+    // For gradient themes like Sunset
+    var isGradient: Bool {
+        self == .sunsetGlow
+    }
+    
+    var gradientColors: [Color] {
+        switch self {
+        case .sunsetGlow:
+            return [Color(hex: "FF6B4A"), Color(hex: "FF8E53"), Color(hex: "FFD93D")]
+        default:
+            return [Color(hex: primaryHex), Color(hex: lightHex)]
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .indigoBlue: return "drop.fill"
+        case .sunsetGlow: return "sun.max.fill"
+        case .mintTeal: return "leaf.fill"
+        case .lavenderDream: return "sparkles"
+        case .rosePink: return "heart.fill"
+        case .forestGreen: return "tree.fill"
+        case .oceanBlue: return "water.waves"
+        case .coralRed: return "flame.fill"
+        }
+    }
+}
+
 class ThemeManager: ObservableObject {
     @Published var isDarkMode: Bool {
         didSet {
@@ -13,8 +91,20 @@ class ThemeManager: ObservableObject {
         }
     }
     
+    @Published var accentColorTheme: AccentColorTheme {
+        didSet {
+            UserDefaults.standard.set(accentColorTheme.rawValue, forKey: "accentColorTheme")
+        }
+    }
+    
     init() {
         self.isDarkMode = UserDefaults.standard.bool(forKey: "isDarkMode")
+        if let savedTheme = UserDefaults.standard.string(forKey: "accentColorTheme"),
+           let theme = AccentColorTheme(rawValue: savedTheme) {
+            self.accentColorTheme = theme
+        } else {
+            self.accentColorTheme = .sunsetGlow
+        }
     }
     
     // ╔══════════════════════════════════════════════════════════════════╗
@@ -22,23 +112,23 @@ class ThemeManager: ObservableObject {
     // ║         Cute, playful palette for our adorable pet app! 🐾       ║
     // ╚══════════════════════════════════════════════════════════════════╝
     
-    // MARK: - Primary Colors (Indigo Blue - Deep & Trustworthy!)
+    // MARK: - Primary Colors (Dynamic based on accent theme!)
     
-    /// The signature VirtuPet indigo blue - deep, trustworthy, professional
+    /// The signature VirtuPet color - changes based on selected accent theme
     var primaryColor: Color {
-        Color(hex: "4A6CF7")  // Deeper indigo-blue
+        Color(hex: accentColorTheme.primaryHex)
     }
     
     var primaryDarkColor: Color {
-        Color(hex: "3D5BD9")
+        Color(hex: accentColorTheme.darkHex)
     }
     
     var primaryLightColor: Color {
-        Color(hex: "6B8AFF")
+        Color(hex: accentColorTheme.lightHex)
     }
     
     var primaryExtraLight: Color {
-        Color(hex: "A3B8FF")
+        Color(hex: accentColorTheme.lightHex).opacity(0.5)
     }
     
     // MARK: - Secondary Colors (Mint Teal - Fresh & Cute!)
@@ -261,10 +351,10 @@ class ThemeManager: ObservableObject {
     
     // MARK: - Primary Gradients
     
-    /// Main brand gradient - indigo blue (solid)
+    /// Main brand gradient - uses accent theme colors
     var primaryGradient: LinearGradient {
         LinearGradient(
-            colors: [primaryColor, primaryColor],
+            colors: accentColorTheme.isGradient ? accentColorTheme.gradientColors : [primaryColor, primaryColor],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )

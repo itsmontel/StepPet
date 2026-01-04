@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var showContactSheet = false
     @State private var showSubscriptionManagement = false
     @State private var showRevenueCatPaywall = false
+    @State private var showAccentColorSheet = false
     @State private var newUserName = ""
     @State private var newPetName = ""
     @State private var selectedGoal = 10000
@@ -92,6 +93,11 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showRevenueCatPaywall) {
             PaywallView(displayCloseButton: true)
+        }
+        .sheet(isPresented: $showAccentColorSheet) {
+            AccentColorPickerView()
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
         }
         .onAppear {
             selectedPetType = userSettings.pet.type
@@ -297,6 +303,64 @@ struct SettingsView: View {
                             Spacer()
                             
                             // Locked toggle indicator
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(themeManager.accentColor.opacity(0.6))
+                        }
+                        .padding(14)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                
+                Divider()
+                    .padding(.leading, 60)
+                
+                // Accent Color Theme - Premium Only
+                if userSettings.isPremium {
+                    SettingsRow(
+                        icon: "paintpalette.fill",
+                        iconColor: themeManager.primaryColor,
+                        iconBackground: themeManager.primaryColor.opacity(0.15),
+                        title: "App Theme",
+                        subtitle: themeManager.accentColorTheme.rawValue,
+                        showChevron: true,
+                        action: {
+                            showAccentColorSheet = true
+                        }
+                    )
+                } else {
+                    // Locked Accent Color for free users
+                    Button(action: {
+                        showPremiumSheet = true
+                    }) {
+                        HStack(spacing: 14) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(themeManager.primaryColor.opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                
+                                Image(systemName: "paintpalette.fill")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(themeManager.primaryColor)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("App Theme")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(themeManager.primaryTextColor)
+                                
+                                HStack(spacing: 4) {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 10))
+                                    Text("Premium Feature")
+                                        .font(.system(size: 13, weight: .semibold))
+                                }
+                                .foregroundColor(themeManager.accentColor)
+                            }
+                            
+                            Spacer()
+                            
+                            // Locked indicator
                             Image(systemName: "crown.fill")
                                 .font(.system(size: 14))
                                 .foregroundColor(themeManager.accentColor.opacity(0.6))
@@ -2483,6 +2547,231 @@ struct PaywallPlanButton: View {
                     .shadow(color: isSelected ? themeManager.accentColor.opacity(0.15) : Color.clear, radius: 8, y: 4)
             )
         }
+    }
+}
+
+// MARK: - Accent Color Picker View
+struct AccentColorPickerView: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var userSettings: UserSettings
+    @Environment(\.dismiss) var dismiss
+    
+    let columns = [
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Header description
+                    VStack(spacing: 8) {
+                        Image(systemName: "paintpalette.fill")
+                            .font(.system(size: 50))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: themeManager.accentColorTheme.gradientColors,
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        
+                        Text("Choose Your Theme")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                        
+                        Text("Personalize your app with a color that matches your style")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(themeManager.secondaryTextColor)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.top, 20)
+                    
+                    // Color grid
+                    LazyVGrid(columns: columns, spacing: 16) {
+                        ForEach(AccentColorTheme.allCases, id: \.self) { theme in
+                            AccentColorButton(
+                                theme: theme,
+                                isSelected: themeManager.accentColorTheme == theme,
+                                action: {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        themeManager.accentColorTheme = theme
+                                        userSettings.accentColorTheme = theme.rawValue
+                                    }
+                                    HapticFeedback.light.trigger()
+                                }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    // Preview section
+                    VStack(spacing: 12) {
+                        Text("Preview")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(themeManager.secondaryTextColor)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        HStack(spacing: 16) {
+                            // Sample button
+                            Text("Sample Button")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 12)
+                                .background(
+                                    Capsule()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: themeManager.accentColorTheme.gradientColors,
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                )
+                            
+                            // Sample progress
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(themeManager.primaryColor.opacity(0.2))
+                                    .frame(height: 12)
+                                
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: themeManager.accentColorTheme.gradientColors,
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .frame(width: 80, height: 12)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        
+                        // Sample text
+                        HStack(spacing: 12) {
+                            Image(systemName: "pawprint.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(themeManager.primaryColor)
+                            
+                            Text("8,547")
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .foregroundColor(themeManager.primaryColor)
+                            
+                            Text("steps")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                        }
+                    }
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(themeManager.cardBackgroundColor)
+                    )
+                    .padding(.horizontal, 20)
+                    
+                    Spacer(minLength: 40)
+                }
+            }
+            .background(themeManager.backgroundColor.ignoresSafeArea())
+            .navigationTitle("App Theme")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(themeManager.primaryColor)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Accent Color Button
+struct AccentColorButton: View {
+    let theme: AccentColorTheme
+    let isSelected: Bool
+    let action: () -> Void
+    
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 12) {
+                // Color preview circle
+                ZStack {
+                    // Outer ring when selected
+                    if isSelected {
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: theme.gradientColors,
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 3
+                            )
+                            .frame(width: 64, height: 64)
+                    }
+                    
+                    // Main color circle
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: theme.gradientColors,
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 52, height: 52)
+                        .shadow(color: Color(hex: theme.primaryHex).opacity(0.4), radius: 8, y: 4)
+                    
+                    // Icon
+                    Image(systemName: theme.icon)
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    // Checkmark when selected
+                    if isSelected {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 22, height: 22)
+                            .overlay(
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(Color(hex: theme.primaryHex))
+                            )
+                            .offset(x: 20, y: -20)
+                    }
+                }
+                .frame(width: 68, height: 68)
+                
+                // Theme name
+                Text(theme.rawValue)
+                    .font(.system(size: 13, weight: isSelected ? .bold : .semibold, design: .rounded))
+                    .foregroundColor(isSelected ? themeManager.primaryColor : themeManager.secondaryTextColor)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(themeManager.cardBackgroundColor)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(
+                                isSelected ? Color(hex: theme.primaryHex).opacity(0.5) : Color.clear,
+                                lineWidth: 2
+                            )
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isSelected ? 1.02 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
     }
 }
 

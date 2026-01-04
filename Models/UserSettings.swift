@@ -50,6 +50,12 @@ class UserSettings: ObservableObject {
     @Published var playCredits: Int {
         didSet { save() }
     }
+    @Published var dailyFreeCredits: Int {
+        didSet { save() }
+    }
+    @Published var lastDailyCreditsDate: Date? {
+        didSet { save() }
+    }
     @Published var todayPlayHealthBoost: Int {
         didSet { save() }
     }
@@ -60,6 +66,9 @@ class UserSettings: ObservableObject {
         didSet { save() }
     }
     @Published var hasSeenPaywall: Bool {
+        didSet { save() }
+    }
+    @Published var accentColorTheme: String {
         didSet { save() }
     }
     
@@ -82,15 +91,27 @@ class UserSettings: ObservableObject {
             self.petsUsed = savedSettings.petsUsed
             self.hasCompletedOnboarding = savedSettings.hasCompletedOnboarding
             self.playCredits = savedSettings.playCredits
+            self.dailyFreeCredits = savedSettings.dailyFreeCredits ?? 7
+            self.lastDailyCreditsDate = savedSettings.lastDailyCreditsDate
             self.todayPlayHealthBoost = savedSettings.todayPlayHealthBoost
             self.lastPlayBoostDate = savedSettings.lastPlayBoostDate
             self.hasCompletedAppTutorial = savedSettings.hasCompletedAppTutorial ?? false
             self.hasSeenPaywall = savedSettings.hasSeenPaywall ?? false
+            self.accentColorTheme = savedSettings.accentColorTheme ?? "Sunset Glow"
             
             // Reset daily boost if it's a new day
             if let lastDate = lastPlayBoostDate, !Calendar.current.isDateInToday(lastDate) {
                 self.todayPlayHealthBoost = 0
                 self.lastPlayBoostDate = nil
+            }
+            
+            // Reset daily free credits if it's a new day
+            if let lastCreditsDate = lastDailyCreditsDate, !Calendar.current.isDateInToday(lastCreditsDate) {
+                self.dailyFreeCredits = 7
+                self.lastDailyCreditsDate = Date()
+            } else if lastDailyCreditsDate == nil {
+                self.dailyFreeCredits = 7
+                self.lastDailyCreditsDate = Date()
             }
         } else {
             // Default values
@@ -106,33 +127,84 @@ class UserSettings: ObservableObject {
             self.firstLaunchDate = Date()
             self.petsUsed = Set([PetType.dog.rawValue]) // Dog is the main free pet
             self.hasCompletedOnboarding = false
-            self.playCredits = 3 // Welcome bonus!
+            self.playCredits = 0 // Purchased credits start at 0
+            self.dailyFreeCredits = 7 // 7 free credits daily
+            self.lastDailyCreditsDate = Date()
             self.todayPlayHealthBoost = 0
             self.lastPlayBoostDate = nil
             self.hasCompletedAppTutorial = false
             self.hasSeenPaywall = false
+            self.accentColorTheme = "Sunset Glow"
         }
         
         // Sync haptics setting with global HapticFeedback
         HapticFeedback.isEnabled = self.hapticsEnabled
     }
     
-    // Use a play credit and boost health
-    func usePlayCredit() -> Bool {
-        guard playCredits > 0 else { return false }
-        playCredits -= 1
-        todayPlayHealthBoost += 20
+    // Total available credits (daily free + purchased)
+    var totalCredits: Int {
+        return dailyFreeCredits + playCredits
+    }
+    
+    // Use a credit for playing a minigame (+3 health)
+    func useGameCredit() -> Bool {
+        guard totalCredits > 0 else { return false }
+        
+        // Use daily free credits first, then purchased
+        if dailyFreeCredits > 0 {
+            dailyFreeCredits -= 1
+        } else {
+            playCredits -= 1
+        }
+        
+        todayPlayHealthBoost += 3
         lastPlayBoostDate = Date()
-        pet.health = min(100, pet.health + 20)
+        pet.health = min(100, pet.health + 3)
         save()
         return true
     }
     
-    // Check if it's a new day and reset daily boost
+    // Use a credit for pet activity (+5 health)
+    func useActivityCredit() -> Bool {
+        guard totalCredits > 0 else { return false }
+        
+        // Use daily free credits first, then purchased
+        if dailyFreeCredits > 0 {
+            dailyFreeCredits -= 1
+        } else {
+            playCredits -= 1
+        }
+        
+        todayPlayHealthBoost += 5
+        lastPlayBoostDate = Date()
+        pet.health = min(100, pet.health + 5)
+        save()
+        return true
+    }
+    
+    // Legacy method - kept for compatibility, uses activity credit
+    func usePlayCredit() -> Bool {
+        return useActivityCredit()
+    }
+    
+    // Check if it's a new day and reset daily boost and credits
     func checkAndResetDailyBoost() {
+        var needsSave = false
+        
         if let lastDate = lastPlayBoostDate, !Calendar.current.isDateInToday(lastDate) {
             todayPlayHealthBoost = 0
             lastPlayBoostDate = nil
+            needsSave = true
+        }
+        
+        // Reset daily free credits at midnight
+        if let lastCreditsDate = lastDailyCreditsDate, !Calendar.current.isDateInToday(lastCreditsDate) {
+            dailyFreeCredits = 7
+            lastDailyCreditsDate = Date()
+            needsSave = true
+        }
+        
+        if needsSave {
             save()
         }
     }
@@ -152,10 +224,13 @@ class UserSettings: ObservableObject {
             petsUsed: petsUsed,
             hasCompletedOnboarding: hasCompletedOnboarding,
             playCredits: playCredits,
+            dailyFreeCredits: dailyFreeCredits,
+            lastDailyCreditsDate: lastDailyCreditsDate,
             todayPlayHealthBoost: todayPlayHealthBoost,
             lastPlayBoostDate: lastPlayBoostDate,
             hasCompletedAppTutorial: hasCompletedAppTutorial,
-            hasSeenPaywall: hasSeenPaywall
+            hasSeenPaywall: hasSeenPaywall,
+            accentColorTheme: accentColorTheme
         )
         
         if let data = try? JSONEncoder().encode(settings) {
@@ -220,10 +295,13 @@ struct SavedUserSettings: Codable {
     var petsUsed: Set<String>
     var hasCompletedOnboarding: Bool
     var playCredits: Int
+    var dailyFreeCredits: Int?
+    var lastDailyCreditsDate: Date?
     var todayPlayHealthBoost: Int
     var lastPlayBoostDate: Date?
     var hasCompletedAppTutorial: Bool?
     var hasSeenPaywall: Bool?
+    var accentColorTheme: String?
 }
 
 // MARK: - Activity Level

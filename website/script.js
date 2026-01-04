@@ -166,17 +166,98 @@ function closeMobileMenu() {
 }
 
 /* ======================================
-   HERO PET CAROUSEL
+   HERO VIDEO SHOWCASE
    ====================================== */
 function initHeroPetCarousel() {
-    const pets = document.querySelectorAll('.hero-pet');
-    let currentPet = 0;
+    const videoShowcase = document.getElementById('videoShowcase');
+    if (!videoShowcase) return;
     
+    const videos = videoShowcase.querySelectorAll('.showcase-video');
+    const indicators = videoShowcase.querySelectorAll('.video-indicator');
+    
+    if (videos.length === 0) return;
+    
+    let currentVideo = 0;
+    let isTransitioning = false;
+    
+    // Function to transition to a specific video
+    function transitionToVideo(index) {
+        if (isTransitioning || index === currentVideo) return;
+        isTransitioning = true;
+        
+        const prevVideo = videos[currentVideo];
+        const nextVideo = videos[index];
+        
+        // Update indicators
+        indicators[currentVideo].classList.remove('active');
+        indicators[index].classList.add('active');
+        
+        // Fade out current video
+        prevVideo.classList.add('fade-out');
+        prevVideo.classList.remove('active');
+        
+        // Prepare and show next video
+        nextVideo.currentTime = 0;
+        nextVideo.classList.add('active');
+        nextVideo.play().catch(() => {}); // Ignore autoplay errors
+        
+        // Clean up after transition
+        setTimeout(() => {
+            prevVideo.classList.remove('fade-out');
+            prevVideo.pause();
+            prevVideo.currentTime = 0;
+            currentVideo = index;
+            isTransitioning = false;
+        }, 800);
+    }
+    
+    // Function to go to next video
+    function nextVideo() {
+        const nextIndex = (currentVideo + 1) % videos.length;
+        transitionToVideo(nextIndex);
+    }
+    
+    // Initialize first video
+    videos[0].play().catch(() => {});
+    
+    // Listen for video end to transition to next
+    videos.forEach((video, index) => {
+        video.addEventListener('ended', () => {
+            if (index === currentVideo) {
+                nextVideo();
+            }
+        });
+        
+        // Fallback: if video doesn't end properly, transition after 8 seconds
+        video.addEventListener('play', () => {
+            // Clear any existing timeout
+            if (video.transitionTimeout) {
+                clearTimeout(video.transitionTimeout);
+            }
+            // Set a max duration timeout (in case video duration is unknown)
+            video.transitionTimeout = setTimeout(() => {
+                if (index === currentVideo && !isTransitioning) {
+                    nextVideo();
+                }
+            }, 10000); // 10 second max per video
+        });
+    });
+    
+    // Click on indicators to jump to that video
+    indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => {
+            transitionToVideo(index);
+        });
+    });
+    
+    // Auto-advance fallback interval (in case ended event doesn't fire)
     setInterval(() => {
-        pets[currentPet].classList.remove('active');
-        currentPet = (currentPet + 1) % pets.length;
-        pets[currentPet].classList.add('active');
-    }, 3000);
+        // Check if current video is paused or ended
+        const current = videos[currentVideo];
+        if (current.paused || current.ended) {
+            nextVideo();
+        }
+    }, 12000);
 }
 
 /* ======================================
