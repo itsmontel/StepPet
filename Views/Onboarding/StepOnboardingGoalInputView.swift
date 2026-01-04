@@ -118,13 +118,14 @@ struct StepOnboardingGoalInputView: View {
                     .padding(.horizontal, 32)
                     
                     // Quick select buttons
-                    HStack(spacing: 10) {
-                        QuickGoalButton(goal: 5000, label: "Easy", selectedGoal: $selectedSteps)
+                    HStack(spacing: 8) {
+                        QuickGoalButton(goal: 3000, label: "Newbie", selectedGoal: $selectedSteps)
+                        QuickGoalButton(goal: 5000, label: "Novice", selectedGoal: $selectedSteps)
                         QuickGoalButton(goal: 7500, label: "Moderate", selectedGoal: $selectedSteps)
                         QuickGoalButton(goal: 10000, label: "Active", selectedGoal: $selectedSteps)
                         QuickGoalButton(goal: 12500, label: "Hard", selectedGoal: $selectedSteps)
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 16)
                     .opacity(animateContent ? 1.0 : 0.0)
                     
                     // Feedback message
@@ -213,24 +214,33 @@ struct QuickGoalButton: View {
         Int(selectedGoal) == goal
     }
     
+    private var goalDisplayText: String {
+        let thousands = Double(goal) / 1000.0
+        if thousands == Double(Int(thousands)) {
+            return "\(Int(thousands))k"
+        } else {
+            return String(format: "%.1fk", thousands)
+        }
+    }
+    
     var body: some View {
         Button(action: {
             selectedGoal = Double(goal)
             HapticFeedback.light.trigger()
         }) {
-            VStack(spacing: 4) {
-                Text("\(goal / 1000)k")
-                    .font(.system(size: 14, weight: .bold))
+            VStack(spacing: 3) {
+                Text(goalDisplayText)
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundColor(isSelected ? .white : themeManager.primaryTextColor)
                 
                 Text(label)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 9, weight: .medium))
                     .foregroundColor(isSelected ? .white.opacity(0.8) : themeManager.secondaryTextColor)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 10)
                     .fill(isSelected ? themeManager.accentColor : themeManager.cardBackgroundColor)
             )
         }

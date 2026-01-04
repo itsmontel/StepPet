@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VirtuPet - Your Steps = Their Happiness</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Floating Particles Background -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">🐾</span>
+                <span class="logo-text">VirtuPet</span>
+            </div>
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu" aria-expanded="false">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            
+            <!-- Navigation Links -->
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#pets">Pets</a></li>
+                <li><a href="#minigames">Minigames</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#reviews">Reviews</a></li>
+                <li class="mobile-cta"><a href="#download" class="nav-cta-mobile">Download Free</a></li>
+            </ul>
+            
+            <a href="#download" class="nav-cta desktop-only">Download Free</a>
+        </div>
+    </nav>
+    
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">🌟 #1 Step Tracking Pet App</div>
+            <h1 class="hero-title">
+                Your Steps =<br>
+                <span class="gradient-text">Their Happiness</span>
+            </h1>
+            <p class="hero-subtitle">
+                Turn every step into love for your virtual pet. Walk more, play games, 
+                and watch your adorable companion thrive!
+            </p>
+            
+            <div class="hero-phone-inline">
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="app-preview">
+                            <div class="pet-showcase" id="heroPetShowcase">
+                                <img src="assets/gifs/DogHappyAnimation.gif" alt="Happy Dog" class="hero-pet active">
+                                <img src="assets/gifs/CatHappyAnimation.gif" alt="Happy Cat" class="hero-pet">
+                                <img src="assets/gifs/BunnyHappyAnimation.gif" alt="Happy Bunny" class="hero-pet">
+                                <img src="assets/gifs/HamsterHappyAnimation.gif" alt="Happy Hamster" class="hero-pet">
+                                <img src="assets/gifs/HorseHappyAnimation.gif" alt="Happy Horse" class="hero-pet">
+                            </div>
+                            <div class="app-ui-overlay">
+                                <div class="step-counter">
+                                    <span class="step-icon">👟</span>
+                                    <span class="step-count">8,547</span>
+                                    <span class="step-goal">/ 10,000 steps</span>
+                                </div>
+                                <div class="health-bar">
+                                    <div class="health-fill" style="width: 85%"></div>
+                                </div>
+                                <div class="mood-indicator">😄 Happy</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hero-cta">
+                <a href="#download" class="btn btn-primary">
+                    <svg class="apple-icon" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                    </svg>
+                    Download for iOS
+                </a>
+                <a href="#features" class="btn btn-secondary">
+                    <span class="btn-icon">✨</span>
+                    See Features
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Spotlight Section -->
+    <section class="spotlight">
+        <div class="container">
+            <div class="spotlight-card main">
+                <div class="spotlight-content">
+                    <span class="spotlight-badge">✨ New Update</span>
+                    <h2>The Cutest Way to Stay Active</h2>
+                    <p>VirtuPet transforms your daily steps into an adorable adventure. Your pet's happiness depends on your activity!</p>
+                    <a href="#download" class="btn btn-primary">Start Your Journey</a>
+                </div>
+                <div class="spotlight-visual">
+                    <img src="assets/gifs/DogRunning.gif" alt="Running Pet" class="spotlight-pet">
+                </div>
+            </div>
+            <div class="spotlight-grid">
+                <div class="spotlight-card small">
+                    <img src="assets/gifs/CatContentAnimation.gif" alt="Content Cat" class="card-pet">
+                    <div class="card-content">
+                        <span class="card-date">Fun Minigames</span>
+                        <h3>Play With Your Pet</h3>
+                        <p>Mood Catch, Memory Match, Sky Dash & more!</p>
+                    </div>
+                </div>
+                <div class="spotlight-card small">
+                    <img src="assets/gifs/BunnyFullHealthAnimation.gif" alt="Happy Bunny" class="card-pet">
+                    <div class="card-content">
+                        <span class="card-date">Premium Pets</span>
+                        <h3>Unlock New Friends</h3>
+                        <p>Choose from 5 unique companions!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">📱 How It Works</span>
+                <h2 class="section-title">Get Started in<br><span class="gradient-text">3 Simple Steps</span></h2>
+            </div>
+            
+            <div class="steps-timeline">
+                <div class="step-card" data-aos="fade-right">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Download & Choose Your Pet</h3>
+                        <p>Pick from our adorable pets - Dog is free, unlock more with premium!</p>
+                    </div>
+                    <div class="step-visual">
+                        <img src="assets/gifs/DogHappyAnimation.gif" alt="Choose Pet">
+                    </div>
+                </div>
+                
+                <div class="step-card" data-aos="fade-left">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Set Your Daily Goal</h3>
+                        <p>Choose from 500 to 15,000 steps - Newbie to Hard!</p>
+                    </div>
+                    <div class="step-visual goals">
+                        <div class="goal-bubble">3K<span class="goal-label">Newbie</span></div>
+                        <div class="goal-bubble">5K<span class="goal-label">Novice</span></div>
+                        <div class="goal-bubble">7.5K<span class="goal-label">Moderate</span></div>
+                        <div class="goal-bubble active">10K<span class="goal-label">Active</span></div>
+                        <div class="goal-bubble">12.5K<span class="goal-label">Hard</span></div>
+                    </div>
+                </div>
+                
+                <div class="step-card" data-aos="fade-right">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Walk & Watch Your Pet Thrive!</h3>
+                        <p>Every step counts! Your pet gets happier as you reach your daily goal.</p>
+                    </div>
+                    <div class="step-visual">
+                        <img src="assets/gifs/CatFullHealthAnimation.gif" alt="Full Health Pet">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">🎯 Features</span>
+                <h2 class="section-title">Everything You Need to<br><span class="gradient-text">Stay Motivated</span></h2>
+                <p class="section-subtitle">VirtuPet combines fitness tracking with the joy of caring for a virtual pet</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card" data-aos="fade-up" data-delay="0">
+                    <div class="feature-icon">
+                        <span>👟</span>
+                    </div>
+                    <h3>Real-Time Step Tracking</h3>
+                    <p>Syncs with Apple HealthKit to track every step you take throughout the day</p>
+                </div>
+                
+                <div class="feature-card" data-aos="fade-up" data-delay="100">
+                    <div class="feature-icon">
+                        <span>❤️</span>
+                    </div>
+                    <h3>Pet Health System</h3>
+                    <p>Your steps directly affect your pet's mood - from sick to thriving!</p>
+                </div>
+                
+                <div class="feature-card" data-aos="fade-up" data-delay="200">
+                    <div class="feature-icon">
+                        <span>🔥</span>
+                    </div>
+                    <h3>Daily Streaks</h3>
+                    <p>Build momentum with daily streaks and earn special milestone rewards</p>
+                </div>
+                
+                <div class="feature-card" data-aos="fade-up" data-delay="300">
+                    <div class="feature-icon">
+                        <span>🎮</span>
+                    </div>
+                    <h3>Fun Minigames</h3>
+                    <p>Play Mood Catch for free, plus Memory Match, Sky Dash & Pattern Match!</p>
+                </div>
+                
+                <div class="feature-card" data-aos="fade-up" data-delay="400">
+                    <div class="feature-icon">
+                        <span>🏆</span>
+                    </div>
+                    <h3>Achievements</h3>
+                    <p>Unlock badges and achievements as you reach fitness milestones</p>
+                </div>
+                
+                <div class="feature-card" data-aos="fade-up" data-delay="500">
+                    <div class="feature-icon">
+                        <span>📊</span>
+                    </div>
+                    <h3>Insights & Analytics</h3>
+                    <p>Track your progress with beautiful charts and weekly summaries</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pets Showcase Section -->
+    <section class="pets-showcase" id="pets">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">🐾 Meet the Pets</span>
+                <h2 class="section-title">Choose Your<br><span class="gradient-text">Perfect Companion</span></h2>
+                <p class="section-subtitle">Each pet has unique personality and animations</p>
+            </div>
+            
+            <div class="pets-carousel">
+                <div class="pet-selector">
+                    <button class="pet-btn active" data-pet="dog">
+                        <img src="assets/pets/dogfullhealth.png" alt="Dog" class="pet-selector-img">
+                        <span class="pet-name">Dog</span>
+                    </button>
+                    <button class="pet-btn" data-pet="cat">
+                        <img src="assets/pets/catfullhealth.png" alt="Cat" class="pet-selector-img">
+                        <span class="pet-name">Cat</span>
+                    </button>
+                    <button class="pet-btn" data-pet="bunny">
+                        <img src="assets/pets/bunnyfullhealth.png" alt="Bunny" class="pet-selector-img">
+                        <span class="pet-name">Bunny</span>
+                    </button>
+                    <button class="pet-btn" data-pet="hamster">
+                        <img src="assets/pets/hamsterfullhealth.png" alt="Hamster" class="pet-selector-img">
+                        <span class="pet-name">Hamster</span>
+                    </button>
+                    <button class="pet-btn" data-pet="horse">
+                        <img src="assets/pets/horsefullhealth.png" alt="Horse" class="pet-selector-img">
+                        <span class="pet-name">Horse</span>
+                    </button>
+                </div>
+                
+                <div class="pet-display">
+                    <!-- Dog -->
+                    <div class="pet-panel active" data-pet="dog">
+                        <div class="pet-info">
+                            <h3>Dog</h3>
+                            <p class="pet-personality">"Loyal, eager, classic choice"</p>
+                            <span class="pet-badge free">🎁 Free</span>
+                        </div>
+                        <div class="mood-grid">
+                            <div class="mood-card">
+                                <img src="assets/gifs/DogSickAnimation.gif" alt="Sick Dog">
+                                <span class="mood-label">Sick</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/DogSadAnimation.gif" alt="Sad Dog">
+                                <span class="mood-label">Sad</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/DogContentAnimation.gif" alt="Content Dog">
+                                <span class="mood-label">Content</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/DogHappyAnimation.gif" alt="Happy Dog">
+                                <span class="mood-label">Happy</span>
+                            </div>
+                            <div class="mood-card featured">
+                                <img src="assets/gifs/DogFullHealthAnimation.gif" alt="Full Health Dog">
+                                <span class="mood-label">🌟 Full Health</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cat -->
+                    <div class="pet-panel" data-pet="cat">
+                        <div class="pet-info">
+                            <h3>Cat</h3>
+                            <p class="pet-personality">"Sassy, judges you for being lazy"</p>
+                            <span class="pet-badge premium">⭐ Premium</span>
+                        </div>
+                        <div class="mood-grid">
+                            <div class="mood-card">
+                                <img src="assets/gifs/CatSickAnimation.gif" alt="Sick Cat">
+                                <span class="mood-label">Sick</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/CatSadAnimation.gif" alt="Sad Cat">
+                                <span class="mood-label">Sad</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/CatContentAnimation.gif" alt="Content Cat">
+                                <span class="mood-label">Content</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/CatHappyAnimation.gif" alt="Happy Cat">
+                                <span class="mood-label">Happy</span>
+                            </div>
+                            <div class="mood-card featured">
+                                <img src="assets/gifs/CatFullHealthAnimation.gif" alt="Full Health Cat">
+                                <span class="mood-label">🌟 Full Health</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bunny -->
+                    <div class="pet-panel" data-pet="bunny">
+                        <div class="pet-info">
+                            <h3>Bunny</h3>
+                            <p class="pet-personality">"Soft, gentle, hops when happy"</p>
+                            <span class="pet-badge premium">⭐ Premium</span>
+                        </div>
+                        <div class="mood-grid">
+                            <div class="mood-card">
+                                <img src="assets/gifs/BunnySickAnimation.gif" alt="Sick Bunny">
+                                <span class="mood-label">Sick</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/BunnySadAnimation.gif" alt="Sad Bunny">
+                                <span class="mood-label">Sad</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/BunnyContentAnimation.gif" alt="Content Bunny">
+                                <span class="mood-label">Content</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/BunnyHappyAnimation.gif" alt="Happy Bunny">
+                                <span class="mood-label">Happy</span>
+                            </div>
+                            <div class="mood-card featured">
+                                <img src="assets/gifs/BunnyFullHealthAnimation.gif" alt="Full Health Bunny">
+                                <span class="mood-label">🌟 Full Health</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hamster -->
+                    <div class="pet-panel" data-pet="hamster">
+                        <div class="pet-info">
+                            <h3>Hamster</h3>
+                            <p class="pet-personality">"Small, energetic, runs on wheel"</p>
+                            <span class="pet-badge premium">⭐ Premium</span>
+                        </div>
+                        <div class="mood-grid">
+                            <div class="mood-card">
+                                <img src="assets/gifs/HamsterSickAnimation.gif" alt="Sick Hamster">
+                                <span class="mood-label">Sick</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/HamsterSadAnimation.gif" alt="Sad Hamster">
+                                <span class="mood-label">Sad</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/HamsterContentAnimation.gif" alt="Content Hamster">
+                                <span class="mood-label">Content</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/HamsterHappyAnimation.gif" alt="Happy Hamster">
+                                <span class="mood-label">Happy</span>
+                            </div>
+                            <div class="mood-card featured">
+                                <img src="assets/gifs/HamsterFullHealthAnimation.gif" alt="Full Health Hamster">
+                                <span class="mood-label">🌟 Full Health</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Horse -->
+                    <div class="pet-panel" data-pet="horse">
+                        <div class="pet-info">
+                            <h3>Horse</h3>
+                            <p class="pet-personality">"Majestic, strong, adventure-ready"</p>
+                            <span class="pet-badge premium">⭐ Premium</span>
+                        </div>
+                        <div class="mood-grid">
+                            <div class="mood-card">
+                                <img src="assets/gifs/HorseSickAnimation.gif" alt="Sick Horse">
+                                <span class="mood-label">Sick</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/HorseSadAnimation.gif" alt="Sad Horse">
+                                <span class="mood-label">Sad</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/HorseContentAnimation.gif" alt="Content Horse">
+                                <span class="mood-label">Content</span>
+                            </div>
+                            <div class="mood-card">
+                                <img src="assets/gifs/HorseHappyAnimation.gif" alt="Happy Horse">
+                                <span class="mood-label">Happy</span>
+                            </div>
+                            <div class="mood-card featured">
+                                <img src="assets/gifs/HorseFullHealthAnimation.gif" alt="Full Health Horse">
+                                <span class="mood-label">🌟 Full Health</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Minigames Section -->
+    <section class="minigames" id="minigames">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">🎮 Minigames</span>
+                <h2 class="section-title">Cool Mini Games to<br><span class="gradient-text">Play Anytime</span></h2>
+                <p class="section-subtitle">Bond with your pet through fun, engaging minigames</p>
+            </div>
+            
+            <div class="games-grid">
+                <div class="game-card" data-aos="zoom-in" data-delay="0">
+                    <div class="game-icon mood-catch">
+                        <span>🧡</span>
+                    </div>
+                    <h3>Mood Catch</h3>
+                    <p>Catch happy moods, avoid sad ones!</p>
+                    <div class="game-tag free">FREE TO PLAY</div>
+                </div>
+                
+                <div class="game-card" data-aos="zoom-in" data-delay="100">
+                    <div class="game-icon memory-match">
+                        <span>🧠</span>
+                    </div>
+                    <h3>Memory Match</h3>
+                    <p>Match pairs to test your memory!</p>
+                    <div class="game-tag premium">PREMIUM</div>
+                </div>
+                
+                <div class="game-card" data-aos="zoom-in" data-delay="200">
+                    <div class="game-icon sky-dash">
+                        <span>🌟</span>
+                    </div>
+                    <h3>Sky Dash</h3>
+                    <p>Dodge walls and rise to the top!</p>
+                    <div class="game-tag premium">PREMIUM</div>
+                </div>
+                
+                <div class="game-card" data-aos="zoom-in" data-delay="300">
+                    <div class="game-icon pattern-match">
+                        <span>🧩</span>
+                    </div>
+                    <h3>Pattern Match</h3>
+                    <p>Remember the pattern, beat 5 levels!</p>
+                    <div class="game-tag premium">PREMIUM</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section" id="faq">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">❓ FAQ</span>
+                <h2 class="section-title">Frequently Asked<br><span class="gradient-text">Questions</span></h2>
+                <p class="section-subtitle">Everything you need to know about VirtuPet</p>
+            </div>
+            
+            <div class="faq-container">
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>How does VirtuPet work?</span>
+                        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>VirtuPet syncs with Apple Health to track your daily steps. Your pet's health is determined by how close you get to your daily step goal. Walk more, and your pet thrives! You can also track activities, play minigames, and complete challenges.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>How is pet health calculated?</span>
+                        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Pet health = (Current Steps / Daily Goal) × 100. If your goal is 10,000 steps and you walk 6,700, your pet will be at 67% health. Your pet has 5 mood states: Sick (0-20%), Sad (21-40%), Content (41-60%), Happy (61-80%), and Full Health (81-100%).</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>What happens at midnight?</span>
+                        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Your pet's health resets at midnight local time. Each day is a fresh start—no punishment carried over from bad days! Daily achievements also reset if not completed.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>How do streaks work?</span>
+                        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Streaks track consecutive days where your pet ends the day at 100% health. This can be achieved by hitting your step goal or by playing pet activities. Break a streak by missing a day.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>What pets are available?</span>
+                        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>There are 5 pets: Dog (free), Cat, Bunny, Hamster, and Horse (premium). Each has unique moods and animations!</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>Are minigames free?</span>
+                        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Mood Catch is completely free to play! The other minigames (Memory Match, Sky Dash, Pattern Match) are available with Premium. All minigames are just for fun with your pet - no credits needed!</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>How do achievements work?</span>
+                        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Complete various challenges to unlock achievements! Some are daily (like step goals), some are cumulative (like total steps walked), and some are one-time accomplishments. Track your progress in the Challenges tab.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>How do I sync with Apple Health?</span>
+                        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>VirtuPet automatically syncs when you grant HealthKit permissions during onboarding. Make sure you've allowed step count access in your device's Settings > Privacy > Health.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>Can I change my pet?</span>
+                        <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes! Go to Settings and tap 'Change Pet' to select a different companion. Premium members can access all 5 pets.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reviews Section -->
+    <section class="reviews" id="reviews">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">💬 Reviews</span>
+                <h2 class="section-title">Loved by<br><span class="gradient-text">Our Users</span></h2>
+            </div>
+            
+            <div class="reviews-grid">
+                <div class="review-card" data-aos="fade-up" data-delay="0">
+                    <div class="review-stars">
+                        <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+                    </div>
+                    <p class="review-text">"This app completely changed my motivation to walk! I can't let my little dog be sad. Already walked 100,000 steps this month!"</p>
+                </div>
+                
+                <div class="review-card featured" data-aos="fade-up" data-delay="100">
+                    <div class="review-stars">
+                        <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+                    </div>
+                    <p class="review-text">"The cutest fitness app ever! My kids love checking on our hamster every day. It's become a family activity to hit our step goals together."</p>
+                </div>
+                
+                <div class="review-card" data-aos="fade-up" data-delay="200">
+                    <div class="review-stars">
+                        <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+                    </div>
+                    <p class="review-text">"Finally a step counter that makes me actually want to walk more! The minigames are a nice bonus too. Highly recommend!"</p>
+                </div>
+                
+                <div class="review-card" data-aos="fade-up" data-delay="300">
+                    <div class="review-stars">
+                        <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+                    </div>
+                    <p class="review-text">"I've tried so many fitness apps but this one actually keeps me engaged. The streak feature is addicting in the best way!"</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download CTA Section -->
+    <section class="download-cta" id="download">
+        <div class="container">
+            <div class="cta-content">
+                <div class="cta-pets">
+                    <img src="assets/pets/dogfullhealth.png" alt="Dog" class="cta-pet pet-1">
+                    <img src="assets/pets/catfullhealth.png" alt="Cat" class="cta-pet pet-2">
+                    <img src="assets/pets/bunnyfullhealth.png" alt="Bunny" class="cta-pet pet-3">
+                    <img src="assets/pets/hamsterfullhealth.png" alt="Hamster" class="cta-pet pet-4">
+                    <img src="assets/pets/horsefullhealth.png" alt="Horse" class="cta-pet pet-5">
+                </div>
+                <h2>Ready to Start Your<br><span class="gradient-text">VirtuPet Journey?</span></h2>
+                <p>Download now and get your free virtual pet today!</p>
+                <a href="https://apps.apple.com" class="btn btn-large" target="_blank">
+                    <span class="app-store-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                        </svg>
+                    </span>
+                    Download on App Store
+                </a>
+                <div class="cta-features">
+                    <span>✓ Free to Download</span>
+                    <span>✓ No Ads</span>
+                    <span>✓ Free Minigames</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <span class="logo-icon">🐾</span>
+                        <span class="logo-text">VirtuPet</span>
+                    </div>
+                    <p>Turn every step into love for your virtual companion.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>App</h4>
+                        <a href="#features">Features</a>
+                        <a href="#pets">Pets</a>
+                        <a href="#minigames">Minigames</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Support</h4>
+                        <a href="mailto:support@steppet.app">Contact Us</a>
+                        <a href="#faq">FAQ</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Legal</h4>
+                        <a href="#" id="openPrivacy">Privacy Policy</a>
+                        <a href="#" id="openTerms">Terms of Service</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 VirtuPet. All rights reserved. Made with ❤️ for pet lovers everywhere.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Privacy Policy Modal -->
+    <div class="modal-overlay" id="privacyModal">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+            <div class="modal-header">
+                <div class="modal-icon privacy-icon">🔒</div>
+                <h2>Privacy Policy</h2>
+                <p class="modal-date">Last updated: December 2024</p>
+            </div>
+            <div class="modal-body">
+                <div class="policy-section">
+                    <h3>📄 Introduction</h3>
+                    <p>Welcome to VirtuPet: Step Tracker! Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information when you use our app. By using VirtuPet: Step Tracker, you agree to the collection and use of information in accordance with this policy.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>ℹ️ Information We Collect</h3>
+                    <ul>
+                        <li><strong>Health Data:</strong> With your permission, we access step count data from Apple Health to calculate your pet's health and track your daily progress.</li>
+                        <li><strong>Location Data:</strong> When using activity tracking, we access your location to record walking routes and display weather conditions.</li>
+                        <li><strong>Photos:</strong> If you choose to add photos to your activities, we store them locally on your device.</li>
+                        <li><strong>Usage Data:</strong> We collect anonymous usage statistics to improve the app experience.</li>
+                    </ul>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>⚙️ How We Use Your Information</h3>
+                    <ul>
+                        <li>To provide and maintain our app's functionality</li>
+                        <li>To calculate your pet's health based on your step count</li>
+                        <li>To track and display your walking activities</li>
+                        <li>To save your preferences and progress</li>
+                        <li>To improve our app and develop new features</li>
+                    </ul>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>🛡️ Data Storage & Security</h3>
+                    <p>Your data is stored locally on your device. Health data accessed from Apple Health remains on your device and is not transmitted to external servers. We implement appropriate security measures to protect your personal information.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>✋ Your Rights</h3>
+                    <ul>
+                        <li>Access the data we collect about you</li>
+                        <li>Request deletion of your data</li>
+                        <li>Opt out of data collection at any time</li>
+                        <li>Revoke health data access through iOS Settings</li>
+                    </ul>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>👥 Third-Party Services</h3>
+                    <p>We use Apple Health to access step data. This integration is subject to Apple's privacy policies. We may use anonymous analytics services to improve app performance, but no personally identifiable information is shared.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>📧 Contact Us</h3>
+                    <p>If you have any questions about this Privacy Policy, please contact us at <a href="mailto:support@steppet.app">support@steppet.app</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div class="modal-overlay" id="termsModal">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close modal">&times;</button>
+            <div class="modal-header">
+                <div class="modal-icon terms-icon">📋</div>
+                <h2>Terms of Service</h2>
+                <p class="modal-date">Last updated: December 2024</p>
+            </div>
+            <div class="modal-body">
+                <div class="policy-section">
+                    <h3>✅ Acceptance of Terms</h3>
+                    <p>By downloading, installing, or using VirtuPet, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the app.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>📱 Use of the App</h3>
+                    <p>VirtuPet is a fitness companion app designed to motivate you to walk more by caring for a virtual pet. You agree to:</p>
+                    <ul>
+                        <li>Use the app only for its intended purpose</li>
+                        <li>Not attempt to reverse engineer or modify the app</li>
+                        <li>Not use the app for any illegal or unauthorized purpose</li>
+                        <li>Provide accurate information when required</li>
+                    </ul>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>❤️ Health Information Disclaimer</h3>
+                    <p>VirtuPet is not a medical device and should not be used as a substitute for professional medical advice. The step tracking and health features are for motivational purposes only. Always consult a healthcare professional before starting any new fitness routine.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>💳 In-App Purchases</h3>
+                    <p>VirtuPet offers optional in-app purchases including:</p>
+                    <ul>
+                        <li>Premium subscription for access to all pets</li>
+                        <li>Play credits for pet activities</li>
+                    </ul>
+                    <p>All purchases are processed through Apple's App Store and are subject to Apple's terms and conditions. Prices may vary by region and are subject to change.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>👤 User Accounts</h3>
+                    <p>Your VirtuPet data is stored locally on your device. You are responsible for maintaining the security of your device. We are not liable for any loss of data due to device issues or unauthorized access.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>⚠️ Limitation of Liability</h3>
+                    <p>VirtuPet is provided "as is" without warranties of any kind. We are not liable for any damages arising from your use of the app, including but not limited to direct, indirect, incidental, or consequential damages.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>🔄 Changes to Terms</h3>
+                    <p>We reserve the right to modify these Terms of Service at any time. Continued use of the app after changes constitutes acceptance of the new terms. We will notify users of significant changes through the app.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>🏛️ Governing Law</h3>
+                    <p>These Terms shall be governed by and construed in accordance with applicable laws. Any disputes arising from these terms shall be resolved through appropriate legal channels.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3>📧 Contact Us</h3>
+                    <p>If you have any questions about these Terms of Service, please contact us at <a href="mailto:support@steppet.app">support@steppet.app</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
