@@ -796,9 +796,9 @@ struct TreatCatchGameView: View {
         let padding: CGFloat = 60
         let x = CGFloat.random(in: padding...(screenSize.width - padding))
         
-        // Increased falling speed - base 3.6 with variation (harder)
-        let baseSpeed: CGFloat = 3.6
-        let speed = baseSpeed + CGFloat.random(in: 0...1.8)
+        // Increased falling speed - base 4.2 with variation (harder)
+        let baseSpeed: CGFloat = 4.0
+        let speed = baseSpeed + CGFloat.random(in: 0...2.0)
         
         let item = GameItem(x: x, y: -60, type: type, speed: speed)
         items.append(item)

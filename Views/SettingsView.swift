@@ -4,6 +4,8 @@
 //
 
 import SwiftUI
+import RevenueCat
+import RevenueCatUI
 
 struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
@@ -19,6 +21,8 @@ struct SettingsView: View {
     @State private var showPrivacySheet = false
     @State private var showTermsSheet = false
     @State private var showContactSheet = false
+    @State private var showSubscriptionManagement = false
+    @State private var showRevenueCatPaywall = false
     @State private var newUserName = ""
     @State private var newPetName = ""
     @State private var selectedGoal = 10000
@@ -45,8 +49,8 @@ struct SettingsView: View {
                 // About Section
                 aboutSection
                 
-                // Version
-                versionInfo
+                // Follow Us & Version
+                followUsSection
                 
                 Spacer(minLength: 100)
             }
@@ -82,15 +86,26 @@ struct SettingsView: View {
         .sheet(isPresented: $showContactSheet) {
             ContactSupportView()
         }
+        .sheet(isPresented: $showSubscriptionManagement) {
+            SubscriptionManagementView()
+                .environmentObject(themeManager)
+        }
+        .sheet(isPresented: $showRevenueCatPaywall) {
+            PaywallView(displayCloseButton: true)
+        }
         .onAppear {
             selectedPetType = userSettings.pet.type
+            // Force light mode for free users
+            if !userSettings.isPremium && themeManager.isDarkMode {
+                themeManager.isDarkMode = false
+            }
         }
     }
     
     // MARK: - Header Section
     private var headerSection: some View {
         Text("Settings")
-            .font(.system(size: 34, weight: .bold))
+            .font(.system(size: 34, weight: .black, design: .rounded))
             .foregroundColor(themeManager.primaryTextColor)
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.top, 20)
@@ -239,15 +254,57 @@ struct SettingsView: View {
                 Divider()
                     .padding(.leading, 60)
                 
-                // Dark Mode
-                SettingsToggleRow(
-                    icon: "moon.stars.fill",
-                    iconColor: .indigo,
-                    iconBackground: Color.indigo.opacity(0.15),
-                    title: "Dark Mode",
-                    subtitle: "Adjust appearance",
-                    isOn: $themeManager.isDarkMode
-                )
+                // Dark Mode - Premium Only
+                if userSettings.isPremium {
+                    SettingsToggleRow(
+                        icon: "moon.stars.fill",
+                        iconColor: .indigo,
+                        iconBackground: Color.indigo.opacity(0.15),
+                        title: "Dark Mode",
+                        subtitle: "Adjust appearance",
+                        isOn: $themeManager.isDarkMode
+                    )
+                } else {
+                    // Locked Dark Mode for free users
+                    Button(action: {
+                        showPremiumSheet = true
+                    }) {
+                        HStack(spacing: 14) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color.indigo.opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                
+                                Image(systemName: "moon.stars.fill")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.indigo)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Dark Mode")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(themeManager.primaryTextColor)
+                                
+                                HStack(spacing: 4) {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 10))
+                                    Text("Premium Feature")
+                                        .font(.system(size: 13, weight: .semibold))
+                                }
+                                .foregroundColor(themeManager.accentColor)
+                            }
+                            
+                            Spacer()
+                            
+                            // Locked toggle indicator
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(themeManager.accentColor.opacity(0.6))
+                        }
+                        .padding(14)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
             }
             .background(
                 RoundedRectangle(cornerRadius: 16)
@@ -318,7 +375,7 @@ struct SettingsView: View {
                     icon: "star.fill",
                     iconColor: .yellow,
                     iconBackground: Color.yellow.opacity(0.15),
-                    title: "Rate StepPet",
+                    title: "Rate VirtuPet",
                     subtitle: "Share your feedback",
                     showChevron: true,
                     action: {
@@ -355,6 +412,24 @@ struct SettingsView: View {
                         }
                     }
                 )
+                
+                // Manage Subscription (only show for premium users)
+                if userSettings.isPremium {
+                    Divider()
+                        .padding(.leading, 60)
+                    
+                    SettingsRow(
+                        icon: "creditcard.fill",
+                        iconColor: .green,
+                        iconBackground: Color.green.opacity(0.15),
+                        title: "Manage Subscription",
+                        subtitle: "View plan details",
+                        showChevron: true,
+                        action: {
+                            showSubscriptionManagement = true
+                        }
+                    )
+                }
                 
                 Divider()
                     .padding(.leading, 60)
@@ -396,12 +471,58 @@ struct SettingsView: View {
     }
     
     // MARK: - Version Info
-    private var versionInfo: some View {
-        Text("Version 1.0.0")
-            .font(.system(size: 13, weight: .medium))
-            .foregroundColor(themeManager.tertiaryTextColor)
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.top, 8)
+    private var followUsSection: some View {
+        VStack(spacing: 16) {
+            // Follow Us Header
+            Text("FOLLOW US")
+                .font(.system(size: 14, weight: .black, design: .rounded))
+                .foregroundColor(themeManager.primaryTextColor)
+                .tracking(2)
+            
+            // Social Media Logos
+            HStack(spacing: 24) {
+                // Instagram
+                Button(action: {
+                    if let url = URL(string: "https://instagram.com/virtupetapp") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Image("instagramlogo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 50, height: 50)
+                }
+                
+                // TikTok
+                Button(action: {
+                    if let url = URL(string: "https://tiktok.com/@virtupetapp") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    Image("tiktoklogo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 50, height: 50)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+            }
+            
+            // VirtuPet Branding & Version
+            VStack(spacing: 6) {
+                Text("VIRTUPET")
+                    .font(.system(size: 20, weight: .black, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+                    .tracking(2)
+                
+                Text("VERSION 1.0.0")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(themeManager.tertiaryTextColor)
+                    .tracking(1)
+            }
+            .padding(.top, 20)
+        }
+        .padding(.top, 20)
+        .padding(.bottom, 20)
     }
     
     // MARK: - Rename Sheet
@@ -850,8 +971,11 @@ struct PremiumView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
+    @ObservedObject var purchaseManager = PurchaseManager.shared
     
-    @State private var selectedPlan: String = "yearly"
+    @State private var selectedPlan: String = "monthly"
+    @State private var showRestoreAlert = false
+    @State private var restoreMessage = ""
     
     var body: some View {
         NavigationView {
@@ -884,84 +1008,115 @@ struct PremiumView: View {
                         PremiumFeatureRow(text: "All 5 Pets (Dog, Cat, Bunny, Hamster, Horse)")
                         PremiumFeatureRow(text: "Unlimited Pet Name Changes")
                         PremiumFeatureRow(text: "Detailed Statistics & Trends")
-                        PremiumFeatureRow(text: "Home Screen Widget")
-                        PremiumFeatureRow(text: "Custom Notification Messages")
-                        PremiumFeatureRow(text: "Support Independent Development")
+                        PremiumFeatureRow(text: "Activity Tracking & Walk History")
+                        PremiumFeatureRow(text: "All Minigames Unlocked")
+                        PremiumFeatureRow(text: "Dark Mode")
                     }
                     .padding(.horizontal, 20)
                     
                     // Plan Selection
                     VStack(spacing: 12) {
-                        // Monthly
-                        PlanButton(
-                            title: "Monthly",
-                            price: "$5.99/month",
-                            isSelected: selectedPlan == "monthly",
-                            isBestValue: false,
-                            action: { selectedPlan = "monthly" }
-                        )
+                        // Monthly (Best Value)
+                        if let monthlyPackage = purchaseManager.monthlyProduct {
+                            PlanButton(
+                                title: "Monthly",
+                                price: monthlyPackage.localizedPriceString + "/month",
+                                subtitle: "SAVE \(purchaseManager.monthlySavingsPercentage)%",
+                                isSelected: selectedPlan == "monthly",
+                                isBestValue: true,
+                                action: { selectedPlan = "monthly" }
+                            )
+                        } else {
+                            PlanButton(
+                                title: "Monthly",
+                                price: "$9.99/month",
+                                subtitle: "BEST VALUE",
+                                isSelected: selectedPlan == "monthly",
+                                isBestValue: true,
+                                action: { selectedPlan = "monthly" }
+                            )
+                        }
                         
-                        // Yearly
-                        PlanButton(
-                            title: "Yearly",
-                            price: "$39.99/year",
-                            subtitle: "SAVE 44%",
-                            isSelected: selectedPlan == "yearly",
-                            isBestValue: true,
-                            action: { selectedPlan = "yearly" }
-                        )
+                        // Weekly
+                        if let weeklyPackage = purchaseManager.weeklyProduct {
+                            PlanButton(
+                                title: "Weekly",
+                                price: weeklyPackage.localizedPriceString + "/week",
+                                isSelected: selectedPlan == "weekly",
+                                isBestValue: false,
+                                action: { selectedPlan = "weekly" }
+                            )
+                        } else {
+                            PlanButton(
+                                title: "Weekly",
+                                price: "$3.99/week",
+                                isSelected: selectedPlan == "weekly",
+                                isBestValue: false,
+                                action: { selectedPlan = "weekly" }
+                            )
+                        }
                     }
                     .padding(.horizontal, 20)
                     
                     // Trial info
-                    Text("7-day free trial included\nCancel anytime")
+                    Text("Cancel anytime in Settings")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(themeManager.secondaryTextColor)
                         .multilineTextAlignment(.center)
                     
+                    // Error message
+                    if let error = purchaseManager.errorMessage {
+                        Text(error)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 20)
+                    }
+                    
                     // Subscribe Button
                     Button(action: {
-                        // Handle subscription
-                        userSettings.isPremium = true
-                        dismiss()
+                        Task {
+                            await handlePurchase()
+                        }
                     }) {
-                        Text("Start Free Trial")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [themeManager.accentColor, .purple],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                            )
+                        HStack {
+                            if purchaseManager.isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.8)
+                            }
+                            Text(purchaseManager.isLoading ? "Processing..." : "Continue")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(purchaseManager.isLoading ? Color.gray : themeManager.accentColor)
+                        )
                     }
+                    .disabled(purchaseManager.isLoading)
                     .padding(.horizontal, 20)
                     
-                    // Links
-                    HStack(spacing: 20) {
-                        Button("Terms") {}
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(themeManager.secondaryTextColor)
-                        
-                        Button("Privacy") {}
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(themeManager.secondaryTextColor)
-                        
-                        Button("Restore Purchase") {}
-                            .font(.system(size: 12, weight: .medium))
+                    // Restore Purchase
+                    Button(action: {
+                        Task {
+                            let success = await purchaseManager.restorePurchases()
+                            restoreMessage = success ? "Purchases restored successfully!" : "No purchases to restore."
+                            showRestoreAlert = true
+                        }
+                    }) {
+                        Text("Restore Purchase")
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                     }
+                    .disabled(purchaseManager.isLoading)
                     .padding(.bottom, 30)
                 }
             }
             .background(themeManager.backgroundColor.ignoresSafeArea())
-            .navigationTitle("StepPet Premium")
+            .navigationTitle("VirtuPet Premium")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -972,6 +1127,36 @@ struct PremiumView: View {
                     }
                 }
             }
+            .alert("Restore", isPresented: $showRestoreAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(restoreMessage)
+            }
+            .onAppear {
+                Task {
+                    await purchaseManager.fetchOfferings()
+                }
+            }
+        }
+    }
+    
+    private func handlePurchase() async {
+        var packageToPurchase: Package?
+        
+        switch selectedPlan {
+        case "monthly":
+            packageToPurchase = purchaseManager.monthlyProduct
+        case "weekly":
+            packageToPurchase = purchaseManager.weeklyProduct
+        default:
+            packageToPurchase = purchaseManager.monthlyProduct
+        }
+        
+        guard let package = packageToPurchase else { return }
+        
+        let success = await purchaseManager.purchase(package: package)
+        if success {
+            dismiss()
         }
     }
 }
@@ -1073,7 +1258,7 @@ struct FAQView: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     let faqs: [(String, String)] = [
-        ("How does StepPet work?", "StepPet syncs with Apple Health to track your daily steps. Your pet's health is determined by how close you get to your daily step goal. Walk more, and your pet thrives! You can also track activities, play minigames, and complete challenges."),
+        ("How does VirtuPet work?", "VirtuPet syncs with Apple Health to track your daily steps. Your pet's health is determined by how close you get to your daily step goal. Walk more, and your pet thrives! You can also track activities, play minigames, and complete challenges."),
         ("How is pet health calculated?", "Pet health = (Current Steps / Daily Goal) × 100. If your goal is 10,000 steps and you walk 6,700, your pet will be at 67% health. Your pet has 5 mood states: Sick (0-20%), Sad (21-40%), Content (41-60%), Happy (61-80%), and Full Health (81-100%)."),
         ("What happens at midnight?", "Your pet's health resets at midnight local time. Each day is a fresh start—no punishment carried over from bad days! Daily achievements also reset if not completed."),
         ("How do streaks work?", "Streaks track consecutive days where your pet ends the day at 100% health. This can be achieved by hitting your step goal or by playing pet activities. Break a streak by missing a day."),
@@ -1082,9 +1267,9 @@ struct FAQView: View {
         ("Are minigames free?", "Yes! All minigames (Mood Catch, Memory Match, Bubble Pop, Pattern Match) are completely free to play. They don't cost credits and are just for fun with your pet."),
         ("How do achievements work?", "Complete various challenges to unlock achievements! Some are daily (like step goals), some are cumulative (like total steps walked), and some are one-time accomplishments. Track your progress in the Challenges tab."),
         ("How does activity tracking work?", "In the Activity tab, you can start tracking walks with real-time GPS, weather effects on the map, and detailed stats. After completing an activity, you can add photos, notes, and rate your mood."),
-        ("How do I sync with Apple Health?", "StepPet automatically syncs when you grant HealthKit permissions during onboarding. Make sure you've allowed step count access in your device's Settings > Privacy > Health."),
+        ("How do I sync with Apple Health?", "VirtuPet automatically syncs when you grant HealthKit permissions during onboarding. Make sure you've allowed step count access in your device's Settings > Privacy > Health."),
         ("Can I change my pet?", "Yes! Go to Settings and tap 'Change Pet' to select a different companion. Premium members can access all 5 pets."),
-        ("How do notifications work?", "StepPet can send you motivational reminders throughout the day. Enable notifications in Settings and customize your preferences.")
+        ("How do notifications work?", "VirtuPet can send you motivational reminders throughout the day. Enable notifications in Settings and customize your preferences.")
     ]
     
     var body: some View {
@@ -1315,14 +1500,14 @@ struct TermsOfServiceView: View {
                     PrivacySection(
                         icon: "checkmark.circle",
                         title: "Acceptance of Terms",
-                        content: "By downloading, installing, or using StepPet, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the app."
+                        content: "By downloading, installing, or using VirtuPet, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the app."
                     )
                     
                     PrivacySection(
                         icon: "iphone",
                         title: "Use of the App",
                         content: """
-                        StepPet is a fitness companion app designed to motivate you to walk more by caring for a virtual pet. You agree to:
+                        VirtuPet is a fitness companion app designed to motivate you to walk more by caring for a virtual pet. You agree to:
                         • Use the app only for its intended purpose
                         • Not attempt to reverse engineer or modify the app
                         • Not use the app for any illegal or unauthorized purpose
@@ -1333,14 +1518,14 @@ struct TermsOfServiceView: View {
                     PrivacySection(
                         icon: "heart.fill",
                         title: "Health Information Disclaimer",
-                        content: "StepPet is not a medical device and should not be used as a substitute for professional medical advice. The step tracking and health features are for motivational purposes only. Always consult a healthcare professional before starting any new fitness routine."
+                        content: "VirtuPet is not a medical device and should not be used as a substitute for professional medical advice. The step tracking and health features are for motivational purposes only. Always consult a healthcare professional before starting any new fitness routine."
                     )
                     
                     PrivacySection(
                         icon: "creditcard",
                         title: "In-App Purchases",
                         content: """
-                        StepPet offers optional in-app purchases including:
+                        VirtuPet offers optional in-app purchases including:
                         • Premium subscription for access to all pets
                         • Play credits for pet activities
                         
@@ -1351,13 +1536,13 @@ struct TermsOfServiceView: View {
                     PrivacySection(
                         icon: "person.fill",
                         title: "User Accounts",
-                        content: "Your StepPet data is stored locally on your device. You are responsible for maintaining the security of your device. We are not liable for any loss of data due to device issues or unauthorized access."
+                        content: "Your VirtuPet data is stored locally on your device. You are responsible for maintaining the security of your device. We are not liable for any loss of data due to device issues or unauthorized access."
                     )
                     
                     PrivacySection(
                         icon: "exclamationmark.triangle",
                         title: "Limitation of Liability",
-                        content: "StepPet is provided \"as is\" without warranties of any kind. We are not liable for any damages arising from your use of the app, including but not limited to direct, indirect, incidental, or consequential damages."
+                        content: "VirtuPet is provided \"as is\" without warranties of any kind. We are not liable for any damages arising from your use of the app, including but not limited to direct, indirect, incidental, or consequential damages."
                     )
                     
                     PrivacySection(
@@ -1699,26 +1884,21 @@ struct QuickActionButton: View {
 struct OnboardingPaywallView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
+    @ObservedObject var purchaseManager = PurchaseManager.shared
     @Binding var isPresented: Bool
     
     @State private var currentPage: Int = 0
-    @State private var selectedPlan: String = "weekly"
+    @State private var selectedPlan: String = "monthly"
     @State private var pulseAnimation = false
     @State private var showContent = false
     
+    // Paywall background color
+    private let softYellow = Color(hex: "#FFFAE6") // App background color
+    
     var body: some View {
         ZStack {
-            // App theme gradient background
-            LinearGradient(
-                colors: [
-                    themeManager.accentColor,
-                    themeManager.accentColor.opacity(0.9),
-                    themeManager.accentColor.opacity(0.85)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            // Soft yellow background matching app theme
+            softYellow.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Close button
@@ -1730,16 +1910,16 @@ struct OnboardingPaywallView: View {
                     }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(themeManager.secondaryTextColor)
                             .frame(width: 32, height: 32)
-                            .background(Circle().fill(Color.white.opacity(0.15)))
+                            .background(Circle().fill(themeManager.cardBackgroundColor))
                     }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
                 
                 if currentPage == 0 {
-                    // PAGE 1: Intro - "We want you to try StepPet for free"
+                    // PAGE 1: Intro - "We want you to try VirtuPet for free"
                     paywallIntroPage
                         .transition(.asymmetric(
                             insertion: .move(edge: .trailing).combined(with: .opacity),
@@ -1774,88 +1954,112 @@ struct OnboardingPaywallView: View {
             VStack(spacing: 8) {
                 Text("We want you to try")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundColor(themeManager.primaryTextColor)
                 
-                Text("StepPet")
+                Text("VirtuPet")
                     .font(.system(size: 36, weight: .black, design: .rounded))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Color(hex: "FFD700"), Color(hex: "FFA500")],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                    .foregroundColor(themeManager.accentColor)
                 
                 Text("for free")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundColor(themeManager.primaryTextColor)
             }
             .opacity(showContent ? 1 : 0)
             .offset(y: showContent ? 0 : 20)
             .padding(.bottom, 30)
             
-            // Device mockup with pet
+            // Device mockup with accurate home screen
             ZStack {
                 // Phone frame
                 RoundedRectangle(cornerRadius: 40)
                     .fill(Color.white)
-                    .frame(width: 220, height: 380)
+                    .frame(width: 220, height: 400)
                     .shadow(color: Color.black.opacity(0.3), radius: 30, y: 15)
                 
-                // Screen content
+                // Screen content - accurate Today view mockup
                 RoundedRectangle(cornerRadius: 36)
                     .fill(themeManager.backgroundColor)
-                    .frame(width: 200, height: 360)
+                    .frame(width: 200, height: 380)
                     .overlay(
-                        VStack(spacing: 12) {
-                            // Mini header
-                            HStack {
-                                Text("Today")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(themeManager.primaryTextColor)
-                                Spacer()
-                                Text("🔥 5")
-                                    .font(.system(size: 12, weight: .semibold))
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.top, 20)
+                        VStack(spacing: 8) {
+                            Spacer().frame(height: 16)
                             
-                            // Pet in the mockup
-                            AnimatedPetVideoView(
-                                petType: userSettings.pet.type,
-                                moodState: .fullHealth
-                            )
-                            .frame(width: 100, height: 100)
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                            
+                            // Pet name
                             Text(userSettings.pet.name)
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .font(.system(size: 20, weight: .black, design: .rounded))
                                 .foregroundColor(themeManager.primaryTextColor)
                             
-                            // Mini progress bar
-                            VStack(spacing: 4) {
-                                HStack {
-                                    Text("8,432")
-                                        .font(.system(size: 12, weight: .bold))
-                                    Text("/ 10,000 steps")
-                                        .font(.system(size: 10))
-                                        .foregroundColor(themeManager.secondaryTextColor)
-                                }
+                            // Pet with progress ring
+                            ZStack {
+                                // Progress ring background
+                                Circle()
+                                    .stroke(Color.gray.opacity(0.15), lineWidth: 6)
+                                    .frame(width: 100, height: 100)
                                 
+                                // Progress ring (85% filled)
+                                Circle()
+                                    .trim(from: 0, to: 0.85)
+                                    .stroke(Color.green, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                    .frame(width: 100, height: 100)
+                                    .rotationEffect(.degrees(-90))
+                                
+                                // Pet
+                                AnimatedPetVideoView(
+                                    petType: userSettings.pet.type,
+                                    moodState: .fullHealth
+                                )
+                                .frame(width: 70, height: 70)
+                                .clipShape(Circle())
+                            }
+                            
+                            // Steps count (blue)
+                            VStack(spacing: 2) {
+                                Text("8,543")
+                                    .font(.system(size: 24, weight: .black, design: .rounded))
+                                    .foregroundColor(themeManager.accentColor)
+                                
+                                Text("steps today")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(themeManager.secondaryTextColor)
+                            }
+                            
+                            // Health bar
+                            VStack(spacing: 4) {
                                 GeometryReader { geo in
                                     ZStack(alignment: .leading) {
                                         RoundedRectangle(cornerRadius: 4)
                                             .fill(Color.gray.opacity(0.2))
-                                            .frame(height: 6)
+                                            .frame(height: 8)
                                         
                                         RoundedRectangle(cornerRadius: 4)
                                             .fill(Color.green)
-                                            .frame(width: geo.size.width * 0.84, height: 6)
+                                            .frame(width: geo.size.width * 0.85, height: 8)
                                     }
                                 }
-                                .frame(height: 6)
+                                .frame(height: 8)
+                                
+                                // Pet health centered below bar
+                                Text("Pet Health: 85%")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundColor(.green)
                             }
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, 16)
+                            
+                            // Steps to goal (blue flag)
+                            HStack(spacing: 4) {
+                                Image(systemName: "flag.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(themeManager.accentColor)
+                                Text("1,457 steps to goal")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(themeManager.secondaryTextColor)
+                            }
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 12)
+                            .background(
+                                Capsule()
+                                    .fill(themeManager.accentColor.opacity(0.15))
+                            )
                             
                             Spacer()
                         }
@@ -1875,13 +2079,13 @@ struct OnboardingPaywallView: View {
             }) {
                 Text("Next")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.accentColor)
+                    .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
                     .background(
                         RoundedRectangle(cornerRadius: 30)
-                            .fill(Color.white)
-                            .shadow(color: Color.black.opacity(0.15), radius: 10, y: 5)
+                            .fill(themeManager.accentColor)
+                            .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
                     )
             }
             .padding(.horizontal, 30)
@@ -1897,11 +2101,11 @@ struct OnboardingPaywallView: View {
             VStack(spacing: 6) {
                 Text("We'll remind you before")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundColor(themeManager.primaryTextColor)
                 
                 Text("your trial ends")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundColor(themeManager.primaryTextColor)
             }
             .padding(.top, 10)
             .padding(.bottom, 24)
@@ -1913,7 +2117,7 @@ struct OnboardingPaywallView: View {
                     icon: "lock.open.fill",
                     iconColor: Color(hex: "#F59E0B"),
                     title: "Today",
-                    subtitle: "Unlock full access to StepPet\nand keep your pet happy!",
+                    subtitle: "Unlock full access to VirtuPet\nand keep your pet happy!",
                     isFirst: true,
                     isLast: false
                 )
@@ -1969,15 +2173,15 @@ struct OnboardingPaywallView: View {
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                         
-                        Text("Only \(selectedPlan == "weekly" ? "$3.99" : "$9.99") per \(selectedPlan == "weekly" ? "week" : "month")")
-                            .font(.system(size: 14, weight: .medium))
+                        Text(selectedPlan == "monthly" ? "Best value - save \(purchaseManager.monthlySavingsPercentage)%" : "Cancel anytime")
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                     }
                     
                     Spacer()
                     
-                    // Price
-                    Text(selectedPlan == "weekly" ? "$3.99/wk" : "$9.99/mo")
+                    // Price from RevenueCat
+                    Text(selectedPlan == "monthly" ? purchaseManager.monthlyPriceString + "/mo" : purchaseManager.weeklyPriceString + "/wk")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundColor(themeManager.primaryTextColor)
                 }
@@ -2017,11 +2221,6 @@ struct OnboardingPaywallView: View {
                 .padding(4)
                 .background(Capsule().fill(themeManager.secondaryTextColor.opacity(0.1)))
                 
-                // No commitment text
-                Text("No commitment. Cancel anytime.")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
-                    .padding(.top, 4)
             }
             .padding(20)
             .background(
@@ -2031,26 +2230,39 @@ struct OnboardingPaywallView: View {
             )
             .padding(.horizontal, 20)
             
+            // No commitment text
+            Text("No commitment. Cancel anytime.")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(themeManager.secondaryTextColor)
+                .padding(.top, 12)
+            
             // CTA Button
             Button(action: {
-                // Handle subscription
-                userSettings.isPremium = true
-                userSettings.hasSeenPaywall = true
-                isPresented = false
+                Task {
+                    await handlePurchase()
+                }
             }) {
-                Text("Try for FREE")
-                    .font(.system(size: 20, weight: .heavy, design: .rounded))
-                    .foregroundColor(themeManager.accentColor)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 18)
-                    .background(
-                        RoundedRectangle(cornerRadius: 30)
-                            .fill(Color.white)
-                            .shadow(color: Color.black.opacity(0.15), radius: 10, y: 5)
-                    )
+                HStack {
+                    if purchaseManager.isLoading {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.8)
+                    }
+                    Text(purchaseManager.isLoading ? "Processing..." : "Try for FREE")
+                        .font(.system(size: 20, weight: .heavy, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+                .background(
+                    RoundedRectangle(cornerRadius: 30)
+                        .fill(purchaseManager.isLoading ? Color.gray : themeManager.accentColor)
+                        .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
+                )
             }
+            .disabled(purchaseManager.isLoading)
             .padding(.horizontal, 20)
-            .padding(.top, 16)
+            .padding(.top, 12)
             
             // Skip option
             Button(action: {
@@ -2059,26 +2271,36 @@ struct OnboardingPaywallView: View {
             }) {
                 Text("Maybe later")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(themeManager.tertiaryTextColor)
             }
             .padding(.top, 12)
-            
-            // Legal links
-            HStack(spacing: 20) {
-                Button("Terms") {}
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
-                
-                Button("Privacy") {}
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
-                
-                Button("Restore") {}
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.5))
-            }
-            .padding(.top, 8)
             .padding(.bottom, 30)
+        }
+    }
+    
+    private func handlePurchase() async {
+        var packageToPurchase: Package?
+        
+        switch selectedPlan {
+        case "weekly":
+            packageToPurchase = purchaseManager.weeklyProduct
+        case "monthly":
+            packageToPurchase = purchaseManager.monthlyProduct
+        default:
+            packageToPurchase = purchaseManager.monthlyProduct
+        }
+        
+        guard let package = packageToPurchase else {
+            // Fallback if no package available - close anyway
+            userSettings.hasSeenPaywall = true
+            isPresented = false
+            return
+        }
+        
+        let success = await purchaseManager.purchase(package: package)
+        if success {
+            userSettings.hasSeenPaywall = true
+            isPresented = false
         }
     }
 }
@@ -2092,19 +2314,21 @@ struct TimelineItem: View {
     let isFirst: Bool
     let isLast: Bool
     
+    @EnvironmentObject var themeManager: ThemeManager
+    
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             // Timeline line and dot
             VStack(spacing: 0) {
                 // Line above (hidden for first item)
                 Rectangle()
-                    .fill(isFirst ? Color.clear : Color.white.opacity(0.3))
+                    .fill(isFirst ? Color.clear : Color.gray.opacity(0.3))
                     .frame(width: 2, height: 10)
                 
                 // Icon circle
                 ZStack {
                     Circle()
-                        .fill(Color.white)
+                        .fill(iconColor.opacity(0.15))
                         .frame(width: 44, height: 44)
                     
                     Image(systemName: icon)
@@ -2114,7 +2338,7 @@ struct TimelineItem: View {
                 
                 // Line below (hidden for last item)
                 Rectangle()
-                    .fill(isLast ? Color.clear : Color.white.opacity(0.3))
+                    .fill(isLast ? Color.clear : Color.gray.opacity(0.3))
                     .frame(width: 2)
                     .frame(maxHeight: .infinity)
             }
@@ -2124,11 +2348,11 @@ struct TimelineItem: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundColor(themeManager.primaryTextColor)
                 
                 Text(subtitle)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(themeManager.secondaryTextColor)
                     .lineSpacing(2)
             }
             .padding(.top, 10)

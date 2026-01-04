@@ -85,6 +85,10 @@ struct TodayView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
+                // Clean background
+                themeManager.backgroundColor
+                    .ignoresSafeArea()
+                
                 ScrollViewReader { scrollProxy in
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 0) {
@@ -112,7 +116,6 @@ struct TodayView: View {
                 streakAnimationOverlay(in: geometry)
             }
         }
-        .background(themeManager.backgroundColor.ignoresSafeArea())
         .onAppear {
             refreshData()
             animateValues()
@@ -152,6 +155,7 @@ struct TodayView: View {
                 .environmentObject(themeManager)
                 .environmentObject(userSettings)
                 .environmentObject(stepDataManager)
+                .environmentObject(healthKitManager)
         }
         .sheet(isPresented: $showTestPaywall) {
             OnboardingPaywallView(isPresented: $showTestPaywall)
@@ -163,15 +167,22 @@ struct TodayView: View {
     // MARK: - Header Section (Compact)
     private var headerSection: some View {
         HStack(alignment: .center) {
-            // Date (smaller)
+            // Date badge
             HStack(spacing: 6) {
                 Image(systemName: "calendar")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(themeManager.secondaryTextColor)
                 
                 Text(formattedDate)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(themeManager.primaryTextColor)
             }
-            .foregroundColor(themeManager.primaryTextColor)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                Capsule()
+                    .fill(themeManager.secondaryCardColor)
+            )
             
             Spacer()
             
@@ -187,34 +198,57 @@ struct TodayView: View {
                     .padding(8)
                     .background(
                         Circle()
-                            .fill(themeManager.accentColor)
+                            .fill(
+                                LinearGradient(
+                                    colors: [themeManager.primaryColor, themeManager.primaryLightColor],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
                     )
             }
             .buttonStyle(PlainButtonStyle())
             #endif
             
-            // Credits (clickable - navigates to Pet section)
+            // Credits (clickable - navigates to Pet section) with gradient
             Button(action: {
                 HapticFeedback.light.trigger()
                 // Set target section to Pet (1) and navigate to Challenges
                 UserDefaults.standard.set(1, forKey: "challengesTargetSegment")
                 NotificationCenter.default.post(name: NSNotification.Name("NavigateToChallenges"), object: nil, userInfo: ["segment": 1])
             }) {
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
                     Image(systemName: "bolt.fill")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.yellow)
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.yellow, .orange],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
                     
                     Text("\(userSettings.playCredits)")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .font(.system(size: 14, weight: .black, design: .rounded))
                         .foregroundColor(themeManager.primaryTextColor)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
                 .background(
                     Capsule()
-                        .fill(Color.yellow.opacity(0.15))
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.yellow.opacity(0.2), Color.orange.opacity(0.12)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.yellow.opacity(0.25), lineWidth: 1)
+                        )
                 )
+                .shadow(color: Color.yellow.opacity(0.15), radius: 4, y: 2)
             }
             .buttonStyle(PlainButtonStyle())
             .tutorialHighlight("tutorial_credits_badge")
@@ -225,20 +259,31 @@ struct TodayView: View {
                     HapticFeedback.light.trigger()
                     showStreakCalendar = true
                 }) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 5) {
                         Text("🔥")
-                            .font(.system(size: 12))
+                            .font(.system(size: 14))
                         
                         Text("\(userSettings.streakData.currentStreak)")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .font(.system(size: 14, weight: .black, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
                     .background(
                         Capsule()
-                            .fill(Color.orange.opacity(0.15))
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.orange.opacity(0.2), Color.red.opacity(0.12)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color.orange.opacity(0.25), lineWidth: 1)
+                            )
                     )
+                    .shadow(color: Color.orange.opacity(0.15), radius: 4, y: 2)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .scaleEffect(streakBadgeScale)
@@ -266,95 +311,199 @@ struct TodayView: View {
     
     // MARK: - Hero Card Section
     private var heroCardSection: some View {
-        VStack(spacing: 16) {
-            // Pet Name
-            Text(userSettings.pet.name)
-                .font(.system(size: 28, weight: .black, design: .rounded))
-                .foregroundColor(themeManager.primaryTextColor)
-                .padding(.top, 16)
+        VStack(spacing: 12) {
+            // Pet Name with sparkles
+            HStack(spacing: 8) {
+                Text("✨")
+                    .font(.system(size: 20))
+                Text(userSettings.pet.name)
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+                Text("✨")
+                    .font(.system(size: 20))
+            }
+            .padding(.top, 8)
             
             // Pet with Progress Ring
             ZStack {
-                // Background ring
+                // Outer glow ring
                 Circle()
-                    .stroke(Color.gray.opacity(0.15), lineWidth: 10)
-                    .frame(width: 200, height: 200)
+                    .fill(
+                        RadialGradient(
+                            colors: [healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.2), Color.clear],
+                            center: .center,
+                            startRadius: 80,
+                            endRadius: 130
+                        )
+                    )
+                    .frame(width: 260, height: 260)
                 
-                // Progress ring
+                // Background ring with gradient
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.gray.opacity(0.1), Color.gray.opacity(0.2)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 14
+                    )
+                    .frame(width: 290, height: 290)
+                
+                // Progress ring with animated gradient
                 Circle()
                     .trim(from: 0, to: isViewingToday ? goalProgress : Double(selectedDayHealth) / 100)
                     .stroke(
                         AngularGradient(
-                            colors: [healthColor(for: isViewingToday ? currentHealth : selectedDayHealth), 
-                                    healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.6)],
+                            colors: [
+                                healthColor(for: isViewingToday ? currentHealth : selectedDayHealth),
+                                healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.8),
+                                healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.6),
+                                healthColor(for: isViewingToday ? currentHealth : selectedDayHealth)
+                            ],
                             center: .center
                         ),
-                        style: StrokeStyle(lineWidth: 10, lineCap: .round)
+                        style: StrokeStyle(lineWidth: 14, lineCap: .round)
                     )
-                    .frame(width: 200, height: 200)
+                    .frame(width: 290, height: 290)
                     .rotationEffect(.degrees(-90))
+                    .shadow(color: healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.5), radius: 10)
                     .animation(.spring(response: 1.0, dampingFraction: 0.8), value: goalProgress)
                 
-                // Pet Animation
-                AnimatedPetVideoView(
-                    petType: userSettings.pet.type,
-                    moodState: isViewingToday ? moodState : selectedDayMood
-                )
-                .frame(width: 140, height: 140)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                // Inner glow
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [themeManager.cardBackgroundColor, themeManager.cardBackgroundColor.opacity(0.95)],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 130
+                        )
+                    )
+                    .frame(width: 270, height: 270)
+                
+                // Pet Animation with border
+                ZStack {
+                    RoundedRectangle(cornerRadius: 32)
+                        .fill(themeManager.cardBackgroundColor)
+                        .frame(width: 238, height: 238)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 32)
+                                .stroke(
+                                    healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.4),
+                                    lineWidth: 2
+                                )
+                                .shadow(
+                                    color: healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.5),
+                                    radius: 12
+                                )
+                                .shadow(
+                                    color: healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.3),
+                                    radius: 20
+                                )
+                        )
+                    
+                    AnimatedPetVideoView(
+                        petType: userSettings.pet.type,
+                        moodState: isViewingToday ? moodState : selectedDayMood
+                    )
+                    .frame(width: 230, height: 230)
+                    .clipShape(RoundedRectangle(cornerRadius: 28))
+                }
             }
             .tutorialHighlight("tutorial_pet_hero")
             
-            // Steps Display
+            // Steps Display with gradient
             VStack(spacing: 6) {
                 if isViewingToday {
                     Text("\(healthKitManager.todaySteps)")
-                        .font(.system(size: 48, weight: .black, design: .rounded))
-                        .foregroundColor(themeManager.accentColor)
+                        .font(.system(size: 52, weight: .black, design: .rounded))
+                        .foregroundColor(themeManager.primaryColor)
                         .contentTransition(.numericText())
                     
-                    Text("steps today")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(themeManager.secondaryTextColor)
+                    HStack(spacing: 6) {
+                        Image(systemName: "shoeprints.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(themeManager.secondaryTextColor)
+                        Text("steps today")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(themeManager.secondaryTextColor)
+                    }
                 } else {
                     Text("\(selectedDaySteps)")
-                        .font(.system(size: 48, weight: .black, design: .rounded))
-                        .foregroundColor(themeManager.accentColor)
+                        .font(.system(size: 52, weight: .black, design: .rounded))
+                        .foregroundColor(themeManager.primaryColor)
                     
                     Text(selectedDayFormatted)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(themeManager.secondaryTextColor)
                 }
             }
             .tutorialHighlight("tutorial_step_count")
             
-            // Health Bar (no number)
-            VStack(spacing: 8) {
+            // Health Bar with enhanced styling
+            VStack(spacing: 10) {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.gray.opacity(0.15))
-                            .frame(height: 12)
-                        
+                        // Background with subtle gradient
                         Capsule()
                             .fill(
                                 LinearGradient(
-                                    colors: [healthColor(for: isViewingToday ? currentHealth : selectedDayHealth), 
-                                            healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.7)],
+                                    colors: [Color.gray.opacity(0.12), Color.gray.opacity(0.18)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
                             )
-                            .frame(width: geometry.size.width * CGFloat(isViewingToday ? currentHealth : selectedDayHealth) / 100, height: 12)
+                            .frame(height: 14)
+                        
+                        // Health fill with glow
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        healthColor(for: isViewingToday ? currentHealth : selectedDayHealth),
+                                        healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.8),
+                                        healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.9)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: geometry.size.width * CGFloat(isViewingToday ? currentHealth : selectedDayHealth) / 100, height: 14)
+                            .shadow(color: healthColor(for: isViewingToday ? currentHealth : selectedDayHealth).opacity(0.5), radius: 6, y: 2)
                             .animation(.spring(response: 0.5, dampingFraction: 0.7), value: currentHealth)
+                        
+                        // Shimmer overlay
+                        if currentHealth > 0 {
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.white.opacity(0), Color.white.opacity(0.3), Color.white.opacity(0)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: 40, height: 14)
+                                .offset(x: min(geometry.size.width * CGFloat(isViewingToday ? currentHealth : selectedDayHealth) / 100 - 20, geometry.size.width - 40))
+                        }
                     }
                 }
-                .frame(height: 12)
-                .padding(.horizontal, 30)
+                .frame(height: 14)
+                .padding(.horizontal, 24)
                 
-                Text("Pet Health")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(themeManager.secondaryTextColor)
+                HStack(spacing: 6) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(healthColor(for: currentHealth))
+                    Text("Pet Health")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                    Text("•")
+                        .foregroundColor(themeManager.tertiaryTextColor)
+                    Text("\(isViewingToday ? currentHealth : selectedDayHealth)%")
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                        .foregroundColor(healthColor(for: isViewingToday ? currentHealth : selectedDayHealth))
+                }
             }
             
             // Steps to Goal / Next Mood (only for today)
@@ -362,11 +511,12 @@ struct TodayView: View {
                 stepsToGoalSection
             }
         }
-        .padding(.vertical, 20)
+        .padding(.vertical, 24)
         .padding(.horizontal, 16)
         .background(
-            RoundedRectangle(cornerRadius: 28)
-                .fill(themeManager.backgroundColor)
+            RoundedRectangle(cornerRadius: 32)
+                .fill(themeManager.cardBackgroundColor)
+                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.05), radius: 10, y: 4)
         )
         .padding(.top, 16)
     }
@@ -376,49 +526,105 @@ struct TodayView: View {
         VStack(spacing: 12) {
             // Steps to reach goal
             if stepsToGoal > 0 {
-                HStack(spacing: 8) {
-                    Image(systemName: "flag.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(themeManager.accentColor)
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle()
+                            .fill(themeManager.primaryColor)
+                            .frame(width: 28, height: 28)
+                        
+                        Image(systemName: "flag.fill")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                     
-                    Text("\(stepsToGoal) steps to reach goal")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    Text("\(stepsToGoal.formatted()) steps to reach goal")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
                         .foregroundColor(themeManager.primaryTextColor)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
                 .background(
                     Capsule()
-                        .fill(themeManager.accentColor.opacity(0.1))
+                        .fill(themeManager.primaryColor.opacity(0.1))
                 )
             } else {
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(.green)
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: "22C55E"), Color(hex: "5CD9C5")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 28, height: 28)
+                        
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                     
-                    Text("Goal reached! 🎉")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundColor(.green)
+                    Text("Goal reached!")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color(hex: "22C55E"), Color(hex: "5CD9C5")],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                    
+                    Text("🎉")
+                        .font(.system(size: 16))
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
                 .background(
                     Capsule()
-                        .fill(Color.green.opacity(0.1))
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.green.opacity(0.15), Color(hex: "5CD9C5").opacity(0.1)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.green.opacity(0.25), lineWidth: 1)
+                        )
                 )
+                .shadow(color: Color.green.opacity(0.15), radius: 6, y: 3)
             }
         }
-        .padding(.top, 8)
+        .padding(.top, 12)
     }
     
     // MARK: - Weekly Graph Section
     private var weeklyGraphSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Last 7 Days")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [themeManager.primaryColor, themeManager.primaryLightColor],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 32, height: 32)
+                        
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    Text("Last 7 Days")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                }
                 
                 Spacer()
                 
@@ -428,9 +634,19 @@ struct TodayView: View {
                             selectedDay = nil 
                         }
                     }) {
-                        Text("Back to Today")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(themeManager.accentColor)
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.uturn.backward")
+                                .font(.system(size: 10, weight: .bold))
+                            Text("Today")
+                                .font(.system(size: 12, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(themeManager.accentColor)
+                        )
                     }
                 }
             }
@@ -444,30 +660,88 @@ struct TodayView: View {
             )
             .frame(height: 140)
         }
-        .padding(16)
+        .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(themeManager.accentColor.opacity(0.08))
+            ZStack {
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(themeManager.cardBackgroundColor)
+                
+                // Decorative gradient
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                themeManager.primaryColor.opacity(0.06),
+                                themeManager.primaryLightColor.opacity(0.04),
+                                Color.clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(
+                        LinearGradient(
+                            colors: [themeManager.primaryColor.opacity(0.2), themeManager.primaryLightColor.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+            .shadow(color: themeManager.accentBlue.opacity(0.1), radius: 12, y: 6)
         )
         .padding(.top, 16)
     }
     
     // MARK: - Encouragement Section
     private var encouragementSection: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 12) {
+            // Animated pet emoji based on health
+            Text(healthEmoji)
+                .font(.system(size: 28))
+            
             Text(encouragementMessage)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundColor(themeManager.primaryTextColor)
-                .multilineTextAlignment(.center)
+                .multilineTextAlignment(.leading)
+            
+            Spacer()
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(healthColor(for: currentHealth).opacity(0.1))
+            ZStack {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                healthColor(for: currentHealth).opacity(0.15),
+                                healthColor(for: currentHealth).opacity(0.08)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(healthColor(for: currentHealth).opacity(0.25), lineWidth: 1)
+            }
         )
         .padding(.top, 16)
+    }
+    
+    private var healthEmoji: String {
+        switch currentHealth {
+        case 0...20: return "😰"
+        case 21...40: return "🙂"
+        case 41...60: return "😊"
+        case 61...80: return "😄"
+        case 81...99: return "🤩"
+        default: return "🌟"
+        }
     }
     
     private var encouragementMessage: String {
@@ -491,41 +765,86 @@ struct TodayView: View {
     private var dashboardSection: some View {
         VStack(spacing: 16) {
             HStack {
-                Text("Quick Stats")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
+                HStack(spacing: 8) {
+                    Text("⚡")
+                        .font(.system(size: 18))
+                    Text("Quick Stats")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                }
                 
                 Spacer()
+                
+                Text("Today")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(themeManager.secondaryTextColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(themeManager.secondaryCardColor)
+                    )
             }
             
-            // Stats Row
+            // Stats Row with enhanced cards
             HStack(spacing: 12) {
-                QuickStatCard(
+                TodayEnhancedStatCard(
                     title: "Calories",
                     value: "\(Int(Double(healthKitManager.todaySteps) * 0.04))",
                     icon: "flame.fill",
-                    color: .orange
+                    gradient: [Color(hex: "FF6B4A"), Color(hex: "FFD93D")]
                 )
                 
-                QuickStatCard(
+                TodayEnhancedStatCard(
                     title: "Miles",
                     value: String(format: "%.1f", Double(healthKitManager.todaySteps) * 2.5 / 5280),
                     icon: "map.fill",
-                    color: .purple
+                    gradient: [Color(hex: "A855F7"), Color(hex: "EC4899")]
                 )
                 
-                QuickStatCard(
+                TodayEnhancedStatCard(
                     title: "Goal",
                     value: "\(Int(goalProgress * 100))%",
                     icon: "target",
-                    color: .green
+                    gradient: [Color(hex: "22C55E"), Color(hex: "5CD9C5")]
                 )
             }
         }
-        .padding(16)
+        .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.purple.opacity(0.08))
+            ZStack {
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(themeManager.cardBackgroundColor)
+                
+                // Multi-color gradient overlay
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.orange.opacity(0.04),
+                                Color.purple.opacity(0.03),
+                                Color.green.opacity(0.04)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.orange.opacity(0.15),
+                                Color.purple.opacity(0.1),
+                                Color.green.opacity(0.15)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+            .shadow(color: Color.purple.opacity(0.08), radius: 12, y: 6)
         )
         .padding(.top, 16)
     }
@@ -1074,6 +1393,81 @@ struct QuickStatCard: View {
     }
 }
 
+// MARK: - Enhanced Stat Card (More Colorful)
+struct TodayEnhancedStatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let gradient: [Color]
+    
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        VStack(spacing: 10) {
+            // Icon with gradient background
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: gradient,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 44, height: 44)
+                    .shadow(color: gradient[0].opacity(0.4), radius: 6, y: 3)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+            }
+            
+            Text(value)
+                .font(.system(size: 22, weight: .black, design: .rounded))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: gradient,
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            
+            Text(title)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(themeManager.secondaryTextColor)
+                .textCase(.uppercase)
+                .tracking(0.5)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(themeManager.secondaryCardColor)
+                
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(
+                        LinearGradient(
+                            colors: [gradient[0].opacity(0.08), gradient[1].opacity(0.04)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(
+                        LinearGradient(
+                            colors: [gradient[0].opacity(0.3), gradient[1].opacity(0.15)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+        )
+    }
+}
+
 // MARK: - Celebration Overlay
 struct CelebrationOverlay: View {
     let petName: String
@@ -1159,10 +1553,13 @@ struct StreakCalendarView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
     @EnvironmentObject var stepDataManager: StepDataManager
+    @EnvironmentObject var healthKitManager: HealthKitManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var currentMonth: Date = Date()
     @State private var animateFlame = false
+    @State private var historicalSteps: [Date: Int] = [:]
+    @State private var isLoadingData = false
     
     private let calendar = Calendar.current
     private let daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"]
@@ -1176,7 +1573,7 @@ struct StreakCalendarView: View {
             VStack(spacing: 0) {
                 // Header with close button
                 HStack {
-                    Text("Streak")
+                    Text("Streak Calendar")
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(themeManager.primaryTextColor)
                     
@@ -1215,17 +1612,17 @@ struct StreakCalendarView: View {
                                     endRadius: 70
                                 )
                             )
-                            .frame(width: 140, height: 140)
+                            .frame(width: 120, height: 120)
                             .scaleEffect(animateFlame ? 1.1 : 1.0)
                         
                         // Flame emoji and number
                         VStack(spacing: 0) {
                             Text("🔥")
-                                .font(.system(size: 50))
+                                .font(.system(size: 40))
                                 .scaleEffect(animateFlame ? 1.05 : 1.0)
                             
                             Text("\(userSettings.streakData.currentStreak)")
-                                .font(.system(size: 48, weight: .black, design: .rounded))
+                                .font(.system(size: 40, weight: .black, design: .rounded))
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [Color.orange, Color.red],
@@ -1237,34 +1634,34 @@ struct StreakCalendarView: View {
                     }
                     
                     Text("day streak")
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
                         .foregroundColor(themeManager.secondaryTextColor)
                     
                     // Highest streak
                     HStack(spacing: 4) {
                         Text("Highest streak")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundColor(themeManager.tertiaryTextColor)
                         
                         Text("⭐")
-                            .font(.system(size: 12))
+                            .font(.system(size: 11))
                         
                         Text("\(userSettings.streakData.longestStreak)")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                     }
                 }
-                .padding(.bottom, 24)
+                .padding(.bottom, 20)
                 
                 // Calendar Card
-                VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     // Month Navigation
                     HStack {
                         Button(action: { previousMonth() }) {
                             Image(systemName: "chevron.left")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(themeManager.primaryTextColor)
-                                .frame(width: 40, height: 40)
+                                .frame(width: 36, height: 36)
                                 .background(
                                     Circle()
                                         .fill(themeManager.secondaryCardColor)
@@ -1274,16 +1671,16 @@ struct StreakCalendarView: View {
                         Spacer()
                         
                         Text(monthYearString)
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .font(.system(size: 17, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                         
                         Spacer()
                         
                         Button(action: { nextMonth() }) {
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(themeManager.primaryTextColor)
-                                .frame(width: 40, height: 40)
+                                .frame(width: 36, height: 36)
                                 .background(
                                     Circle()
                                         .fill(themeManager.secondaryCardColor)
@@ -1292,43 +1689,72 @@ struct StreakCalendarView: View {
                         .opacity(canGoToNextMonth ? 1.0 : 0.3)
                         .disabled(!canGoToNextMonth)
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, 4)
                     
                     // Days of week header
                     HStack(spacing: 0) {
                         ForEach(daysOfWeek, id: \.self) { day in
                             Text(day)
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: 11, weight: .semibold))
                                 .foregroundColor(themeManager.tertiaryTextColor)
                                 .frame(maxWidth: .infinity)
                         }
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, 4)
                     
-                    // Calendar grid
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
-                        ForEach(daysInMonth, id: \.self) { date in
-                            if let date = date {
-                                DayCell(
-                                    date: date,
-                                    status: dayStatus(for: date),
-                                    isToday: calendar.isDateInToday(date)
-                                )
-                            } else {
-                                Color.clear
-                                    .frame(height: 40)
+                    // Calendar grid with step counts
+                    if isLoadingData {
+                        ProgressView()
+                            .frame(height: 300)
+                    } else {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 6) {
+                            ForEach(daysInMonth, id: \.self) { date in
+                                if let date = date {
+                                    EnhancedDayCell(
+                                        date: date,
+                                        steps: stepsForDate(date),
+                                        goalSteps: userSettings.dailyStepGoal,
+                                        isToday: calendar.isDateInToday(date),
+                                        isFuture: date > Date()
+                                    )
+                                } else {
+                                    Color.clear
+                                        .frame(height: 54)
+                                }
                             }
                         }
+                        .padding(.horizontal, 2)
                     }
-                    .padding(.horizontal, 8)
+                    
+                    // Legend
+                    HStack(spacing: 16) {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(Color(hex: "34C759"))
+                                .frame(width: 10, height: 10)
+                            Text("Goal achieved")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                        }
+                        
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(Color(hex: "FF3B30"))
+                                .frame(width: 10, height: 10)
+                            Text("Goal missed")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                        }
+                    }
+                    .padding(.top, 8)
                 }
-                .padding(20)
+                .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 24)
                         .fill(themeManager.cardBackgroundColor)
                         .shadow(color: Color.black.opacity(0.05), radius: 10, y: 5)
                 )
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
                 
                 Spacer()
             }
@@ -1339,6 +1765,10 @@ struct StreakCalendarView: View {
             withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
                 animateFlame = true
             }
+            fetchMonthData()
+        }
+        .onChange(of: currentMonth) { _, _ in
+            fetchMonthData()
         }
     }
     
@@ -1375,6 +1805,43 @@ struct StreakCalendarView: View {
     
     // MARK: - Helper Methods
     
+    private func fetchMonthData() {
+        isLoadingData = true
+        
+        // Calculate start and end of current displayed month
+        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth))!
+        let range = calendar.range(of: .day, in: .month, for: currentMonth)!
+        let endOfMonth = calendar.date(byAdding: .day, value: range.count - 1, to: startOfMonth)!
+        
+        // Fetch historical data from HealthKit
+        healthKitManager.fetchSteps(from: startOfMonth, to: min(endOfMonth, Date())) { data in
+            DispatchQueue.main.async {
+                // Merge with existing data
+                for (date, steps) in data {
+                    let normalizedDate = calendar.startOfDay(for: date)
+                    historicalSteps[normalizedDate] = steps
+                }
+                isLoadingData = false
+            }
+        }
+    }
+    
+    private func stepsForDate(_ date: Date) -> Int {
+        let normalizedDate = calendar.startOfDay(for: date)
+        
+        // First check HealthKit data
+        if let steps = historicalSteps[normalizedDate] {
+            return steps
+        }
+        
+        // Fallback to app's daily records
+        if let record = stepDataManager.dailyRecords.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+            return record.steps
+        }
+        
+        return 0
+    }
+    
     private func previousMonth() {
         withAnimation(.easeInOut(duration: 0.3)) {
             currentMonth = calendar.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
@@ -1387,49 +1854,17 @@ struct StreakCalendarView: View {
             currentMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
         }
     }
-    
-    private func dayStatus(for date: Date) -> DayStatus {
-        // Don't show status for future dates
-        if date > Date() {
-            return .future
-        }
-        
-        // Find record for this date
-        let record = stepDataManager.dailyRecords.first { record in
-            calendar.isDate(record.date, inSameDayAs: date)
-        }
-        
-        if let record = record {
-            return record.goalAchieved ? .achieved : .missed
-        }
-        
-        // No record exists - if it's a past date, consider it missed
-        let today = calendar.startOfDay(for: Date())
-        let checkDate = calendar.startOfDay(for: date)
-        
-        if checkDate < today {
-            return .noData
-        }
-        
-        return .future
-    }
 }
 
-// MARK: - Day Status
-enum DayStatus {
-    case achieved
-    case missed
-    case future
-    case noData
-}
-
-// MARK: - Day Cell
-struct DayCell: View {
+// MARK: - Enhanced Day Cell (with step counts)
+struct EnhancedDayCell: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     let date: Date
-    let status: DayStatus
+    let steps: Int
+    let goalSteps: Int
     let isToday: Bool
+    let isFuture: Bool
     
     private var dayNumber: String {
         let formatter = DateFormatter()
@@ -1437,49 +1872,97 @@ struct DayCell: View {
         return formatter.string(from: date)
     }
     
+    private var goalAchieved: Bool {
+        steps >= goalSteps && steps > 0
+    }
+    
+    private var hasData: Bool {
+        steps > 0
+    }
+    
+    private var stepsText: String {
+        if isFuture {
+            return ""
+        }
+        if steps >= 1000 {
+            return String(format: "%.1fK", Double(steps) / 1000.0)
+        } else if steps > 0 {
+            return "\(steps)"
+        }
+        return "0"
+    }
+    
     var body: some View {
-        ZStack {
-            // Background circle based on status
-            Circle()
-                .fill(backgroundColor)
-                .frame(width: 36, height: 36)
-            
-            // Today indicator ring
-            if isToday {
-                Circle()
-                    .stroke(themeManager.accentColor, lineWidth: 2)
-                    .frame(width: 40, height: 40)
+        VStack(spacing: 2) {
+            // Step count above the day
+            if !isFuture {
+                Text(stepsText)
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .foregroundColor(stepTextColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            } else {
+                Text("")
+                    .font(.system(size: 8))
             }
             
-            Text(dayNumber)
-                .font(.system(size: 14, weight: isToday ? .bold : .medium, design: .rounded))
-                .foregroundColor(textColor)
+            ZStack {
+                // Background circle based on status
+                Circle()
+                    .fill(backgroundColor)
+                    .frame(width: 32, height: 32)
+                
+                // Today indicator ring
+                if isToday {
+                    Circle()
+                        .stroke(
+                            LinearGradient(
+                                colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.6)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 2.5
+                        )
+                        .frame(width: 36, height: 36)
+                }
+                
+                Text(dayNumber)
+                    .font(.system(size: 13, weight: isToday ? .bold : .medium, design: .rounded))
+                    .foregroundColor(textColor)
+            }
         }
-        .frame(height: 44)
+        .frame(height: 54)
     }
     
     private var backgroundColor: Color {
-        switch status {
-        case .achieved:
-            return Color(hex: "34C759") // Green
-        case .missed:
-            return Color(hex: "FF3B30") // Red
-        case .future:
+        if isFuture {
             return Color.clear
-        case .noData:
-            return themeManager.secondaryCardColor.opacity(0.5)
         }
+        
+        if !hasData {
+            return themeManager.secondaryCardColor.opacity(0.3)
+        }
+        
+        return goalAchieved ? Color(hex: "34C759") : Color(hex: "FF3B30")
     }
     
     private var textColor: Color {
-        switch status {
-        case .achieved, .missed:
-            return .white
-        case .future:
+        if isFuture {
             return themeManager.tertiaryTextColor
-        case .noData:
+        }
+        
+        if !hasData {
             return themeManager.secondaryTextColor
         }
+        
+        return .white
+    }
+    
+    private var stepTextColor: Color {
+        if !hasData {
+            return themeManager.tertiaryTextColor
+        }
+        return goalAchieved ? Color(hex: "34C759") : Color(hex: "FF3B30")
     }
 }
 

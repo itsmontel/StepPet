@@ -42,7 +42,8 @@ struct OnboardingView: View {
     
     var body: some View {
         ZStack {
-            themeManager.backgroundColor
+            // Light yellow background for onboarding
+            (themeManager.isDarkMode ? Color(hex: "121212") : Color(hex: "FFFAE6"))
                 .ignoresSafeArea()
             
             VStack {

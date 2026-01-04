@@ -4,12 +4,14 @@
 //
 
 import SwiftUI
+import RevenueCat
 
 struct ChallengesView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var achievementManager: AchievementManager
     @EnvironmentObject var userSettings: UserSettings
     @EnvironmentObject var tutorialManager: TutorialManager
+    @ObservedObject var purchaseManager = PurchaseManager.shared
     
     @State private var selectedCategory: AchievementCategory? = nil
     @State private var showCompletedOnly = false
@@ -274,8 +276,8 @@ struct ChallengesView: View {
                     title: "Mood Catch",
                     description: "Catch happy moods, avoid sad ones!",
                     icon: "heart.circle.fill",
-                    color: .orange,
-                    gradient: [Color.orange, Color.yellow],
+                    color: themeManager.moodCatchColor,
+                    gradient: [Color(hex: "FF6B4A"), Color(hex: "FFD93D")],
                     emoji: "",
                     isFree: true
                 ) {
@@ -288,8 +290,8 @@ struct ChallengesView: View {
                     title: "Memory Match",
                     description: "Match pairs to test your memory!",
                     icon: "square.grid.2x2.fill",
-                    color: .purple,
-                    gradient: [Color.purple, Color.pink],
+                    color: themeManager.memoryMatchColor,
+                    gradient: [Color(hex: "A855F7"), Color(hex: "EC4899")],
                     emoji: "🧠",
                     isPremium: userSettings.isPremium
                 ) {
@@ -302,8 +304,8 @@ struct ChallengesView: View {
                     title: "Sky Dash",
                     description: "Dodge walls and rise to the top!",
                     icon: "arrow.up.forward.circle.fill",
-                    color: .purple,
-                    gradient: [Color(hex: "667eea"), Color(hex: "764ba2")],
+                    color: themeManager.skyDashColor,
+                    gradient: [Color(hex: "667EEA"), Color(hex: "764BA2")],
                     emoji: "🌟",
                     isPremium: userSettings.isPremium
                 ) {
@@ -316,8 +318,8 @@ struct ChallengesView: View {
                     title: "Pattern Match",
                     description: "Remember the pattern, beat 5 levels!",
                     icon: "brain.head.profile",
-                    color: Color(hex: "11998e"),
-                    gradient: [Color(hex: "11998e"), Color(hex: "38ef7d")],
+                    color: themeManager.patternMatchColor,
+                    gradient: [Color(hex: "11998E"), Color(hex: "38EF7D")],
                     emoji: "🧩",
                     isPremium: userSettings.isPremium
                 ) {
@@ -633,8 +635,25 @@ struct ChallengesView: View {
     }
     
     private func purchaseCredits(package: CreditPackage) {
-        userSettings.playCredits += package.credits
-        HapticFeedback.medium.trigger()
+        // Find matching RevenueCat package by product ID
+        Task {
+            if let rcPackage = purchaseManager.creditProducts.first(where: { 
+                $0.storeProduct.productIdentifier == package.productId
+            }) {
+                let success = await purchaseManager.purchaseCredits(package: rcPackage, userSettings: userSettings)
+                if success {
+                    HapticFeedback.success.trigger()
+                    showCreditsSheet = false
+                }
+            } else {
+                // Fallback if RevenueCat not loaded yet - add credits directly for testing
+                #if DEBUG
+                userSettings.playCredits += package.credits
+                HapticFeedback.medium.trigger()
+                showCreditsSheet = false
+                #endif
+            }
+        }
     }
     
     // MARK: - Header Section
@@ -646,25 +665,19 @@ struct ChallengesView: View {
                     .foregroundColor(themeManager.primaryTextColor)
                 
                 Text("Complete challenges to earn rewards!")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundColor(themeManager.secondaryTextColor)
             }
             
             Spacer()
             
-            // Pet with count
-            VStack(spacing: 4) {
-                AnimatedPetVideoView(
-                    petType: userSettings.pet.type,
-                    moodState: .fullHealth
-                )
-                .frame(width: 50, height: 50)
-                .clipShape(Circle())
-                
-                Text("\(achievementManager.unlockedCount)")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(themeManager.accentColor)
-            }
+            // Pet (no badge)
+            AnimatedPetVideoView(
+                petType: userSettings.pet.type,
+                moodState: .fullHealth
+            )
+            .frame(width: 55, height: 55)
+            .clipShape(Circle())
         }
         .padding(.top, 16)
     }
@@ -674,48 +687,47 @@ struct ChallengesView: View {
         VStack(spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Your Progress")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundColor(themeManager.primaryTextColor)
+                    HStack(spacing: 6) {
+                        Text("🏆")
+                            .font(.system(size: 16))
+                        Text("Your Progress")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                    }
                     
                     Text("\(achievementManager.unlockedCount) of \(achievementManager.totalCount) completed")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundColor(themeManager.secondaryTextColor)
                 }
                 
                 Spacer()
                 
-                // Percentage
+                // Percentage in indigo-blue
                 Text("\(Int(achievementManager.completionPercentage * 100))%")
                     .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundColor(themeManager.accentColor)
+                    .foregroundColor(themeManager.primaryColor)
             }
             
-            // Progress Bar
+            // Progress Bar in indigo-blue
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.gray.opacity(0.15))
-                        .frame(height: 12)
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.gray.opacity(0.12))
+                        .frame(height: 14)
                     
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(
-                            LinearGradient(
-                                colors: [themeManager.accentColor, .purple],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: geometry.size.width * achievementManager.completionPercentage, height: 12)
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(themeManager.primaryColor)
+                        .frame(width: geometry.size.width * achievementManager.completionPercentage, height: 14)
                         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: achievementManager.completionPercentage)
+                        .shadow(color: themeManager.primaryColor.opacity(0.4), radius: 4, x: 0, y: 2)
                 }
             }
-            .frame(height: 12)
+            .frame(height: 14)
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(themeManager.accentColor.opacity(0.1))
+                .fill(themeManager.secondaryCardColor)
         )
     }
     
@@ -1705,7 +1717,7 @@ struct PetActivityCard: View {
 
 // MARK: - Scale Button Style
 struct ScaleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
+    func makeBody(configuration: Self.Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.spring(response: 0.2), value: configuration.isPressed)

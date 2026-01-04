@@ -10,6 +10,8 @@
 		8F17D5682F05745C005AC193 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F17D5672F05745C005AC193 /* WidgetKit.framework */; };
 		8F17D56A2F05745C005AC193 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F17D5692F05745C005AC193 /* SwiftUI.framework */; };
 		8F17D5772F057461005AC193 /* StepPetWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8F17D5662F05745C005AC193 /* StepPetWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8F9133512F0A25570036DD13 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 8F9133502F0A25570036DD13 /* RevenueCat */; };
+		8F9133532F0A25570036DD13 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8F9133522F0A25570036DD13 /* RevenueCatUI */; };
 		E81A00012D5E00000001 /* StepPetApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010001 /* StepPetApp.swift */; };
 		E81A00012D5E00000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010002 /* ContentView.swift */; };
 		E81A00012D5E00000003 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010003 /* TodayView.swift */; };
@@ -59,6 +61,7 @@
 		E81A00012D5E00000061 /* PetActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010061 /* PetActivity.swift */; };
 		E81A00012D5E00000062 /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010062 /* WorkoutActivityAttributes.swift */; };
 		E81A00012D5E00000063 /* WidgetDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010063 /* WidgetDataManager.swift */; };
+		E81A00012D5E00000064 /* PurchaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010064 /* PurchaseManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -141,6 +144,7 @@
 		E81A00012D5E00010061 /* PetActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetActivity.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010062 /* WorkoutActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivityAttributes.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010063 /* WidgetDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataManager.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010064 /* PurchaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -171,7 +175,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8F9133512F0A25570036DD13 /* RevenueCat in Frameworks */,
 				E81A00012D5E00000030 /* HealthKit.framework in Frameworks */,
+				8F9133532F0A25570036DD13 /* RevenueCatUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -181,14 +187,14 @@
 		E81A00012D5E00030000 = {
 			isa = PBXGroup;
 			children = (
-				E81A00012D5E00030001 /*  */,
+				E81A00012D5E00030001,
 				8F17D56B2F05745C005AC193 /* StepPetWidget */,
 				E81A00012D5E00030002 /* Products */,
 				E81A00012D5E00030010 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
-		E81A00012D5E00030001 /*  */ = {
+		E81A00012D5E00030001 = {
 			isa = PBXGroup;
 			children = (
 				E81A00012D5E00010001 /* StepPetApp.swift */,
@@ -204,7 +210,6 @@
 				E81A00012D5E00010022 /* Info.plist */,
 				E81A00012D5E00010023 /* StepPet.entitlements */,
 			);
-			name = "";
 			sourceTree = "<group>";
 		};
 		E81A00012D5E00030002 /* Products */ = {
@@ -263,6 +268,7 @@
 				E81A00012D5E00010010 /* AchievementManager.swift */,
 				E81A00012D5E00010011 /* NotificationManager.swift */,
 				E81A00012D5E00010063 /* WidgetDataManager.swift */,
+				E81A00012D5E00010064 /* PurchaseManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -375,6 +381,9 @@
 				Base,
 			);
 			mainGroup = E81A00012D5E00030000;
+			packageReferences = (
+				8F91334F2F0A25570036DD13 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+			);
 			productRefGroup = E81A00012D5E00030002 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -462,6 +471,7 @@
 				E81A00012D5E00000060 /* ActivityView.swift in Sources */,
 				E81A00012D5E00000061 /* PetActivity.swift in Sources */,
 				E81A00012D5E00000062 /* WorkoutActivityAttributes.swift in Sources */,
+				E81A00012D5E00000064 /* PurchaseManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -489,6 +499,8 @@
 				INFOPLIST_FILE = StepPetWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StepPetWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -496,7 +508,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.StepPet.StepPetWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.montel.virtupetsteps.StepPetWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -518,6 +530,8 @@
 				INFOPLIST_FILE = StepPetWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StepPetWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -525,7 +539,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.StepPet.StepPetWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.montel.virtupetsteps.StepPetWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -678,7 +692,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.StepPet;
+				PRODUCT_BUNDLE_IDENTIFIER = com.montel.virtupetsteps;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -713,7 +727,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.StepPet;
+				PRODUCT_BUNDLE_IDENTIFIER = com.montel.virtupetsteps;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -754,6 +768,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8F91334F2F0A25570036DD13 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.52.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8F9133502F0A25570036DD13 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F91334F2F0A25570036DD13 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+		8F9133522F0A25570036DD13 /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F91334F2F0A25570036DD13 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E81A00012D5E00070001 /* Project object */;
 }

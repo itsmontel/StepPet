@@ -5,12 +5,14 @@
 
 import SwiftUI
 import StoreKit
+import RevenueCat
 
 // MARK: - Main View
 struct PetCustomizationView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
     @EnvironmentObject var achievementManager: AchievementManager
+    @ObservedObject var purchaseManager = PurchaseManager.shared
     
     @State private var selectedPetType: PetType = .dog
     @State private var showRenameSheet = false
@@ -638,8 +640,22 @@ struct PetCustomizationView: View {
     }
     
     private func purchaseCredits(package: CreditPackage) {
-        userSettings.playCredits += package.credits
-        HapticFeedback.medium.trigger()
+        // Find matching RevenueCat package by product ID
+        Task {
+            if let rcPackage = purchaseManager.creditProducts.first(where: { 
+                $0.storeProduct.productIdentifier == package.productId
+            }) {
+                let success = await purchaseManager.purchaseCredits(package: rcPackage, userSettings: userSettings)
+                if success {
+                    HapticFeedback.success.trigger()
+                    showCreditsSheet = false
+                }
+            } else {
+                // Fallback if RevenueCat package not found (for testing)
+                userSettings.playCredits += package.credits
+                HapticFeedback.medium.trigger()
+            }
+        }
     }
 }
 

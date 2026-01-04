@@ -15,6 +15,7 @@ struct VirtuPetApp: App {
     @StateObject private var userSettings = UserSettings()
     @StateObject private var achievementManager = AchievementManager()
     @StateObject private var stepDataManager = StepDataManager()
+    @StateObject private var purchaseManager = PurchaseManager.shared
     
     var body: some Scene {
         WindowGroup {
@@ -30,14 +31,22 @@ struct VirtuPetApp: App {
             .environmentObject(userSettings)
             .environmentObject(achievementManager)
             .environmentObject(stepDataManager)
+            .environmentObject(purchaseManager)
             .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
             .onAppear {
                 setupApp()
+            }
+            .onChange(of: purchaseManager.isPremium) { _, isPremium in
+                // Sync premium status with UserSettings
+                userSettings.isPremium = isPremium
             }
         }
     }
     
     private func setupApp() {
+        // Configure RevenueCat
+        purchaseManager.configure()
+        
         // Only request authorization if onboarding is complete
         if userSettings.hasCompletedOnboarding {
             healthKitManager.requestAuthorization()

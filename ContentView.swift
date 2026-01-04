@@ -114,95 +114,138 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Centered Tab Bar (Today in middle, prominent)
+// MARK: - Centered Tab Bar (Today in middle, prominent) 🎨
 struct CenteredTabBar: View {
     @Binding var selectedTab: Int
     @EnvironmentObject var themeManager: ThemeManager
     var tutorialManager: TutorialManager? = nil
     
     // Tab order: Activity, Insights, TODAY (center), Challenges, Settings
-    let tabs: [(icon: String, selectedIcon: String, title: String, tutorialID: String)] = [
-        ("figure.walk.motion", "figure.walk.motion", "Activity", "tutorial_tab_activity"),
-        ("chart.line.uptrend.xyaxis", "chart.line.uptrend.xyaxis", "Insights", "tutorial_tab_insights"),
-        ("house", "house.fill", "Today", "tutorial_tab_today"),
-        ("trophy", "trophy.fill", "Challenges", "tutorial_tab_challenges"),
-        ("gearshape", "gearshape.fill", "Settings", "tutorial_tab_settings")
-    ]
+    // Each tab gets its own cute color! 🌈
+    var tabs: [(icon: String, selectedIcon: String, title: String, tutorialID: String, color: Color)] {
+        [
+            ("figure.walk.motion", "figure.walk.motion", "Activity", "tutorial_tab_activity", themeManager.activityTabColor),
+            ("chart.line.uptrend.xyaxis", "chart.line.uptrend.xyaxis", "Insights", "tutorial_tab_insights", themeManager.insightsTabColor),
+            ("house", "house.fill", "Today", "tutorial_tab_today", themeManager.todayTabColor),
+            ("trophy", "trophy.fill", "Challenges", "tutorial_tab_challenges", themeManager.challengesTabColor),
+            ("gearshape", "gearshape.fill", "Settings", "tutorial_tab_settings", themeManager.settingsTabColor)
+        ]
+    }
     
     var body: some View {
         HStack(spacing: 0) {
             ForEach(0..<tabs.count, id: \.self) { index in
                 if index == 2 {
-                    // Center tab (Today) - Prominent
+                    // Center tab (Today) - Prominent with gradient!
                     CenterTabButton(
                         icon: tabs[index].selectedIcon,
                         title: tabs[index].title,
-                        isSelected: selectedTab == index
+                        isSelected: selectedTab == index,
+                        tabColor: tabs[index].color
                     ) {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             selectedTab = index
                         }
+                        HapticFeedback.light.trigger()
                     }
                     .tutorialHighlight(tabs[index].tutorialID)
                 } else {
-                    // Regular tabs
-                    TabBarButton(
+                    // Regular tabs with colorful accents
+                    ColorfulTabBarButton(
                         icon: selectedTab == index ? tabs[index].selectedIcon : tabs[index].icon,
                         title: tabs[index].title,
-                        isSelected: selectedTab == index
+                        isSelected: selectedTab == index,
+                        tabColor: tabs[index].color
                     ) {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             selectedTab = index
                         }
+                        HapticFeedback.light.trigger()
                     }
                     .tutorialHighlight(tabs[index].tutorialID)
                 }
             }
         }
         .padding(.horizontal, 4)
-        .padding(.top, 6)
-        .padding(.bottom, 20)
+        .padding(.top, 8)
+        .padding(.bottom, 2)
         .background(
-            themeManager.cardBackgroundColor
-                .shadow(color: Color.black.opacity(0.08), radius: 20, x: 0, y: -5)
-                .ignoresSafeArea(edges: .bottom)
+            ZStack {
+                // Glass morphism effect
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(themeManager.cardBackgroundColor)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        themeManager.primaryColor.opacity(0.03),
+                                        Color.clear,
+                                        themeManager.primaryColor.opacity(0.02)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    )
+                    .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0.3 : 0.08), radius: 20, x: 0, y: -5)
+                    .shadow(color: themeManager.primaryColor.opacity(0.05), radius: 15, x: 0, y: -3)
+            }
+            .padding(.horizontal, 8)
         )
+        .padding(.bottom, 0)
     }
 }
 
-// MARK: - Center Tab Button (Prominent)
+// MARK: - Center Tab Button (Prominent) 🏠
 struct CenterTabButton: View {
     let icon: String
     let title: String
     let isSelected: Bool
+    var tabColor: Color = .orange
     let action: () -> Void
     @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 2) {
+            VStack(spacing: 3) {
                 ZStack {
-                    // Glowing background
+                    // Enhanced glowing background with multiple layers
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.7)],
+                                colors: [tabColor, tabColor.opacity(0.8)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 48, height: 48)
-                        .shadow(color: themeManager.accentColor.opacity(isSelected ? 0.5 : 0.3), radius: isSelected ? 10 : 6, x: 0, y: 3)
+                        .frame(width: 56, height: 56)
+                        .shadow(color: tabColor.opacity(isSelected ? 0.7 : 0.5), radius: isSelected ? 16 : 12, x: 0, y: 4)
+                        .shadow(color: tabColor.opacity(isSelected ? 0.4 : 0.2), radius: isSelected ? 24 : 18, x: 0, y: 8)
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [Color.white.opacity(0.5), Color.white.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 2.5
+                                )
+                        )
                     
                     Image(systemName: icon)
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
                 }
-                .offset(y: -6) // Reduced offset
+                .offset(y: -8)
+                .scaleEffect(isSelected ? 1.08 : 1.0)
+                .animation(.spring(response: 0.35, dampingFraction: 0.65), value: isSelected)
                 
                 Text(title)
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(isSelected ? themeManager.accentColor : themeManager.secondaryTextColor)
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundColor(isSelected ? tabColor : themeManager.secondaryTextColor)
+                    .offset(y: -4)
             }
             .frame(maxWidth: .infinity)
         }
@@ -210,7 +253,55 @@ struct CenterTabButton: View {
     }
 }
 
-// MARK: - Tab Bar Button (Regular)
+// MARK: - Colorful Tab Bar Button 🎨
+struct ColorfulTabBarButton: View {
+    let icon: String
+    let title: String
+    let isSelected: Bool
+    var tabColor: Color = .blue
+    let action: () -> Void
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                ZStack {
+                    // Enhanced background when selected
+                    if isSelected {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [tabColor.opacity(0.18), tabColor.opacity(0.12)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .frame(width: 40, height: 40)
+                            .overlay(
+                                Circle()
+                                    .stroke(tabColor.opacity(0.2), lineWidth: 1.5)
+                            )
+                    }
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 21, weight: isSelected ? .bold : .semibold))
+                        .foregroundColor(isSelected ? tabColor : themeManager.secondaryTextColor)
+                }
+                .frame(height: 40)
+                .scaleEffect(isSelected ? 1.12 : 1.0)
+                .animation(.spring(response: 0.35, dampingFraction: 0.65), value: isSelected)
+                
+                Text(title)
+                    .font(.system(size: 11, weight: isSelected ? .bold : .semibold, design: .rounded))
+                    .foregroundColor(isSelected ? tabColor : themeManager.secondaryTextColor)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Legacy Tab Bar Button (for compatibility)
 struct TabBarButton: View {
     let icon: String
     let title: String
@@ -219,21 +310,14 @@ struct TabBarButton: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
-        Button(action: action) {
-            VStack(spacing: 2) {
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
-                    .foregroundColor(isSelected ? themeManager.accentColor : themeManager.secondaryTextColor)
-                    .scaleEffect(isSelected ? 1.05 : 1.0)
-                    .animation(.spring(response: 0.3), value: isSelected)
-                
-                Text(title)
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(isSelected ? themeManager.accentColor : themeManager.secondaryTextColor)
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(PlainButtonStyle())
+        ColorfulTabBarButton(
+            icon: icon,
+            title: title,
+            isSelected: isSelected,
+            tabColor: themeManager.accentColor,
+            action: action
+        )
+        .environmentObject(themeManager)
     }
 }
 

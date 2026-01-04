@@ -1524,6 +1524,7 @@ struct ActivityView: View {
     private var premiumGateView: some View {
         VStack(spacing: 24) {
             Spacer()
+                .frame(maxHeight: 60)
             
             // Lock icon
             ZStack {
@@ -1600,7 +1601,7 @@ struct ActivityView: View {
                     .foregroundColor(themeManager.primaryTextColor)
                 
                 Text("Track your walks with \(userSettings.pet.name)")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundColor(themeManager.secondaryTextColor)
             }
             
@@ -1612,24 +1613,28 @@ struct ActivityView: View {
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 14, weight: .bold))
                     
                     if !walkHistory.walkHistory.isEmpty {
                         Text("\(walkHistory.walkHistory.count)")
-                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .font(.system(size: 13, weight: .black, design: .rounded))
                     }
                     
                     Text("History")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
                 }
                 .foregroundColor(.white)
                 .padding(.horizontal, 14)
-                .padding(.vertical, 8)
+                .padding(.vertical, 9)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(LinearGradient(colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
+                        .fill(themeManager.primaryGradient)
                 )
-                .shadow(color: themeManager.accentColor.opacity(0.3), radius: 6, x: 0, y: 3)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                )
+                .shadow(color: themeManager.primaryColor.opacity(0.3), radius: 6, x: 0, y: 3)
             }
             .tutorialHighlight("tutorial_history_button")
         }
