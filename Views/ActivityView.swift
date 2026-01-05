@@ -1425,7 +1425,6 @@ struct ActivityView: View {
     @State private var showCountdown = false
     @State private var countdownValue = 3
     @State private var selectedRecentWalk: WalkRecord?
-    @State private var showRecentDetail = false
     @State private var showPremiumSheet = false
     
     var body: some View {
@@ -1489,10 +1488,8 @@ struct ActivityView: View {
                 )
             }
         }
-        .sheet(isPresented: $showRecentDetail) {
-            if let walk = selectedRecentWalk {
-                ActivityDetailView(walk: walk, walkHistory: walkHistory)
-            }
+        .sheet(item: $selectedRecentWalk) { walk in
+            ActivityDetailView(walk: walk, walkHistory: walkHistory)
         }
         .alert("Location Access Required", isPresented: $showPermissionAlert) {
             Button("Open Settings") {
@@ -1847,7 +1844,6 @@ struct ActivityView: View {
                     ForEach(Array(walkHistory.walkHistory.prefix(3))) { walk in
                         Button(action: {
                             selectedRecentWalk = walk
-                            showRecentDetail = true
                             HapticFeedback.light.trigger()
                         }) {
                             EnhancedRecentActivityCard(walk: walk)
