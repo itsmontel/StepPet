@@ -4,12 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VirtuPet - Your Steps = Their Happiness</title>
+    <link rel="icon" type="image/png" href="Screenshots/Virtupetlogo.png">
+    <link rel="apple-touch-icon" href="Screenshots/Virtupetlogo.png">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Sticky Waitlist Bar -->
+    <div class="waitlist-bar" id="waitlistBar">
+        <div class="waitlist-bar-content">
+            <span class="waitlist-bar-text">Be the first to know when VirtuPet launches on iOS!</span>
+            <form class="waitlist-bar-form" id="waitlistBarForm">
+                <input type="email" placeholder="Enter your email" required class="waitlist-bar-input" id="waitlistBarEmail">
+                <button type="submit" class="waitlist-bar-btn">Join Waitlist</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Floating Particles Background -->
     <div class="particles" id="particles"></div>
     
@@ -17,7 +30,7 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="logo">
-                <span class="logo-icon">🐾</span>
+                <img src="Screenshots/Virtupetlogo.png" alt="VirtuPet Logo" class="logo-img">
                 <span class="logo-text">VirtuPet</span>
             </div>
             
@@ -36,10 +49,7 @@
                 <li><a href="#minigames">Minigames</a></li>
                 <li><a href="#faq">FAQ</a></li>
                 <li><a href="#reviews">Reviews</a></li>
-                <li class="mobile-cta"><a href="#download" class="nav-cta-mobile">Download Free</a></li>
             </ul>
-            
-            <a href="#download" class="nav-cta desktop-only">Download Free</a>
         </div>
     </nav>
     
@@ -92,11 +102,11 @@
             </div>
             
             <div class="hero-cta">
-                <a href="#download" class="btn btn-primary">
+                <a href="#waitlist" class="btn btn-primary">
                     <svg class="apple-icon" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                         <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
                     </svg>
-                    Download for iOS
+                    Join Waitlist - iOS
                 </a>
                 <a href="#features" class="btn btn-secondary">
                     <span class="btn-icon">✨</span>
@@ -114,7 +124,7 @@
                     <span class="spotlight-badge">✨ New Update</span>
                     <h2>The Cutest Way to Stay Active</h2>
                     <p>VirtuPet transforms your daily steps into an adorable adventure. Your pet's happiness depends on your activity!</p>
-                    <a href="#download" class="btn btn-primary">Start Your Journey</a>
+                    <a href="#waitlist" class="btn btn-primary">Join the Waitlist</a>
                 </div>
                 <div class="spotlight-visual">
                     <img src="assets/gifs/DogRunning.gif" alt="Running Pet" class="spotlight-pet">
@@ -145,7 +155,7 @@
     <section class="how-it-works" id="how-it-works">
         <div class="container">
             <div class="section-header">
-                <span class="section-badge">📱 How It Works</span>
+                <span class="section-badge">How It Works</span>
                 <h2 class="section-title">Get Started in<br><span class="gradient-text">3 Simple Steps</span></h2>
             </div>
             
@@ -194,58 +204,106 @@
     <section class="features" id="features">
         <div class="container">
             <div class="section-header">
-                <span class="section-badge">🎯 Features</span>
+                <span class="section-badge">Features</span>
                 <h2 class="section-title">Everything You Need to<br><span class="gradient-text">Stay Motivated</span></h2>
                 <p class="section-subtitle">VirtuPet combines fitness tracking with the joy of caring for a virtual pet</p>
             </div>
             
-            <div class="features-grid">
-                <div class="feature-card" data-aos="fade-up" data-delay="0">
-                    <div class="feature-icon">
-                        <span>👟</span>
+            <div class="features-showcase">
+                <!-- Track Your Walks -->
+                <div class="feature-row" data-aos="fade-up">
+                    <div class="feature-text">
+                        <h3>Track Your Walks</h3>
+                        <p>Record walks, runs, and activities with detailed stats and route history</p>
                     </div>
-                    <h3>Real-Time Step Tracking</h3>
-                    <p>Syncs with Apple HealthKit to track every step you take throughout the day</p>
+                    <div class="feature-mockup">
+                        <div class="feature-phone">
+                            <div class="feature-phone-notch"></div>
+                            <div class="feature-phone-screen">
+                                <img src="Screenshots/Activity.PNG" alt="Activity Tracking">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="feature-card" data-aos="fade-up" data-delay="100">
-                    <div class="feature-icon">
-                        <span>❤️</span>
+                <!-- Pet Health System -->
+                <div class="feature-row" data-aos="fade-up">
+                    <div class="feature-text">
+                        <h3>Pet Health System</h3>
+                        <p>Your steps directly affect your pet's mood - from sick to thriving!</p>
                     </div>
-                    <h3>Pet Health System</h3>
-                    <p>Your steps directly affect your pet's mood - from sick to thriving!</p>
+                    <div class="feature-mockup">
+                        <div class="feature-phone">
+                            <div class="feature-phone-notch"></div>
+                            <div class="feature-phone-screen">
+                                <video src="Screenshots/PetHealth.MP4" autoplay loop muted playsinline></video>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="feature-card" data-aos="fade-up" data-delay="200">
-                    <div class="feature-icon">
-                        <span>🔥</span>
+                <!-- Daily Streaks -->
+                <div class="feature-row" data-aos="fade-up">
+                    <div class="feature-text">
+                        <h3>Daily Streaks</h3>
+                        <p>Build momentum with daily streaks and earn special milestone rewards</p>
                     </div>
-                    <h3>Daily Streaks</h3>
-                    <p>Build momentum with daily streaks and earn special milestone rewards</p>
+                    <div class="feature-mockup">
+                        <div class="feature-phone">
+                            <div class="feature-phone-notch"></div>
+                            <div class="feature-phone-screen">
+                                <img src="Screenshots/Streaks.PNG" alt="Daily Streaks">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="feature-card" data-aos="fade-up" data-delay="300">
-                    <div class="feature-icon">
-                        <span>🎮</span>
+                <!-- Dark Mode -->
+                <div class="feature-row" data-aos="fade-up">
+                    <div class="feature-text">
+                        <h3>Dark Mode</h3>
+                        <p>Easy on the eyes with a beautiful dark theme that looks stunning day or night</p>
                     </div>
-                    <h3>Fun Minigames</h3>
-                    <p>Play Mood Catch for free, plus Memory Match, Sky Dash & Pattern Match!</p>
+                    <div class="feature-mockup">
+                        <div class="feature-phone">
+                            <div class="feature-phone-notch"></div>
+                            <div class="feature-phone-screen">
+                                <video src="Screenshots/Darkmode.MP4" autoplay loop muted playsinline></video>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="feature-card" data-aos="fade-up" data-delay="400">
-                    <div class="feature-icon">
-                        <span>🏆</span>
+                <!-- Achievements -->
+                <div class="feature-row" data-aos="fade-up">
+                    <div class="feature-text">
+                        <h3>Achievements</h3>
+                        <p>Unlock badges and achievements as you reach fitness milestones</p>
                     </div>
-                    <h3>Achievements</h3>
-                    <p>Unlock badges and achievements as you reach fitness milestones</p>
+                    <div class="feature-mockup">
+                        <div class="feature-phone">
+                            <div class="feature-phone-notch"></div>
+                            <div class="feature-phone-screen">
+                                <video src="Screenshots/Achievements.mov" autoplay loop muted playsinline></video>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="feature-card" data-aos="fade-up" data-delay="500">
-                    <div class="feature-icon">
-                        <span>📊</span>
+                <!-- Insights & Analytics -->
+                <div class="feature-row" data-aos="fade-up">
+                    <div class="feature-text">
+                        <h3>Insights & Analytics</h3>
+                        <p>Track your progress with beautiful charts and weekly summaries</p>
                     </div>
-                    <h3>Insights & Analytics</h3>
-                    <p>Track your progress with beautiful charts and weekly summaries</p>
+                    <div class="feature-mockup">
+                        <div class="feature-phone">
+                            <div class="feature-phone-notch"></div>
+                            <div class="feature-phone-screen">
+                                <video src="Screenshots/Insights.mov" autoplay loop muted playsinline></video>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -255,7 +313,7 @@
     <section class="pets-showcase" id="pets">
         <div class="container">
             <div class="section-header">
-                <span class="section-badge">🐾 Meet the Pets</span>
+                <span class="section-badge">Meet the Pets</span>
                 <h2 class="section-title">Choose Your<br><span class="gradient-text">Perfect Companion</span></h2>
                 <p class="section-subtitle">Each pet has unique personality and animations</p>
             </div>
@@ -320,7 +378,7 @@
                     <div class="pet-panel" data-pet="cat">
                         <div class="pet-info">
                             <h3>Cat</h3>
-                            <p class="pet-personality">"Sassy, judges you for being lazy"</p>
+                            <p class="pet-personality">"Playful & curious, loves to explore with you"</p>
                             <span class="pet-badge premium">⭐ Premium</span>
                         </div>
                         <div class="mood-grid">
@@ -448,47 +506,81 @@
     <section class="minigames" id="minigames">
         <div class="container">
             <div class="section-header">
-                <span class="section-badge">🎮 Minigames</span>
+                <span class="section-badge">Minigames</span>
                 <h2 class="section-title">Cool Mini Games to<br><span class="gradient-text">Play Anytime</span></h2>
                 <p class="section-subtitle">Bond with your pet through fun, engaging minigames</p>
             </div>
             
-            <div class="games-grid">
-                <div class="game-card" data-aos="zoom-in" data-delay="0">
-                    <div class="game-icon mood-catch">
-                        <span>🧡</span>
+            <!-- Phone Mockups Showcase -->
+            <div class="games-phone-showcase">
+                <!-- Mood Catch -->
+                <div class="game-phone-wrapper" data-game="mood-catch">
+                    <div class="game-phone-mockup">
+                        <div class="game-phone-notch"></div>
+                        <div class="game-phone-screen">
+                            <img src="Screenshots/6.PNG" alt="Mood Catch Game">
+                        </div>
                     </div>
-                    <h3>Mood Catch</h3>
-                    <p>Catch happy moods, avoid sad ones!</p>
-                    <div class="game-tag free">1 CREDIT • +3 HEALTH</div>
+                    <div class="game-phone-label">
+                        <span class="game-emoji">🧡</span>
+                        <span class="game-name">Mood Catch</span>
+                        <span class="game-desc">Catch happy moods, avoid the sad ones!</span>
+                    </div>
                 </div>
                 
-                <div class="game-card" data-aos="zoom-in" data-delay="100">
-                    <div class="game-icon memory-match">
-                        <span>🧠</span>
+                <!-- Memory Match -->
+                <div class="game-phone-wrapper" data-game="memory-match">
+                    <div class="game-phone-mockup">
+                        <div class="game-phone-notch"></div>
+                        <div class="game-phone-screen">
+                            <img src="Screenshots/7.PNG" alt="Memory Match Game">
+                        </div>
                     </div>
-                    <h3>Memory Match</h3>
-                    <p>Match pairs to test your memory!</p>
-                    <div class="game-tag free">1 CREDIT • +3 HEALTH</div>
+                    <div class="game-phone-label">
+                        <span class="game-emoji">🧠</span>
+                        <span class="game-name">Memory Match</span>
+                        <span class="game-desc">Flip cards and match pairs to win!</span>
+                    </div>
                 </div>
                 
-                <div class="game-card" data-aos="zoom-in" data-delay="200">
-                    <div class="game-icon sky-dash">
-                        <span>🌟</span>
+                <!-- Sky Dash -->
+                <div class="game-phone-wrapper" data-game="sky-dash">
+                    <div class="game-phone-mockup">
+                        <div class="game-phone-notch"></div>
+                        <div class="game-phone-screen">
+                            <img src="Screenshots/8.PNG" alt="Sky Dash Game">
+                        </div>
                     </div>
-                    <h3>Sky Dash</h3>
-                    <p>Dodge walls and rise to the top!</p>
-                    <div class="game-tag free">1 CREDIT • +3 HEALTH</div>
+                    <div class="game-phone-label">
+                        <span class="game-emoji">🌟</span>
+                        <span class="game-name">Sky Dash</span>
+                        <span class="game-desc">Dodge walls and fly to the top!</span>
+                    </div>
                 </div>
                 
-                <div class="game-card" data-aos="zoom-in" data-delay="300">
-                    <div class="game-icon pattern-match">
-                        <span>🧩</span>
+                <!-- Pattern Match -->
+                <div class="game-phone-wrapper" data-game="pattern-match">
+                    <div class="game-phone-mockup">
+                        <div class="game-phone-notch"></div>
+                        <div class="game-phone-screen">
+                            <img src="Screenshots/9.PNG" alt="Pattern Match Game">
+                        </div>
                     </div>
-                    <h3>Pattern Match</h3>
-                    <p>Remember the pattern, beat 5 levels!</p>
-                    <div class="game-tag free">1 CREDIT • +3 HEALTH</div>
+                    <div class="game-phone-label">
+                        <span class="game-emoji">🧩</span>
+                        <span class="game-name">Pattern Match</span>
+                        <span class="game-desc">Remember the pattern, beat 5 levels!</span>
+                    </div>
                 </div>
+            </div>
+            
+            <!-- Credit Info Badge -->
+            <div class="games-credit-info">
+                <div class="credit-badge">
+                    <span class="credit-icon">⚡</span>
+                    <span class="credit-text">1 Credit per game • +3 Health boost</span>
+                </div>
+                <p class="credit-subtext">Get 7 free credits daily!</p>
             </div>
         </div>
     </section>
@@ -497,7 +589,7 @@
     <section class="faq-section" id="faq">
         <div class="container">
             <div class="section-header">
-                <span class="section-badge">❓ FAQ</span>
+                <span class="section-badge">FAQ</span>
                 <h2 class="section-title">Frequently Asked<br><span class="gradient-text">Questions</span></h2>
                 <p class="section-subtitle">Everything you need to know about VirtuPet</p>
             </div>
@@ -618,7 +710,7 @@
     <section class="reviews" id="reviews">
         <div class="container">
             <div class="section-header">
-                <span class="section-badge">💬 Reviews</span>
+                <span class="section-badge">Reviews</span>
                 <h2 class="section-title">Loved by<br><span class="gradient-text">Our Users</span></h2>
             </div>
             
@@ -654,8 +746,8 @@
         </div>
     </section>
 
-    <!-- Download CTA Section -->
-    <section class="download-cta" id="download">
+    <!-- Waitlist CTA Section -->
+    <section class="waitlist-cta" id="waitlist">
         <div class="container">
             <div class="cta-content">
                 <div class="cta-pets">
@@ -666,19 +758,27 @@
                     <img src="assets/pets/horsefullhealth.png" alt="Horse" class="cta-pet pet-5">
                 </div>
                 <h2>Ready to Start Your<br><span class="gradient-text">VirtuPet Journey?</span></h2>
-                <p>Download now and get your free virtual pet today!</p>
-                <a href="https://apps.apple.com" class="btn btn-large" target="_blank">
-                    <span class="app-store-icon">
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                        </svg>
-                    </span>
-                    Download on App Store
-                </a>
+                <p>Join the waitlist to be first in line when we launch on iOS!</p>
+                
+                <form class="waitlist-form" id="waitlistMainForm">
+                    <div class="waitlist-input-group">
+                        <input type="email" placeholder="Enter your email address" required class="waitlist-input" id="waitlistMainEmail">
+                        <button type="submit" class="btn btn-large waitlist-submit">
+                            <span class="app-store-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                                </svg>
+                            </span>
+                            Join Waitlist
+                        </button>
+                    </div>
+                    <div class="waitlist-message" id="waitlistMainMessage"></div>
+                </form>
+                
                 <div class="cta-features">
-                    <span>✓ Free to Download</span>
-                    <span>✓ No Ads</span>
-                    <span>✓ Free Minigames</span>
+                    <span>✓ iOS Only</span>
+                    <span>✓ Free to Use</span>
+                    <span>✓ No Spam</span>
                 </div>
             </div>
         </div>
@@ -690,7 +790,7 @@
             <div class="footer-content">
                 <div class="footer-brand">
                     <div class="logo">
-                        <span class="logo-icon">🐾</span>
+                        <img src="Screenshots/Virtupetlogo.png" alt="VirtuPet Logo" class="logo-img">
                         <span class="logo-text">VirtuPet</span>
                     </div>
                     <p>Turn every step into love for your virtual companion.</p>
@@ -853,6 +953,59 @@
         </div>
     </div>
 
+    <!-- Waitlist Popup Modal -->
+    <div class="waitlist-popup-overlay" id="waitlistPopup">
+        <div class="waitlist-popup">
+            <button class="waitlist-popup-close" id="waitlistPopupClose">&times;</button>
+            <div class="waitlist-popup-content">
+                <img src="Screenshots/Virtupetlogo.png" alt="VirtuPet" class="waitlist-popup-logo">
+                <h2>Don't Miss Out! 🐾</h2>
+                <p>Be the first to know when VirtuPet launches on iOS. Join our waitlist for early access!</p>
+                <form class="waitlist-popup-form" id="waitlistPopupForm">
+                    <input type="email" placeholder="Enter your email" required class="waitlist-popup-input" id="waitlistPopupEmail">
+                    <button type="submit" class="waitlist-popup-btn">Join Waitlist</button>
+                </form>
+                <div class="waitlist-popup-message" id="waitlistPopupMessage"></div>
+                <div class="waitlist-popup-instagram">
+                    <span>Follow us for updates!</span>
+                    <a href="https://instagram.com/virtupetapp" target="_blank" class="instagram-link-popup">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                        @virtupetapp
+                    </a>
+                </div>
+                <span class="waitlist-popup-note">iOS only • No spam, ever</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Waitlist Section -->
+    <section class="footer-waitlist">
+        <div class="container">
+            <div class="footer-waitlist-content">
+                <div class="footer-waitlist-text">
+                    <h3>Join the VirtuPet Waitlist</h3>
+                    <p>Get notified when we launch on iOS and be among the first to adopt your virtual pet!</p>
+                </div>
+                <form class="footer-waitlist-form" id="footerWaitlistForm">
+                    <input type="email" placeholder="your@email.com" required class="footer-waitlist-input" id="footerWaitlistEmail">
+                    <button type="submit" class="footer-waitlist-btn">Join Now</button>
+                </form>
+                <div class="footer-waitlist-message" id="footerWaitlistMessage"></div>
+                <div class="footer-instagram">
+                    <a href="https://instagram.com/virtupetapp" target="_blank" class="instagram-link-footer">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                        Follow us @virtupetapp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main JavaScript (Supabase handled server-side via Netlify function) -->
     <script src="script.js"></script>
 </body>
 </html>

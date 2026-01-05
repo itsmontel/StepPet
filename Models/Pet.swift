@@ -31,7 +31,7 @@ enum PetType: String, CaseIterable, Codable {
     var personality: String {
         switch self {
         case .dog: return "Loyal, eager, classic choice"
-        case .cat: return "Sassy, judges you for being lazy"
+        case .cat: return "Playful & curious, loves to explore with you"
         case .bunny: return "Soft, gentle, hops when happy"
         case .hamster: return "Small, energetic, runs on wheel"
         case .horse: return "Majestic, strong, adventure-ready"

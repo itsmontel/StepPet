@@ -3,7 +3,14 @@
    Animations, Interactivity, and Magic
    ====================================== */
 
+// Waitlist API endpoint (Netlify serverless function)
+// Keys are stored securely on the server side
+const WAITLIST_API_URL = '/.netlify/functions/waitlist';
+
 document.addEventListener('DOMContentLoaded', () => {
+    // No client-side Supabase initialization needed
+    // All API calls go through the secure Netlify function
+    
     // Initialize all components
     initParticles();
     initNavbar();
@@ -14,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initCounterAnimations();
     initFAQ();
     initModals();
+    initWaitlist();
+    initWaitlistPopup();
 });
 
 /* ======================================
@@ -296,8 +305,8 @@ function initPetShowcase() {
    SCROLL ANIMATIONS (Intersection Observer)
    ====================================== */
 function initScrollAnimations() {
-    // Feature cards
-    observeElements('.feature-card', (entry) => {
+    // Feature rows
+    observeElements('.feature-row', (entry) => {
         const delay = entry.target.dataset.delay || 0;
         setTimeout(() => {
             entry.target.classList.add('visible');
@@ -710,4 +719,305 @@ function closeModal(modal) {
 
 console.log('🐾 VirtuPet Website Loaded! Welcome to the cutest fitness app ever!');
 console.log('💡 Psst... try the Konami Code for a surprise! ↑↑↓↓←→←→BA');
+
+/* ======================================
+   WAITLIST FUNCTIONALITY
+   ====================================== */
+function initWaitlist() {
+    // Get all waitlist forms
+    const waitlistBarForm = document.getElementById('waitlistBarForm');
+    const waitlistMainForm = document.getElementById('waitlistMainForm');
+    const footerWaitlistForm = document.getElementById('footerWaitlistForm');
+    const waitlistPopupForm = document.getElementById('waitlistPopupForm');
+    
+    // Attach submit handlers with source tracking for analytics
+    if (waitlistBarForm) {
+        waitlistBarForm.addEventListener('submit', (e) => handleWaitlistSubmit(e, 'waitlistBarEmail', null, 'header_bar'));
+    }
+    
+    if (waitlistMainForm) {
+        waitlistMainForm.addEventListener('submit', (e) => handleWaitlistSubmit(e, 'waitlistMainEmail', 'waitlistMainMessage', 'main_cta'));
+    }
+    
+    if (footerWaitlistForm) {
+        footerWaitlistForm.addEventListener('submit', (e) => handleWaitlistSubmit(e, 'footerWaitlistEmail', 'footerWaitlistMessage', 'footer'));
+    }
+    
+    if (waitlistPopupForm) {
+        waitlistPopupForm.addEventListener('submit', (e) => handleWaitlistSubmit(e, 'waitlistPopupEmail', 'waitlistPopupMessage', 'popup'));
+    }
+}
+
+async function handleWaitlistSubmit(event, emailInputId, messageElementId, source = 'unknown') {
+    event.preventDefault();
+    
+    const emailInput = document.getElementById(emailInputId);
+    const messageElement = messageElementId ? document.getElementById(messageElementId) : null;
+    const email = emailInput.value.trim();
+    
+    if (!email) {
+        if (messageElement) {
+            showMessage(messageElement, 'Please enter your email', 'error');
+        }
+        return;
+    }
+    
+    // Validate email
+    if (!isValidEmail(email)) {
+        if (messageElement) {
+            showMessage(messageElement, 'Please enter a valid email', 'error');
+        }
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Joining...';
+    submitBtn.disabled = true;
+    
+    try {
+        // Submit to Supabase with source tracking
+        const result = await submitToWaitlist(email, source);
+        
+        if (result.success) {
+            if (messageElement) {
+                showMessage(messageElement, '🎉 You\'re on the list! We\'ll notify you when we launch.', 'success');
+            } else {
+                // Show beautiful success notification instead of alert
+                showSuccessNotification(email);
+            }
+            emailInput.value = '';
+            
+            // Close popup if it's open
+            const popup = document.getElementById('waitlistPopup');
+            if (popup && popup.classList.contains('active')) {
+                setTimeout(() => closeWaitlistPopup(), 1500);
+            }
+            
+            // Store in localStorage to prevent showing popup again
+            localStorage.setItem('virtupet_waitlist_joined', 'true');
+        } else {
+            if (result.duplicate) {
+                if (messageElement) {
+                    showMessage(messageElement, 'You\'re already on the waitlist! 🐾', 'success');
+                } else {
+                    showSuccessNotification(email, true);
+                }
+            } else {
+                throw new Error(result.error || 'Failed to join waitlist');
+            }
+        }
+    } catch (error) {
+        console.error('Waitlist error:', error);
+        if (messageElement) {
+            showMessage(messageElement, 'Something went wrong. Please try again.', 'error');
+        } else {
+            alert('Something went wrong. Please try again.');
+        }
+    } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+async function submitToWaitlist(email, source = 'unknown') {
+    try {
+        console.log('Submitting to waitlist:', { email, source, url: WAITLIST_API_URL });
+        
+        // Call Netlify serverless function (keys are secure on server)
+        const response = await fetch(WAITLIST_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: email,
+                source: source
+            })
+        });
+
+        console.log('Response status:', response.status);
+        
+        const result = await response.json();
+        console.log('Response data:', result);
+
+        if (!response.ok) {
+            console.error('Server error:', result);
+            throw new Error(result.error || 'Failed to join waitlist');
+        }
+
+        // Handle duplicate email
+        if (result.duplicate) {
+            return { success: false, duplicate: true };
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Waitlist error:', error);
+        
+        // Fallback to localStorage if function fails (for development/testing)
+        console.warn('📧 Falling back to localStorage (function unavailable):', email, 'Source:', source);
+        
+        const waitlist = JSON.parse(localStorage.getItem('virtupet_waitlist') || '[]');
+        
+        if (waitlist.some(entry => entry.email === email)) {
+            return { success: false, duplicate: true };
+        }
+        
+        waitlist.push({
+            email: email,
+            source: source,
+            timestamp: new Date().toISOString()
+        });
+        localStorage.setItem('virtupet_waitlist', JSON.stringify(waitlist));
+        
+        return { success: true };
+    }
+}
+
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function showMessage(element, message, type) {
+    element.textContent = message;
+    element.className = `${element.className.split(' ')[0]} ${type}`;
+    
+    // Clear message after 5 seconds
+    setTimeout(() => {
+        element.textContent = '';
+        element.className = element.className.split(' ')[0];
+    }, 5000);
+}
+
+function showSuccessNotification(email, isDuplicate = false) {
+    // Remove any existing notification
+    const existingNotification = document.getElementById('waitlist-success-notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.id = 'waitlist-success-notification';
+    notification.className = 'success-notification';
+    
+    notification.innerHTML = `
+        <div class="success-notification-content">
+            <div class="success-icon">
+                <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="success-circle" cx="25" cy="25" r="23" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path class="success-checkmark" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" d="M14 27l7 7 14-14"/>
+                </svg>
+            </div>
+            <div class="success-text">
+                <h3>${isDuplicate ? 'Already on the list!' : 'Welcome to VirtuPet!'}</h3>
+                <p>${isDuplicate ? 'We already have your email. We\'ll notify you when we launch on iOS!' : 'You\'re on the waitlist! We\'ll send you an email when VirtuPet launches on iOS.'}</p>
+                ${!isDuplicate ? `<div class="success-email">${email}</div>` : ''}
+                <a href="https://instagram.com/virtupetapp" target="_blank" class="success-instagram">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                    Follow @virtupetapp for updates
+                </a>
+            </div>
+            <button class="success-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Trigger animation
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+    
+    // Don't auto-remove - user must click X to close
+}
+
+/* ======================================
+   WAITLIST POPUP
+   ====================================== */
+function initWaitlistPopup() {
+    const popup = document.getElementById('waitlistPopup');
+    const closeBtn = document.getElementById('waitlistPopupClose');
+    
+    if (!popup) return;
+    
+    // Check for test parameter to reset popup (for development) - FIRST!
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('resetPopup') === '1') {
+        sessionStorage.removeItem('virtupet_popup_shown');
+        localStorage.removeItem('virtupet_waitlist_joined');
+        console.warn('🔄 Popup storage reset for testing');
+    }
+    
+    // Close popup handlers
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeWaitlistPopup);
+    }
+    
+    // Close on overlay click
+    popup.addEventListener('click', (e) => {
+        if (e.target === popup) {
+            closeWaitlistPopup();
+        }
+    });
+    
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && popup.classList.contains('active')) {
+            closeWaitlistPopup();
+        }
+    });
+    
+    // Show popup after 10 seconds OR on scroll past 40% (if user hasn't already joined)
+    const hasJoined = localStorage.getItem('virtupet_waitlist_joined');
+    const hasSeenPopup = sessionStorage.getItem('virtupet_popup_shown');
+    
+    console.warn('📋 Popup state - hasJoined:', hasJoined, 'hasSeenPopup:', hasSeenPopup);
+    
+    if (!hasJoined && !hasSeenPopup) {
+        console.warn('⏱️ Setting up popup timer (22 seconds)...');
+        
+        // Timer trigger
+        const popupTimer = setTimeout(() => {
+            openWaitlistPopup();
+            sessionStorage.setItem('virtupet_popup_shown', 'true');
+        }, 22000); // 22 seconds
+        
+        // Scroll trigger (40% of page)
+        const scrollHandler = () => {
+            const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+            if (scrollPercent > 40) {
+                clearTimeout(popupTimer);
+                openWaitlistPopup();
+                sessionStorage.setItem('virtupet_popup_shown', 'true');
+                window.removeEventListener('scroll', scrollHandler);
+            }
+        };
+        window.addEventListener('scroll', scrollHandler);
+    }
+}
+
+function openWaitlistPopup() {
+    const popup = document.getElementById('waitlistPopup');
+    console.warn('🚀 Opening waitlist popup...', popup ? 'found' : 'not found');
+    if (popup) {
+        popup.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        console.warn('✅ Popup is now active!');
+    }
+}
+
+function closeWaitlistPopup() {
+    const popup = document.getElementById('waitlistPopup');
+    if (popup) {
+        popup.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
 
