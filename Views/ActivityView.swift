@@ -1426,6 +1426,7 @@ struct ActivityView: View {
     @State private var countdownValue = 3
     @State private var selectedRecentWalk: WalkRecord?
     @State private var showRecentDetail = false
+    @State private var showPremiumSheet = false
     
     var body: some View {
         ZStack {
@@ -1569,8 +1570,8 @@ struct ActivityView: View {
             
             // Upgrade button
             Button(action: {
-                // This would trigger the paywall
                 HapticFeedback.medium.trigger()
+                showPremiumSheet = true
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "crown.fill")
@@ -1589,6 +1590,11 @@ struct ActivityView: View {
             }
             
             Spacer()
+        }
+        .sheet(isPresented: $showPremiumSheet) {
+            PremiumView()
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
         }
     }
     

@@ -72,6 +72,26 @@ class UserSettings: ObservableObject {
         didSet { save() }
     }
     
+    // Achievement tracking properties
+    @Published var previousHealthForAchievement: Int {
+        didSet { save() }
+    }
+    @Published var consecutiveFullHealthDays: Int {
+        didSet { save() }
+    }
+    @Published var consecutiveHealthyDays: Int {
+        didSet { save() }
+    }
+    @Published var consecutiveNoSickDays: Int {
+        didSet { save() }
+    }
+    @Published var rescueCount: Int {
+        didSet { save() }
+    }
+    @Published var lastHealthCheckDate: Date? {
+        didSet { save() }
+    }
+    
     private let userDefaultsKey = "StepPetUserSettings"
     
     init() {
@@ -91,7 +111,7 @@ class UserSettings: ObservableObject {
             self.petsUsed = savedSettings.petsUsed
             self.hasCompletedOnboarding = savedSettings.hasCompletedOnboarding
             self.playCredits = savedSettings.playCredits
-            self.dailyFreeCredits = savedSettings.dailyFreeCredits ?? 7
+            self.dailyFreeCredits = savedSettings.dailyFreeCredits ?? (savedSettings.isPremium ? 10 : 5)
             self.lastDailyCreditsDate = savedSettings.lastDailyCreditsDate
             self.todayPlayHealthBoost = savedSettings.todayPlayHealthBoost
             self.lastPlayBoostDate = savedSettings.lastPlayBoostDate
@@ -99,18 +119,26 @@ class UserSettings: ObservableObject {
             self.hasSeenPaywall = savedSettings.hasSeenPaywall ?? false
             self.accentColorTheme = savedSettings.accentColorTheme ?? "Sunset Glow"
             
+            // Achievement tracking properties
+            self.previousHealthForAchievement = savedSettings.previousHealthForAchievement ?? 0
+            self.consecutiveFullHealthDays = savedSettings.consecutiveFullHealthDays ?? 0
+            self.consecutiveHealthyDays = savedSettings.consecutiveHealthyDays ?? 0
+            self.consecutiveNoSickDays = savedSettings.consecutiveNoSickDays ?? 0
+            self.rescueCount = savedSettings.rescueCount ?? 0
+            self.lastHealthCheckDate = savedSettings.lastHealthCheckDate
+            
             // Reset daily boost if it's a new day
             if let lastDate = lastPlayBoostDate, !Calendar.current.isDateInToday(lastDate) {
                 self.todayPlayHealthBoost = 0
                 self.lastPlayBoostDate = nil
             }
             
-            // Reset daily free credits if it's a new day
+            // Reset daily free credits if it's a new day (5 for free, 10 for premium)
             if let lastCreditsDate = lastDailyCreditsDate, !Calendar.current.isDateInToday(lastCreditsDate) {
-                self.dailyFreeCredits = 7
+                self.dailyFreeCredits = self.isPremium ? 10 : 5
                 self.lastDailyCreditsDate = Date()
             } else if lastDailyCreditsDate == nil {
-                self.dailyFreeCredits = 7
+                self.dailyFreeCredits = self.isPremium ? 10 : 5
                 self.lastDailyCreditsDate = Date()
             }
         } else {
@@ -128,13 +156,21 @@ class UserSettings: ObservableObject {
             self.petsUsed = Set([PetType.dog.rawValue]) // Dog is the main free pet
             self.hasCompletedOnboarding = false
             self.playCredits = 0 // Purchased credits start at 0
-            self.dailyFreeCredits = 7 // 7 free credits daily
+            self.dailyFreeCredits = 5 // 5 free credits daily for free users (10 for premium)
             self.lastDailyCreditsDate = Date()
             self.todayPlayHealthBoost = 0
             self.lastPlayBoostDate = nil
             self.hasCompletedAppTutorial = false
             self.hasSeenPaywall = false
             self.accentColorTheme = "Sunset Glow"
+            
+            // Achievement tracking properties - defaults
+            self.previousHealthForAchievement = 0
+            self.consecutiveFullHealthDays = 0
+            self.consecutiveHealthyDays = 0
+            self.consecutiveNoSickDays = 0
+            self.rescueCount = 0
+            self.lastHealthCheckDate = nil
         }
         
         // Sync haptics setting with global HapticFeedback
@@ -187,6 +223,11 @@ class UserSettings: ObservableObject {
         return useActivityCredit()
     }
     
+    // Daily credits based on premium status
+    var dailyCreditsAllowance: Int {
+        return isPremium ? 10 : 5
+    }
+    
     // Check if it's a new day and reset daily boost and credits
     func checkAndResetDailyBoost() {
         var needsSave = false
@@ -197,9 +238,9 @@ class UserSettings: ObservableObject {
             needsSave = true
         }
         
-        // Reset daily free credits at midnight
+        // Reset daily free credits at midnight (5 for free, 10 for premium)
         if let lastCreditsDate = lastDailyCreditsDate, !Calendar.current.isDateInToday(lastCreditsDate) {
-            dailyFreeCredits = 7
+            dailyFreeCredits = dailyCreditsAllowance
             lastDailyCreditsDate = Date()
             needsSave = true
         }
@@ -230,7 +271,13 @@ class UserSettings: ObservableObject {
             lastPlayBoostDate: lastPlayBoostDate,
             hasCompletedAppTutorial: hasCompletedAppTutorial,
             hasSeenPaywall: hasSeenPaywall,
-            accentColorTheme: accentColorTheme
+            accentColorTheme: accentColorTheme,
+            previousHealthForAchievement: previousHealthForAchievement,
+            consecutiveFullHealthDays: consecutiveFullHealthDays,
+            consecutiveHealthyDays: consecutiveHealthyDays,
+            consecutiveNoSickDays: consecutiveNoSickDays,
+            rescueCount: rescueCount,
+            lastHealthCheckDate: lastHealthCheckDate
         )
         
         if let data = try? JSONEncoder().encode(settings) {
@@ -248,11 +295,67 @@ class UserSettings: ObservableObject {
     }
     
     func updatePetHealth(steps: Int) {
+        // Track previous health for achievement checks
+        let oldHealth = pet.health
+        
         // Calculate step-based health
         let stepHealth = dailyStepGoal > 0 ? Int((Double(steps) / Double(dailyStepGoal)) * 100) : 0
         // Add play activity boosts (capped at 100)
-        pet.health = min(100, stepHealth + todayPlayHealthBoost)
+        let newHealth = min(100, stepHealth + todayPlayHealthBoost)
+        pet.health = newHealth
+        
+        // Update achievement tracking on new day
+        updateHealthAchievementTracking(oldHealth: oldHealth, newHealth: newHealth)
+        
         save()
+    }
+    
+    // MARK: - Update Health Achievement Tracking
+    func updateHealthAchievementTracking(oldHealth: Int, newHealth: Int) {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        // Check if it's a new day
+        let isNewDay: Bool
+        if let lastCheck = lastHealthCheckDate {
+            isNewDay = !calendar.isDate(lastCheck, inSameDayAs: today)
+        } else {
+            isNewDay = true
+        }
+        
+        // Only update daily tracking once per day
+        if isNewDay {
+            // Check if we had full health yesterday
+            if previousHealthForAchievement == 100 {
+                consecutiveFullHealthDays += 1
+            } else {
+                consecutiveFullHealthDays = 0
+            }
+            
+            // Check if we had healthy (60%+) status yesterday
+            if previousHealthForAchievement >= 60 {
+                consecutiveHealthyDays += 1
+            } else {
+                consecutiveHealthyDays = 0
+            }
+            
+            // Check if we were NOT sick (>20%) yesterday
+            if previousHealthForAchievement > 20 {
+                consecutiveNoSickDays += 1
+            } else {
+                consecutiveNoSickDays = 0
+            }
+            
+            lastHealthCheckDate = Date()
+        }
+        
+        // Track rescue count - recovered from sick to healthy
+        if oldHealth <= 20 && newHealth >= 60 {
+            rescueCount += 1
+        }
+        
+        // Update previous health for next check
+        previousHealthForAchievement = newHealth
     }
     
     var greeting: String {
@@ -302,6 +405,14 @@ struct SavedUserSettings: Codable {
     var hasCompletedAppTutorial: Bool?
     var hasSeenPaywall: Bool?
     var accentColorTheme: String?
+    
+    // Achievement tracking
+    var previousHealthForAchievement: Int?
+    var consecutiveFullHealthDays: Int?
+    var consecutiveHealthyDays: Int?
+    var consecutiveNoSickDays: Int?
+    var rescueCount: Int?
+    var lastHealthCheckDate: Date?
 }
 
 // MARK: - Activity Level

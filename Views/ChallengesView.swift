@@ -367,7 +367,7 @@ struct ChallengesView: View {
                     .foregroundColor(.green)
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("7 free credits every day!")
+                    Text(userSettings.isPremium ? "10 free credits every day!" : "5 free credits every day!")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(themeManager.primaryTextColor)
                     Text("Resets at midnight • Buy more anytime")
@@ -601,7 +601,7 @@ struct ChallengesView: View {
                             .font(.system(size: 14))
                             .foregroundColor(.green)
                         
-                        Text("7 free credits daily • Resets at midnight")
+                        Text(userSettings.isPremium ? "10 free credits daily • Resets at midnight" : "5 free credits daily • Resets at midnight")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(themeManager.primaryTextColor)
                         

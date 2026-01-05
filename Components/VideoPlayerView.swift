@@ -19,6 +19,14 @@ struct LoopingVideoPlayer: UIViewRepresentable {
     func updateUIView(_ uiView: UIView, context: Context) {
         if let playerView = uiView as? PlayerUIView {
             playerView.updateVideo(videoName: videoName)
+            // Ensure playback is active when view updates
+            playerView.ensurePlayback()
+        }
+    }
+    
+    static func dismantleUIView(_ uiView: UIView, coordinator: ()) {
+        if let playerView = uiView as? PlayerUIView {
+            playerView.cleanup()
         }
     }
 }
@@ -28,15 +36,48 @@ class PlayerUIView: UIView {
     private var playerLooper: AVPlayerLooper?
     private var queuePlayer: AVQueuePlayer?
     private var currentVideoName: String = ""
+    private var appLifecycleObservers: [NSObjectProtocol] = []
+    private var playerObserver: NSKeyValueObservation?
     
     init(videoName: String) {
         super.init(frame: .zero)
         currentVideoName = videoName
         setupPlayer(videoName: videoName)
+        setupAppLifecycleObservers()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupAppLifecycleObservers() {
+        // Resume when app becomes active
+        let foregroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.resumePlayback()
+        }
+        
+        let activeObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.resumePlayback()
+        }
+        
+        // Pause when app goes to background
+        let backgroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.queuePlayer?.pause()
+        }
+        
+        appLifecycleObservers = [foregroundObserver, activeObserver, backgroundObserver]
     }
     
     private func setupPlayer(videoName: String) {
@@ -77,6 +118,16 @@ class PlayerUIView: UIView {
         
         layer.addSublayer(playerLayer)
         
+        // Observe player status to handle stalls
+        playerObserver = queuePlayer?.observe(\.timeControlStatus, options: [.new]) { [weak self] player, _ in
+            if player.timeControlStatus == .paused && UIApplication.shared.applicationState == .active {
+                // Player stalled while app is active, try to resume
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    self?.resumePlayback()
+                }
+            }
+        }
+        
         queuePlayer?.play()
     }
     
@@ -85,6 +136,8 @@ class PlayerUIView: UIView {
         currentVideoName = videoName
         
         // Stop current player
+        playerObserver?.invalidate()
+        playerObserver = nil
         queuePlayer?.pause()
         playerLooper = nil
         queuePlayer = nil
@@ -93,15 +146,46 @@ class PlayerUIView: UIView {
         setupPlayer(videoName: videoName)
     }
     
+    func ensurePlayback() {
+        // If player exists but isn't playing, restart it
+        if let player = queuePlayer, player.timeControlStatus != .playing {
+            player.play()
+        }
+    }
+    
+    func resumePlayback() {
+        guard window != nil else { return } // Only resume if view is in window
+        queuePlayer?.play()
+    }
+    
+    func cleanup() {
+        playerObserver?.invalidate()
+        playerObserver = nil
+        queuePlayer?.pause()
+        playerLooper = nil
+        queuePlayer = nil
+        
+        for observer in appLifecycleObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        appLifecycleObservers.removeAll()
+    }
+    
     override func layoutSubviews() {
         super.layoutSubviews()
         playerLayer.frame = bounds
     }
     
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window != nil {
+            // View became visible, resume playback
+            resumePlayback()
+        }
+    }
+    
     deinit {
-        queuePlayer?.pause()
-        playerLooper = nil
-        queuePlayer = nil
+        cleanup()
     }
 }
 

@@ -73,7 +73,7 @@ enum TutorialStep: Int, CaseIterable {
         case .streakBadge:
             return "Tap here to see your awards! Build streaks by hitting your daily step goal. 🔥"
         case .creditsBadge:
-            return "Tap to use play credits! Feed, play ball, or watch TV with your pet for an instant +20 health boost."
+            return "Tap to use play credits! Feed, play ball, or watch TV with your pet for a +5 health boost. Play minigames for +3 health."
         case .weeklyGraph:
             return "See your last 7 days at a glance. Tap any day to view that day's detailed stats!"
         case .tabInsights:
@@ -700,6 +700,9 @@ struct TutorialOverlay: View {
             // Weekly graph needs to be higher up
             if step == .weeklyGraph {
                 y = highlight.maxY + 20
+            } else if step == .stepProgress {
+                // Step counter needs more space to avoid overlapping the steps number
+                y = highlight.maxY + 120
             } else {
                 y = highlight.maxY + 35
             }

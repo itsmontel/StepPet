@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - VirtuPet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .policy-page {
+            min-height: 100vh;
+            background: var(--gradient-hero);
+            padding: 40px 20px;
+        }
+        .policy-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 30px;
+            transition: var(--transition-fast);
+        }
+        .back-link:hover {
+            color: var(--primary-dark);
+            transform: translateX(-4px);
+        }
+        .policy-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .policy-icon {
+            width: 100px;
+            height: 100px;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin: 0 auto 24px;
+            box-shadow: var(--shadow-lg);
+        }
+        .policy-title {
+            font-size: 42px;
+            font-weight: 900;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+        .policy-title .gradient-text {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .policy-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .policy-content {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+        }
+        .policy-section {
+            margin-bottom: 32px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .policy-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        .policy-section h3 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .policy-section h3 .icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent-yellow) 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .policy-section p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .policy-section ul {
+            padding-left: 24px;
+            margin-top: 12px;
+        }
+        .policy-section li {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            line-height: 1.7;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .policy-section li::marker {
+            color: var(--primary);
+        }
+        .policy-section a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+            transition: var(--transition-fast);
+        }
+        .policy-section a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .policy-page {
+                padding: 24px 16px;
+            }
+            .policy-title {
+                font-size: 32px;
+            }
+            .policy-content {
+                padding: 24px;
+            }
+            .policy-section h3 {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="policy-page">
+        <div class="policy-container">
+            <a href="/" class="back-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to Home
+            </a>
+            
+            <div class="policy-header">
+                <div class="policy-icon">🔒</div>
+                <h1 class="policy-title">Privacy <span class="gradient-text">Policy</span></h1>
+                <p class="policy-subtitle">Last updated: January 2026</p>
+            </div>
+            
+            <div class="policy-content">
+                <div class="policy-section">
+                    <h3><span class="icon">📱</span> Information We Collect</h3>
+                    <p>VirtuPet collects step count data from Apple HealthKit to track your daily activity and maintain your virtual pet's health. This data is:</p>
+                    <ul>
+                        <li>Stored locally on your device</li>
+                        <li>Never shared with third parties</li>
+                        <li>Used only to calculate your pet's health status</li>
+                    </ul>
+                </div>
+                
+                <div class="policy-section">
+                    <h3><span class="icon">🔐</span> Data Storage</h3>
+                    <p>All your VirtuPet data, including pet information, achievements, and settings, is stored locally on your device using Apple's secure storage mechanisms. We do not maintain servers that store your personal data.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3><span class="icon">❤️</span> HealthKit Integration</h3>
+                    <p>VirtuPet integrates with Apple HealthKit to read your step count data. We only access the data you explicitly grant permission for. You can revoke this access at any time through your device's Settings > Privacy > Health.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3><span class="icon">💳</span> Purchases</h3>
+                    <p>In-app purchases are processed entirely through Apple's App Store. We do not collect or store any payment information. Purchase history is managed by Apple and linked to your Apple ID.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3><span class="icon">📊</span> Analytics</h3>
+                    <p>We may collect anonymous usage analytics to improve the app experience. This data cannot be used to identify you personally and includes general usage patterns and crash reports.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3><span class="icon">🔄</span> Changes to This Policy</h3>
+                    <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date.</p>
+                </div>
+                
+                <div class="policy-section">
+                    <h3><span class="icon">📧</span> Contact Us</h3>
+                    <p>If you have any questions about this Privacy Policy, please contact us at <a href="mailto:support@virtupet.app">support@virtupet.app</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

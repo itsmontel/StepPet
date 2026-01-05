@@ -17,6 +17,9 @@ struct ContentView: View {
     // Listen for navigation to Challenges
     private let navigateToChallengesNotification = NotificationCenter.default.publisher(for: NSNotification.Name("NavigateToChallenges"))
     
+    // Listen for premium upgrade to trigger achievement
+    private let userBecamePremiumNotification = NotificationCenter.default.publisher(for: .userBecamePremium)
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             // Background
@@ -58,6 +61,10 @@ struct ContentView: View {
                     selectedTab = 3 // Navigate to Challenges tab
                 }
             }
+        }
+        .onReceive(userBecamePremiumNotification) { _ in
+            // Unlock premium supporter achievement
+            achievementManager.unlockPremiumSupporter()
         }
         .overlay {
             if achievementManager.showUnlockAnimation, let achievement = achievementManager.recentlyUnlocked {

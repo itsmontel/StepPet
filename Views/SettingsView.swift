@@ -59,8 +59,27 @@ struct SettingsView: View {
         }
         .background(themeManager.backgroundColor.ignoresSafeArea())
         .onChange(of: userSettings.notificationsEnabled) { _, newValue in
+            // Actually enable/disable notifications
             if newValue {
+                // Request permission and schedule notifications
+                NotificationManager.shared.requestAuthorization { granted in
+                    if granted {
+                        NotificationManager.shared.updateScheduledNotifications(
+                            petName: userSettings.pet.name,
+                            enabled: true,
+                            reminderTime: userSettings.reminderTime
+                        )
+                    } else {
+                        // Permission denied - revert the toggle
+                        DispatchQueue.main.async {
+                            userSettings.notificationsEnabled = false
+                        }
+                    }
+                }
                 achievementManager.updateProgress(achievementId: "notifications_on", progress: 1)
+            } else {
+                // Disable notifications - cancel all scheduled
+                NotificationManager.shared.cancelAllNotifications()
             }
         }
         .sheet(isPresented: $showRenameSheet) {
@@ -551,10 +570,11 @@ struct SettingsView: View {
                         UIApplication.shared.open(url)
                     }
                 }) {
-                    Image("instagramlogo")
+                    Image(themeManager.isDarkMode ? "instagramdarklogo" : "instagramlogo")
+                        .renderingMode(.original)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 50, height: 50)
+                        .frame(width: themeManager.isDarkMode ? 42 : 50, height: themeManager.isDarkMode ? 42 : 50)
                 }
                 
                 // TikTok
@@ -1070,17 +1090,36 @@ struct PremiumView: View {
                     // Features
                     VStack(alignment: .leading, spacing: 14) {
                         PremiumFeatureRow(text: "All 5 Pets (Dog, Cat, Bunny, Hamster, Horse)")
-                        PremiumFeatureRow(text: "Unlimited Pet Name Changes")
+                        PremiumFeatureRow(text: "10 Daily Credits (vs 5 for Free)")
                         PremiumFeatureRow(text: "Detailed Statistics & Trends")
                         PremiumFeatureRow(text: "Activity Tracking & Walk History")
-                        PremiumFeatureRow(text: "All Minigames Unlocked")
+                        PremiumFeatureRow(text: "Premium Insights & Analytics")
                         PremiumFeatureRow(text: "Dark Mode")
                     }
                     .padding(.horizontal, 20)
                     
                     // Plan Selection
                     VStack(spacing: 12) {
-                        // Monthly (Best Value)
+                        // Weekly (shown first)
+                        if let weeklyPackage = purchaseManager.weeklyProduct {
+                            PlanButton(
+                                title: "Weekly",
+                                price: weeklyPackage.localizedPriceString + "/week",
+                                isSelected: selectedPlan == "weekly",
+                                isBestValue: false,
+                                action: { selectedPlan = "weekly" }
+                            )
+                        } else {
+                            PlanButton(
+                                title: "Weekly",
+                                price: "$3.99/week",
+                                isSelected: selectedPlan == "weekly",
+                                isBestValue: false,
+                                action: { selectedPlan = "weekly" }
+                            )
+                        }
+                        
+                        // Monthly (Best Value - shown below weekly)
                         if let monthlyPackage = purchaseManager.monthlyProduct {
                             PlanButton(
                                 title: "Monthly",
@@ -1098,25 +1137,6 @@ struct PremiumView: View {
                                 isSelected: selectedPlan == "monthly",
                                 isBestValue: true,
                                 action: { selectedPlan = "monthly" }
-                            )
-                        }
-                        
-                        // Weekly
-                        if let weeklyPackage = purchaseManager.weeklyProduct {
-                            PlanButton(
-                                title: "Weekly",
-                                price: weeklyPackage.localizedPriceString + "/week",
-                                isSelected: selectedPlan == "weekly",
-                                isBestValue: false,
-                                action: { selectedPlan = "weekly" }
-                            )
-                        } else {
-                            PlanButton(
-                                title: "Weekly",
-                                price: "$3.99/week",
-                                isSelected: selectedPlan == "weekly",
-                                isBestValue: false,
-                                action: { selectedPlan = "weekly" }
                             )
                         }
                     }
@@ -1327,8 +1347,8 @@ struct FAQView: View {
         ("What happens at midnight?", "Your pet's health resets at midnight local time. Each day is a fresh start—no punishment carried over from bad days! Daily achievements also reset if not completed."),
         ("How do streaks work?", "Streaks track consecutive days where your pet ends the day at 100% health. This can be achieved by hitting your step goal or by playing pet activities. Break a streak by missing a day."),
         ("What pets are available?", "There are 5 pets: Dog (free), Cat, Bunny, Hamster, and Horse (premium). Each has unique moods and animations!"),
-        ("What are play credits?", "Play credits let you interact with your pet through activities like Feed, Play Ball, or Watch TV. Each activity costs 1 credit and boosts your pet's health by 20%. You can purchase more credits in the Challenges tab."),
-        ("Are minigames free?", "Yes! All minigames (Mood Catch, Memory Match, Bubble Pop, Pattern Match) are completely free to play. They don't cost credits and are just for fun with your pet."),
+        ("What are play credits?", "Play credits are used in the Challenges tab. Minigames cost 1 credit and boost your pet's health by 3%. Pet activities (Feed, Play Ball, Watch TV) cost 1 credit and boost health by 5%. Free users get 5 credits daily, premium users get 10. Extra credits can be purchased in bundles."),
+        ("Are minigames free?", "Minigames in the Challenges tab cost 1 credit each and give +3% health. Free users get 5 credits daily, premium users get 10. Credits reset at midnight and extra can be purchased in the games section."),
         ("How do achievements work?", "Complete various challenges to unlock achievements! Some are daily (like step goals), some are cumulative (like total steps walked), and some are one-time accomplishments. Track your progress in the Challenges tab."),
         ("How does activity tracking work?", "In the Activity tab, you can start tracking walks with real-time GPS, weather effects on the map, and detailed stats. After completing an activity, you can add photos, notes, and rate your mood."),
         ("How do I sync with Apple Health?", "VirtuPet automatically syncs when you grant HealthKit permissions during onboarding. Make sure you've allowed step count access in your device's Settings > Privacy > Health."),
@@ -1371,9 +1391,7 @@ struct FAQCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button(action: {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    isExpanded.toggle()
-                }
+                isExpanded.toggle()
             }) {
                 HStack {
                     Text(question)
@@ -1386,8 +1404,10 @@ struct FAQCard: View {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(themeManager.secondaryTextColor)
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
                 }
                 .padding(16)
+                .contentShape(Rectangle())
             }
             .buttonStyle(PlainButtonStyle())
             
@@ -1397,12 +1417,14 @@ struct FAQCard: View {
                     .foregroundColor(themeManager.secondaryTextColor)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .background(
             RoundedRectangle(cornerRadius: 14)
                 .fill(themeManager.cardBackgroundColor)
         )
+        .animation(.easeOut(duration: 0.2), value: isExpanded)
     }
 }
 
@@ -1501,7 +1523,7 @@ struct PrivacyPolicyView: View {
                     PrivacySection(
                         icon: "envelope",
                         title: "Contact Us",
-                        content: "If you have any questions about this Privacy Policy, please contact us at support@steppet.app"
+                        content: "If you have any questions about this Privacy Policy, please contact us at support@virtupet.app"
                     )
                     
                     Spacer(minLength: 40)
@@ -1624,7 +1646,7 @@ struct TermsOfServiceView: View {
                     PrivacySection(
                         icon: "envelope",
                         title: "Contact Us",
-                        content: "If you have any questions about these Terms of Service, please contact us at support@steppet.app"
+                        content: "If you have any questions about these Terms of Service, please contact us at support@virtupet.app"
                     )
                     
                     Spacer(minLength: 40)
@@ -1683,201 +1705,93 @@ struct PrivacySection: View {
 struct ContactSupportView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var themeManager: ThemeManager
-    @State private var selectedTopic = "General"
-    @State private var messageText = ""
-    @State private var showConfirmation = false
-    
-    let topics = ["General", "Bug Report", "Feature Request", "Account Issue", "Premium/Purchases", "Other"]
     
     var body: some View {
         NavigationView {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    // Header
-                    VStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.green.opacity(0.2), Color.teal.opacity(0.1)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
+            VStack(spacing: 32) {
+                Spacer()
+                
+                // Header
+                VStack(spacing: 16) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [themeManager.accentColor.opacity(0.2), themeManager.accentColor.opacity(0.1)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
                                 )
-                                .frame(width: 80, height: 80)
-                            
-                            Image(systemName: "bubble.left.and.bubble.right.fill")
-                                .font(.system(size: 32))
-                                .foregroundColor(.green)
-                        }
-                        
-                        Text("Contact Support")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(themeManager.primaryTextColor)
-                        
-                        Text("We're here to help!")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(themeManager.secondaryTextColor)
-                    }
-                    .padding(.bottom, 8)
-                    
-                    // Quick Actions
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Quick Actions")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(themeManager.secondaryTextColor)
-                        
-                        HStack(spacing: 12) {
-                            QuickActionButton(
-                                icon: "envelope.fill",
-                                title: "Email Us",
-                                color: .blue,
-                                action: {
-                                    if let url = URL(string: "mailto:support@steppet.app") {
-                                        UIApplication.shared.open(url)
-                                    }
-                                }
                             )
-                            
-                            QuickActionButton(
-                                icon: "star.fill",
-                                title: "Rate App",
-                                color: .yellow,
-                                action: {
-                                    // Open App Store review
-                                }
-                            )
-                        }
+                            .frame(width: 100, height: 100)
                         
-                        HStack(spacing: 12) {
-                            QuickActionButton(
-                                icon: "questionmark.circle.fill",
-                                title: "FAQ",
-                                color: .orange,
-                                action: {
-                                    dismiss()
-                                }
-                            )
-                            
-                            QuickActionButton(
-                                icon: "globe",
-                                title: "Website",
-                                color: .purple,
-                                action: {
-                                    if let url = URL(string: "https://steppet.app") {
-                                        UIApplication.shared.open(url)
-                                    }
-                                }
-                            )
-                        }
+                        Image(systemName: "envelope.fill")
+                            .font(.system(size: 40))
+                            .foregroundColor(themeManager.accentColor)
                     }
                     
-                    // Send a Message Section
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Send a Message")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(themeManager.secondaryTextColor)
-                        
-                        // Topic Selector
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Topic")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(themeManager.secondaryTextColor)
-                            
-                            Menu {
-                                ForEach(topics, id: \.self) { topic in
-                                    Button(topic) {
-                                        selectedTopic = topic
-                                    }
-                                }
-                            } label: {
-                                HStack {
-                                    Text(selectedTopic)
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(themeManager.primaryTextColor)
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.down")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(themeManager.secondaryTextColor)
-                                }
-                                .padding(14)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(themeManager.cardBackgroundColor)
-                                )
-                            }
-                        }
-                        
-                        // Message Input
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Message")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(themeManager.secondaryTextColor)
-                            
-                            TextEditor(text: $messageText)
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(themeManager.primaryTextColor)
-                                .frame(minHeight: 120)
-                                .padding(12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(themeManager.cardBackgroundColor)
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(themeManager.accentColor.opacity(0.3), lineWidth: 1)
-                                )
-                        }
-                        
-                        // Send Button
-                        Button(action: {
-                            // Send message action
-                            if let url = URL(string: "mailto:support@steppet.app?subject=\(selectedTopic.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(messageText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
-                                UIApplication.shared.open(url)
-                            }
-                            showConfirmation = true
-                        }) {
-                            HStack {
-                                Image(systemName: "paperplane.fill")
-                                Text("Send Message")
-                                    .font(.system(size: 16, weight: .bold))
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                            )
-                        }
-                        .disabled(messageText.isEmpty)
-                        .opacity(messageText.isEmpty ? 0.6 : 1.0)
-                    }
+                    Text("Contact Support")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
                     
-                    // Response Time
-                    HStack(spacing: 8) {
-                        Image(systemName: "clock")
-                            .font(.system(size: 14))
-                            .foregroundColor(themeManager.secondaryTextColor)
-                        
-                        Text("Typical response time: 24-48 hours")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(themeManager.secondaryTextColor)
-                    }
-                    .padding(.top, 8)
-                    
-                    Spacer(minLength: 40)
+                    Text("We're here to help!")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
                 }
-                .padding(20)
+                
+                // Email info
+                VStack(spacing: 12) {
+                    Text("Email us at")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                    
+                    Button(action: {
+                        if let url = URL(string: "mailto:support@virtupet.app") {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        Text("support@virtupet.app")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.accentColor)
+                    }
+                }
+                .padding(.vertical, 24)
+                .padding(.horizontal, 32)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(themeManager.cardBackgroundColor)
+                )
+                
+                // Website button
+                Button(action: {
+                    if let url = URL(string: "https://virtupet.app") {
+                        UIApplication.shared.open(url)
+                    }
+                }) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "globe")
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("Visit Website")
+                            .font(.system(size: 17, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(
+                                LinearGradient(
+                                    colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    )
+                }
+                
+                Spacer()
+                Spacer()
             }
+            .padding(20)
             .background(themeManager.backgroundColor.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -1887,13 +1801,6 @@ struct ContactSupportView: View {
                     }
                     .foregroundColor(themeManager.accentColor)
                 }
-            }
-            .alert("Message Sent!", isPresented: $showConfirmation) {
-                Button("OK") {
-                    messageText = ""
-                }
-            } message: {
-                Text("Thank you for reaching out. We'll get back to you within 24-48 hours.")
             }
         }
     }

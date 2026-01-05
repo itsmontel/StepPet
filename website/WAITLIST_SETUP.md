@@ -107,3 +107,5 @@ SELECT * FROM waitlist_summary;
 
 Your waitlist is now secure and ready to collect signups! 🎉
 
+
+

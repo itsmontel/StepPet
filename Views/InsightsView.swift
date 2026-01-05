@@ -45,6 +45,7 @@ struct InsightsView: View {
     @State private var isLoading = false
     @State private var selectedTab: Int = 0
     @State private var animateCharts = false
+    @State private var showPremiumSheet = false
     
     // MARK: - Computed Properties
     private var currentPeriodData: [Date: Int] {
@@ -207,87 +208,87 @@ struct InsightsView: View {
     
     // MARK: - Premium Gate View
     private var premiumGateView: some View {
-        VStack(spacing: 24) {
-            Spacer().frame(maxHeight: 60)
-            
-            // Animated icon
-            ZStack {
-                Circle()
-                    .fill(themeManager.accentColor.opacity(0.1))
-                    .frame(width: 140, height: 140)
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 16) {
+                Spacer().frame(height: 40)
                 
-                Circle()
-                    .fill(themeManager.accentColor.opacity(0.2))
-                    .frame(width: 100, height: 100)
-                
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 50))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.6)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            }
-            
-            VStack(spacing: 12) {
-                Text("Deep Insights")
-                    .font(.system(size: 32, weight: .black, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
-                
-                Text("Premium Analytics")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(
-                        LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing)
-                    )
-                
-                Text("Unlock powerful analytics to understand your fitness journey like never before")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(themeManager.secondaryTextColor)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-            }
-            
-            // Features list
-            VStack(alignment: .leading, spacing: 14) {
-                InsightFeatureRow(icon: "chart.xyaxis.line", text: "Interactive trend charts", color: .blue)
-                InsightFeatureRow(icon: "calendar.badge.clock", text: "Day-of-week patterns", color: .orange)
-                InsightFeatureRow(icon: "trophy.fill", text: "Personal records tracking", color: .yellow)
-                InsightFeatureRow(icon: "flame.fill", text: "Streak analytics", color: .red)
-                InsightFeatureRow(icon: "arrow.triangle.2.circlepath", text: "Week-over-week comparison", color: .green)
-                InsightFeatureRow(icon: "figure.walk.motion", text: "Lifetime milestones", color: .purple)
-            }
-            .padding(.horizontal, 40)
-            .padding(.vertical, 20)
-            
-            // Upgrade button
-            Button(action: {
-                HapticFeedback.medium.trigger()
-            }) {
-                HStack(spacing: 10) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 18, weight: .bold))
-                    Text("Unlock Premium")
-                        .font(.system(size: 18, weight: .bold))
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 40)
-                .padding(.vertical, 18)
-                .background(
-                    RoundedRectangle(cornerRadius: 25)
-                        .fill(
+                // Animated icon
+                ZStack {
+                    Circle()
+                        .fill(themeManager.accentColor.opacity(0.1))
+                        .frame(width: 100, height: 100)
+                    
+                    Circle()
+                        .fill(themeManager.accentColor.opacity(0.2))
+                        .frame(width: 70, height: 70)
+                    
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.system(size: 34))
+                        .foregroundStyle(
                             LinearGradient(
-                                colors: [Color.purple, Color.pink],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                                colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.6)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
                         )
-                        .shadow(color: Color.purple.opacity(0.4), radius: 15, y: 8)
-                )
+                }
+                
+                VStack(spacing: 8) {
+                    Text("Deep Insights")
+                        .font(.system(size: 26, weight: .black, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    Text("Premium Analytics")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(themeManager.accentColor)
+                    
+                    Text("Unlock powerful analytics to understand your fitness journey")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 30)
+                }
+                
+                // Features list - more compact
+                VStack(alignment: .leading, spacing: 10) {
+                    InsightFeatureRow(icon: "chart.xyaxis.line", text: "Interactive trend charts", color: .blue)
+                    InsightFeatureRow(icon: "calendar.badge.clock", text: "Day-of-week patterns", color: .orange)
+                    InsightFeatureRow(icon: "trophy.fill", text: "Personal records tracking", color: .yellow)
+                    InsightFeatureRow(icon: "flame.fill", text: "Streak analytics", color: .red)
+                    InsightFeatureRow(icon: "arrow.triangle.2.circlepath", text: "Week-over-week comparison", color: .green)
+                    InsightFeatureRow(icon: "figure.walk.motion", text: "Lifetime milestones", color: .purple)
+                }
+                .padding(.horizontal, 30)
+                .padding(.vertical, 12)
+                
+                // Upgrade button - matching Activity page style
+                Button(action: {
+                    HapticFeedback.medium.trigger()
+                    showPremiumSheet = true
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 16, weight: .bold))
+                        Text("Upgrade to Premium")
+                            .font(.system(size: 17, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(LinearGradient(colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
+                            .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
+                    )
+                }
+                
+                Spacer(minLength: 100)
             }
-            
-            Spacer()
+        }
+        .sheet(isPresented: $showPremiumSheet) {
+            PremiumView()
+                .environmentObject(themeManager)
+                .environmentObject(userSettings)
         }
     }
     

@@ -142,11 +142,11 @@ struct Achievement: Identifiable, Codable {
         Achievement(id: "steady_pace", title: "Steady Pace", description: "Hit exactly 10,000 steps (±500) for 3 days", category: .consistency, rarity: .uncommon, icon: "speedometer", targetProgress: 3),
         
         // MARK: - Milestone Achievements (8 achievements)
-        Achievement(id: "one_week_user", title: "One Week User", description: "Use StepPet for 7 days", category: .milestones, rarity: .common, icon: "7.circle.fill", targetProgress: 7),
-        Achievement(id: "one_month_user", title: "One Month User", description: "Use StepPet for 30 days", category: .milestones, rarity: .uncommon, icon: "30.circle.fill", targetProgress: 30),
-        Achievement(id: "three_month_user", title: "Three Month User", description: "Use StepPet for 90 days", category: .milestones, rarity: .rare, icon: "calendar.badge.plus", targetProgress: 90),
-        Achievement(id: "six_month_user", title: "Six Month User", description: "Use StepPet for 180 days", category: .milestones, rarity: .epic, icon: "calendar.badge.exclamationmark", targetProgress: 180),
-        Achievement(id: "one_year_user", title: "One Year User", description: "Use StepPet for 365 days", category: .milestones, rarity: .legendary, icon: "star.circle.fill", targetProgress: 365),
+        Achievement(id: "one_week_user", title: "One Week User", description: "Use VirtuPet for 7 days", category: .milestones, rarity: .common, icon: "7.circle.fill", targetProgress: 7),
+        Achievement(id: "one_month_user", title: "One Month User", description: "Use VirtuPet for 30 days", category: .milestones, rarity: .uncommon, icon: "30.circle.fill", targetProgress: 30),
+        Achievement(id: "three_month_user", title: "Three Month User", description: "Use VirtuPet for 90 days", category: .milestones, rarity: .rare, icon: "calendar.badge.plus", targetProgress: 90),
+        Achievement(id: "six_month_user", title: "Six Month User", description: "Use VirtuPet for 180 days", category: .milestones, rarity: .epic, icon: "calendar.badge.exclamationmark", targetProgress: 180),
+        Achievement(id: "one_year_user", title: "One Year User", description: "Use VirtuPet for 365 days", category: .milestones, rarity: .legendary, icon: "star.circle.fill", targetProgress: 365),
         Achievement(id: "hundred_goals", title: "100 Goals", description: "Achieve your daily goal 100 times", category: .milestones, rarity: .rare, icon: "100.circle.fill", targetProgress: 100),
         Achievement(id: "thousand_goals", title: "1000 Goals", description: "Achieve your daily goal 1000 times", category: .milestones, rarity: .legendary, icon: "crown.fill", targetProgress: 1000),
         Achievement(id: "first_anniversary", title: "First Anniversary", description: "Celebrate one year with your pet", category: .milestones, rarity: .legendary, icon: "gift.fill", targetProgress: 365),
@@ -161,7 +161,7 @@ struct Achievement: Identifiable, Codable {
         Achievement(id: "close_call", title: "Close Call", description: "Complete your goal in the last hour of the day", category: .special, rarity: .uncommon, icon: "clock.badge.exclamationmark.fill", targetProgress: 1),
         Achievement(id: "overachiever", title: "Overachiever", description: "Exceed your weekly goal by 25%", category: .special, rarity: .uncommon, icon: "arrow.up.right.circle.fill", targetProgress: 1),
         Achievement(id: "pet_lover", title: "Pet Lover", description: "Try all 5 different pets", category: .special, rarity: .rare, icon: "pawprint.fill", targetProgress: 5),
-        Achievement(id: "premium_supporter", title: "Premium Supporter", description: "Upgrade to StepPet Premium", category: .special, rarity: .epic, icon: "crown.fill", targetProgress: 1)
+        Achievement(id: "premium_supporter", title: "Premium Supporter", description: "Upgrade to VirtuPet Premium", category: .special, rarity: .epic, icon: "crown.fill", targetProgress: 1)
     ]
 }
 

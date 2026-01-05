@@ -134,6 +134,7 @@ struct TodayView: View {
                 CelebrationOverlay(petName: userSettings.pet.name) {
                     withAnimation { showCelebration = false }
                 }
+                .environmentObject(themeManager)
             }
         }
         .overlay {
@@ -1046,6 +1047,11 @@ struct TodayView: View {
         
         // Always check achievements, not just when at 100% health
         let daysUsed = Calendar.current.dateComponents([.day], from: userSettings.firstLaunchDate ?? Date(), to: Date()).day ?? 0
+        let previousHealth = userSettings.previousHealthForAchievement
+        
+        // Calculate weekly steps
+        let weeklySteps = healthKitManager.weeklySteps.values.reduce(0, +)
+        
         achievementManager.checkAchievements(
             todaySteps: steps,
             totalSteps: stepDataManager.totalStepsAllTime,
@@ -1054,8 +1060,24 @@ struct TodayView: View {
             goalSteps: userSettings.dailyStepGoal,
             goalsAchieved: stepDataManager.totalGoalsAchieved,
             daysUsed: daysUsed,
-            petsUsed: userSettings.petsUsed.count
+            petsUsed: userSettings.petsUsed.count,
+            weeklySteps: weeklySteps,
+            previousHealth: previousHealth,
+            consecutiveFullHealthDays: userSettings.consecutiveFullHealthDays,
+            consecutiveHealthyDays: userSettings.consecutiveHealthyDays,
+            consecutiveNoSickDays: userSettings.consecutiveNoSickDays,
+            rescueCount: userSettings.rescueCount,
+            consecutiveGoalDays: userSettings.streakData.currentStreak
         )
+        
+        // Check daily walker achievement
+        achievementManager.checkDailyWalkerAchievement(todaySteps: steps)
+        
+        // Check day-specific achievements (weekend warrior, never miss Monday)
+        achievementManager.checkDaySpecificAchievements(todaySteps: steps, goalSteps: userSettings.dailyStepGoal)
+        
+        // Update previous health for next check
+        userSettings.previousHealthForAchievement = currentHealth
         
         // Update streak only when goal achieved
         if currentHealth >= 100 {
@@ -1473,71 +1495,271 @@ struct CelebrationOverlay: View {
     let petName: String
     let onDismiss: () -> Void
     
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var showContent = false
-    @State private var confettiActive = true
+    @State private var pulseAnimation = false
+    @State private var sparkleRotation: Double = 0
+    @State private var confettiParticles: [ConfettiParticle] = []
     
     var body: some View {
         ZStack {
-            Color.black.opacity(0.6)
-                .ignoresSafeArea()
-                .onTapGesture { onDismiss() }
+            // Gradient background overlay
+            LinearGradient(
+                colors: [
+                    Color.black.opacity(0.85),
+                    Color(hex: "1a1a2e").opacity(0.95)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            .onTapGesture { onDismiss() }
             
-            VStack(spacing: 20) {
-                HStack(spacing: 20) {
-                    ForEach(0..<5) { i in
-                        Text(["🎉", "⭐", "🌟", "✨", "🎊"][i])
-                            .font(.system(size: 30))
-                            .offset(y: confettiActive ? -20 : 0)
-                            .animation(
-                                .easeInOut(duration: 0.5)
-                                .repeatForever(autoreverses: true)
-                                .delay(Double(i) * 0.1),
-                                value: confettiActive
-                            )
+            // Floating confetti particles
+            ForEach(confettiParticles) { particle in
+                Text(particle.emoji)
+                    .font(.system(size: particle.size))
+                    .position(particle.position)
+                    .opacity(particle.opacity)
+            }
+            
+            // Main content card
+            VStack(spacing: 0) {
+                // Top glow effect
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color.yellow.opacity(0.4), Color.clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 100
+                        )
+                    )
+                    .frame(width: 200, height: 200)
+                    .blur(radius: 25)
+                    .offset(y: 30)
+                
+                VStack(spacing: 16) {
+                    // Sparkle ring around trophy
+                    ZStack {
+                        // Rotating sparkles
+                        ForEach(0..<8, id: \.self) { i in
+                            Image(systemName: "sparkle")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.yellow, .orange],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .offset(x: 55 * cos(Double(i) * .pi / 4 + sparkleRotation),
+                                        y: 55 * sin(Double(i) * .pi / 4 + sparkleRotation))
+                                .opacity(0.8)
+                        }
+                        
+                        // Trophy with glow
+                        ZStack {
+                            Text("🏆")
+                                .font(.system(size: 70))
+                                .shadow(color: .yellow.opacity(0.6), radius: 15)
+                            
+                            // Pulse ring
+                            Circle()
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [.yellow.opacity(0.5), .orange.opacity(0.3)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 2.5
+                                )
+                                .frame(width: 100, height: 100)
+                                .scaleEffect(pulseAnimation ? 1.2 : 1.0)
+                                .opacity(pulseAnimation ? 0 : 0.8)
+                        }
                     }
-                }
-                
-                Text("🏆")
-                    .font(.system(size: 80))
-                    .scaleEffect(showContent ? 1.0 : 0.5)
-                
-                Text("Goal Achieved!")
-                    .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundColor(.white)
-                
-                Text("\(petName) is at full health!")
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.8))
-                
-                Text("Streak maintained! 🔥")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundColor(.orange)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Capsule().fill(Color.orange.opacity(0.2)))
-                
-                Button(action: onDismiss) {
-                    Text("Continue")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                    .scaleEffect(showContent ? 1.0 : 0.3)
+                    
+                    // Title with gradient
+                    Text("Goal Achieved!")
+                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.white, Color(hex: "FFD700")],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .shadow(color: .yellow.opacity(0.3), radius: 8)
+                    
+                    // Pet status
+                    VStack(spacing: 6) {
+                        Text("\(petName) is thriving!")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.9))
+                        
+                        HStack(spacing: 5) {
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.pink)
+                            Text("100% Health")
+                                .font(.system(size: 14, weight: .bold, design: .rounded))
+                                .foregroundColor(.pink)
+                        }
+                    }
+                    
+                    // Streak badge
+                    HStack(spacing: 8) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.orange, .red],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                        
+                        Text("Streak Maintained!")
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.orange.opacity(0.3), Color.red.opacity(0.2)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color.orange.opacity(0.5), lineWidth: 1)
+                            )
+                    )
+                    
+                    // Continue button
+                    Button(action: onDismiss) {
+                        HStack(spacing: 8) {
+                            Text("Continue")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 14, weight: .bold))
+                        }
+                        .foregroundColor(.black)
                         .padding(.horizontal, 40)
                         .padding(.vertical, 14)
                         .background(
                             Capsule()
-                                .fill(LinearGradient(colors: [.green, .green.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color(hex: "FFD700"), Color(hex: "FFA500")],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .shadow(color: .orange.opacity(0.5), radius: 12, y: 4)
                         )
+                    }
                 }
-                .padding(.top, 10)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 32)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(hex: "2d2d44"),
+                                    Color(hex: "1a1a2e")
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 32)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [Color.white.opacity(0.2), Color.clear],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                        .shadow(color: .black.opacity(0.5), radius: 30, y: 20)
+                )
+                .padding(.horizontal, 24)
             }
+            .offset(y: -60)
             .scaleEffect(showContent ? 1.0 : 0.8)
             .opacity(showContent ? 1.0 : 0.0)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            // Generate confetti particles
+            generateConfetti()
+            
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 showContent = true
+            }
+            
+            // Start pulse animation
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: false)) {
+                pulseAnimation = true
+            }
+            
+            // Start sparkle rotation
+            withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+                sparkleRotation = .pi * 2
+            }
+            
+            // Animate confetti
+            animateConfetti()
+        }
+    }
+    
+    private func generateConfetti() {
+        let emojis = ["🎉", "⭐", "✨", "🌟", "🎊", "💫", "🏆", "❤️"]
+        confettiParticles = (0..<20).map { _ in
+            ConfettiParticle(
+                emoji: emojis.randomElement()!,
+                position: CGPoint(
+                    x: CGFloat.random(in: 50...350),
+                    y: CGFloat.random(in: -100...0)
+                ),
+                size: CGFloat.random(in: 20...35),
+                opacity: 0
+            )
+        }
+    }
+    
+    private func animateConfetti() {
+        for i in confettiParticles.indices {
+            let delay = Double(i) * 0.1
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                withAnimation(.easeOut(duration: 2.5)) {
+                    confettiParticles[i].position.y += CGFloat.random(in: 600...900)
+                    confettiParticles[i].opacity = 1
+                }
+                withAnimation(.easeIn(duration: 2.5).delay(1.5)) {
+                    confettiParticles[i].opacity = 0
+                }
             }
         }
     }
+}
+
+// Confetti particle model
+struct ConfettiParticle: Identifiable {
+    let id = UUID()
+    let emoji: String
+    var position: CGPoint
+    let size: CGFloat
+    var opacity: Double
 }
 
 // MARK: - Streak Badge Position Key

@@ -10,6 +10,11 @@ import SwiftUI
 import RevenueCat
 import RevenueCatUI
 
+// MARK: - Notification Names
+extension Notification.Name {
+    static let userBecamePremium = Notification.Name("userBecamePremium")
+}
+
 // MARK: - Entitlement Identifier
 struct EntitlementConstants {
     static let pro = "Virtupet: Steps Pro"
@@ -105,12 +110,21 @@ class PurchaseManager: NSObject, ObservableObject {
         isLoading = true
         errorMessage = nil
         
+        let wasPremiumBefore = isPremium
+        
         do {
             let result = try await Purchases.shared.purchase(package: package)
             
             self.customerInfo = result.customerInfo
-            self.isPremium = result.customerInfo.entitlements[EntitlementConstants.pro]?.isActive == true
+            let isNowPremium = result.customerInfo.entitlements[EntitlementConstants.pro]?.isActive == true
+            self.isPremium = isNowPremium
             isLoading = false
+            
+            // Post notification if user just became premium for the first time
+            if isNowPremium && !wasPremiumBefore && !result.userCancelled {
+                NotificationCenter.default.post(name: .userBecamePremium, object: nil)
+                print("🎉 User upgraded to premium! Achievement notification posted.")
+            }
             
             return !result.userCancelled
         } catch {
