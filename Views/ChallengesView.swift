@@ -20,7 +20,6 @@ struct ChallengesView: View {
     
     // Activities & Minigames States
     @State private var showCreditsSheet = false
-    @State private var showActivitySheet = false
     @State private var selectedActivity: PetActivity?
     @State private var showHealthBoostAnimation = false
     @State private var healthBoostAmount = 0
@@ -112,14 +111,12 @@ struct ChallengesView: View {
             ChallengeDetailSheet(challenge: challenge)
         }
         .sheet(isPresented: $showCreditsSheet) { creditsSheet }
-        .sheet(isPresented: $showActivitySheet) {
-            if let activity = selectedActivity {
-                ActivityPlaySheet(
-                    activity: activity,
-                    petType: userSettings.pet.type,
-                    onComplete: { handleActivityComplete() }
-                )
-            }
+        .sheet(item: $selectedActivity) { activity in
+            ActivityPlaySheet(
+                activity: activity,
+                petType: userSettings.pet.type,
+                onComplete: { handleActivityComplete() }
+            )
         }
         .fullScreenCover(isPresented: $showTreatCatch) {
             TreatCatchGameView(onComplete: handleMinigameComplete)
@@ -489,7 +486,6 @@ struct ChallengesView: View {
                     ) {
                         if userSettings.totalCredits > 0 {
                             selectedActivity = activity
-                            showActivitySheet = true
                         } else {
                             showCreditsSheet = true
                         }
@@ -521,7 +517,7 @@ struct ChallengesView: View {
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                         
-                        Text("Starting at $1.99 for 3 credits")
+                        Text("Starting at \(CreditPackage.packages.first?.price ?? "$1.99") for \(CreditPackage.packages.first?.credits ?? 5) credits")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                     }
@@ -745,7 +741,7 @@ struct ChallengesView: View {
     private func handleActivityComplete() {
         // Credits and health already handled when user clicked "Start"
         // Just close the sheet
-        showActivitySheet = false
+        selectedActivity = nil
     }
     
     private func purchaseCredits(package: CreditPackage) {
@@ -1175,9 +1171,10 @@ struct ActivityPlaySheet: View {
     @EnvironmentObject var userSettings: UserSettings
     @Environment(\.dismiss) var dismiss
     
-    @State private var showAnimation = false
+    @State private var hasStarted = false
     @State private var animationComplete = false
     @State private var pulseAnimation = false
+    @State private var isGIFAnimating = false
     
     var body: some View {
         GeometryReader { geo in
@@ -1226,7 +1223,7 @@ struct ActivityPlaySheet: View {
                             Image(systemName: "bolt.fill")
                                 .font(.system(size: 11))
                                 .foregroundColor(.yellow)
-                            Text("\(userSettings.playCredits)")
+                            Text("\(userSettings.totalCredits)")
                                 .font(.system(size: 13, weight: .bold, design: .rounded))
                                 .foregroundColor(themeManager.primaryTextColor)
                         }
@@ -1243,212 +1240,194 @@ struct ActivityPlaySheet: View {
                     
                     Spacer()
                     
-                    // Main content area
-                    if showAnimation {
-                            // Animation playing state
-                            VStack(spacing: isCompact ? 16 : 24) {
-                                // GIF container with nice styling
-                                ZStack {
-                                    // Glow effect behind GIF
-                                    RoundedRectangle(cornerRadius: 24)
-                                        .fill(activity.color.opacity(0.15))
-                                        .frame(width: animationSize + 20, height: animationSize + 20)
-                                        .blur(radius: 20)
-                                        .scaleEffect(pulseAnimation ? 1.05 : 1.0)
-                                    
-                                    // GIF card
+                    // Main content - GIF is always loaded, just with overlay when not started
+                    VStack(spacing: isCompact ? 16 : 24) {
+                        // GIF container - always visible, loads immediately
+                        ZStack {
+                            // Glow effect behind GIF
+                            RoundedRectangle(cornerRadius: 24)
+                                .fill(activity.color.opacity(0.15))
+                                .frame(width: animationSize + 20, height: animationSize + 20)
+                                .blur(radius: 20)
+                                .scaleEffect(pulseAnimation && hasStarted ? 1.05 : 1.0)
+                            
+                            // GIF card - ALWAYS present for preloading
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(themeManager.cardBackgroundColor)
+                                    .shadow(color: activity.color.opacity(0.2), radius: 20, y: 8)
+                                
+                                // GIF is always in view tree, just controls animation state
+                                GIFImage(activity.gifName(for: petType), isAnimating: $isGIFAnimating)
+                                    .frame(width: animationSize - 16, height: animationSize - 16)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                                
+                                // Overlay with play icon when not started
+                                if !hasStarted {
                                     ZStack {
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .fill(themeManager.cardBackgroundColor)
-                                            .shadow(color: activity.color.opacity(0.2), radius: 20, y: 8)
-                                        
-                                        GIFImage(activity.gifName(for: petType))
-                                            .frame(width: animationSize - 16, height: animationSize - 16)
+                                        Color.black.opacity(0.3)
                                             .clipShape(RoundedRectangle(cornerRadius: 16))
-                                            .id("\(activity.id)-\(petType.rawValue)")
-                                    }
-                                    .frame(width: animationSize, height: animationSize)
-                                }
-                                
-                                // Status text
-                                if animationComplete {
-                                    VStack(spacing: 10) {
-                                        // Success emoji with bounce
-                                        Text("🎉")
-                                            .font(.system(size: isCompact ? 32 : 44))
                                         
-                                        Text("\(userSettings.pet.name) loved it!")
-                                            .font(.system(size: isCompact ? 18 : 22, weight: .bold, design: .rounded))
-                                            .foregroundColor(themeManager.primaryTextColor)
-                                        
-                                        // Health boost badge
-                                        HStack(spacing: 6) {
-                                            Image(systemName: "heart.fill")
-                                                .font(.system(size: 12))
-                                            Text("+5 Health")
+                                        VStack(spacing: 12) {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(Color.white.opacity(0.9))
+                                                    .frame(width: 60, height: 60)
+                                                
+                                                Image(systemName: "play.fill")
+                                                    .font(.system(size: 24, weight: .bold))
+                                                    .foregroundColor(activity.color)
+                                            }
+                                            .shadow(color: Color.black.opacity(0.2), radius: 8, y: 4)
+                                            
+                                            Text("Tap Start to Play")
                                                 .font(.system(size: 14, weight: .bold, design: .rounded))
+                                                .foregroundColor(.white)
                                         }
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            Capsule()
-                                                .fill(LinearGradient(
-                                                    colors: [Color.green, Color.green.opacity(0.8)],
-                                                    startPoint: .leading,
-                                                    endPoint: .trailing
-                                                ))
-                                        )
                                     }
-                                    .transition(.asymmetric(
-                                        insertion: .scale(scale: 0.8).combined(with: .opacity),
-                                        removal: .opacity
-                                    ))
-                                } else {
-                                    // Playing indicator
-                                    HStack(spacing: 8) {
-                                        ForEach(0..<3) { i in
-                                            Circle()
-                                                .fill(activity.color)
-                                                .frame(width: 8, height: 8)
-                                                .scaleEffect(pulseAnimation ? 1.0 : 0.5)
-                                                .animation(
-                                                    .easeInOut(duration: 0.6)
-                                                    .repeatForever()
-                                                    .delay(Double(i) * 0.15),
-                                                    value: pulseAnimation
-                                                )
-                                        }
-                                        
-                                        Text("Playing")
-                                            .font(.system(size: 15, weight: .semibold, design: .rounded))
-                                            .foregroundColor(themeManager.secondaryTextColor)
-                                    }
+                                    .frame(width: animationSize - 16, height: animationSize - 16)
                                 }
                             }
-                            .onAppear {
-                                pulseAnimation = true
-                            }
-                        } else {
-                            // Ready to start state
-                            VStack(spacing: isCompact ? 20 : 28) {
-                                // Activity icon
-                                ZStack {
-                                    Circle()
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [activity.color.opacity(0.2), activity.color.opacity(0.1)],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                        .frame(width: isCompact ? 100 : 120, height: isCompact ? 100 : 120)
-                                    
-                                    Image(systemName: activity.icon)
-                                        .font(.system(size: isCompact ? 40 : 50, weight: .semibold))
-                                        .foregroundStyle(
-                                            LinearGradient(
-                                                colors: [activity.color, activity.color.opacity(0.7)],
-                                                startPoint: .top,
-                                                endPoint: .bottom
-                                            )
-                                        )
-                                }
-                                .shadow(color: activity.color.opacity(0.3), radius: 20, y: 10)
+                            .frame(width: animationSize, height: animationSize)
+                        }
+                        
+                        // Activity title
+                        Text(activity.displayName(for: petType))
+                            .font(.system(size: isCompact ? 20 : 24, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                        
+                        // Status text
+                        if animationComplete {
+                            VStack(spacing: 10) {
+                                // Success emoji
+                                Text("🎉")
+                                    .font(.system(size: isCompact ? 32 : 44))
                                 
-                                // Activity info
-                                VStack(spacing: 8) {
-                                    Text(activity.displayName(for: petType))
-                                        .font(.system(size: isCompact ? 22 : 26, weight: .bold, design: .rounded))
-                                        .foregroundColor(themeManager.primaryTextColor)
-                                    
-                                    Text(activity.description)
-                                        .font(.system(size: isCompact ? 14 : 15, weight: .medium))
-                                        .foregroundColor(themeManager.secondaryTextColor)
-                                        .multilineTextAlignment(.center)
-                                }
+                                Text("\(userSettings.pet.name) loved it!")
+                                    .font(.system(size: isCompact ? 16 : 18, weight: .bold, design: .rounded))
+                                    .foregroundColor(themeManager.primaryTextColor)
                                 
-                                // Cost info
+                                // Health boost badge
                                 HStack(spacing: 6) {
-                                    Image(systemName: "bolt.fill")
-                                        .font(.system(size: 13))
-                                        .foregroundColor(.yellow)
-                                    
-                                    Text("Costs 1 Credit")
-                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                        .foregroundColor(themeManager.secondaryTextColor)
+                                    Image(systemName: "heart.fill")
+                                        .font(.system(size: 12))
+                                    Text("+5 Health")
+                                        .font(.system(size: 14, weight: .bold, design: .rounded))
                                 }
-                                .padding(.horizontal, 14)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(
                                     Capsule()
-                                        .fill(Color.yellow.opacity(0.12))
-                                        .overlay(
-                                            Capsule()
-                                                .strokeBorder(Color.yellow.opacity(0.2), lineWidth: 1)
-                                        )
+                                        .fill(LinearGradient(
+                                            colors: [Color.green, Color.green.opacity(0.8)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        ))
                                 )
                             }
+                            .transition(.scale.combined(with: .opacity))
+                        } else if hasStarted {
+                            // Playing indicator
+                            HStack(spacing: 8) {
+                                ForEach(0..<3, id: \.self) { i in
+                                    Circle()
+                                        .fill(activity.color)
+                                        .frame(width: 8, height: 8)
+                                        .scaleEffect(pulseAnimation ? 1.0 : 0.5)
+                                        .animation(
+                                            .easeInOut(duration: 0.6)
+                                            .repeatForever()
+                                            .delay(Double(i) * 0.15),
+                                            value: pulseAnimation
+                                        )
+                                }
+                                
+                                Text("Playing")
+                                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                    .foregroundColor(themeManager.secondaryTextColor)
+                            }
+                        } else {
+                            // Cost info when not started
+                            HStack(spacing: 6) {
+                                Image(systemName: "bolt.fill")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.yellow)
+                                
+                                Text("Costs 1 Credit")
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .foregroundColor(themeManager.secondaryTextColor)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(
+                                Capsule()
+                                    .fill(Color.yellow.opacity(0.12))
+                                    .overlay(
+                                        Capsule()
+                                            .strokeBorder(Color.yellow.opacity(0.2), lineWidth: 1)
+                                    )
+                            )
                         }
+                    }
                     
                     Spacer()
                     
                     // Bottom button
                     if animationComplete {
-                            Button(action: {
-                                dismiss()
-                                // Don't call onComplete here - credits already deducted at start
-                            }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 14, weight: .bold))
-                                    Text("Done!")
-                                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                                }
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [Color.green, Color.green.opacity(0.85)],
-                                                startPoint: .top,
-                                                endPoint: .bottom
-                                            )
-                                        )
-                                        .shadow(color: Color.green.opacity(0.3), radius: 10, y: 5)
-                                )
+                        Button(action: {
+                            dismiss()
+                        }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 14, weight: .bold))
+                                Text("Done!")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
                             }
-                            .padding(.horizontal, 20)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                        } else if !showAnimation {
-                            Button(action: startActivity) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "play.fill")
-                                        .font(.system(size: 14, weight: .bold))
-                                    Text("Start Activity")
-                                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                                }
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [activity.color, activity.color.opacity(0.85)],
-                                                startPoint: .top,
-                                                endPoint: .bottom
-                                            )
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color.green, Color.green.opacity(0.85)],
+                                            startPoint: .top,
+                                            endPoint: .bottom
                                         )
-                                        .shadow(color: activity.color.opacity(0.3), radius: 10, y: 5)
-                                )
-                            }
-                            .padding(.horizontal, 20)
-                            .disabled(userSettings.playCredits <= 0)
-                            .opacity(userSettings.playCredits > 0 ? 1 : 0.5)
+                                    )
+                                    .shadow(color: Color.green.opacity(0.3), radius: 10, y: 5)
+                            )
                         }
+                        .padding(.horizontal, 20)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    } else if !hasStarted {
+                        Button(action: startActivity) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "play.fill")
+                                    .font(.system(size: 14, weight: .bold))
+                                Text("Start Activity")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [activity.color, activity.color.opacity(0.85)],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                                    .shadow(color: activity.color.opacity(0.3), radius: 10, y: 5)
+                            )
+                        }
+                        .padding(.horizontal, 20)
+                        .disabled(userSettings.totalCredits <= 0)
+                        .opacity(userSettings.totalCredits > 0 ? 1 : 0.5)
+                    }
                     
                     Spacer().frame(height: isCompact ? 20 : 30)
                 }
@@ -1457,17 +1436,20 @@ struct ActivityPlaySheet: View {
     }
     
     private func startActivity() {
-        // Deduct credit and add health immediately when starting (+10 for activities)
+        // Deduct credit and add health immediately
         guard userSettings.useActivityCredit() else {
-            // No credits available
             dismiss()
             return
         }
         
         HapticFeedback.medium.trigger()
         
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-            showAnimation = true
+        // Start GIF animation and update state
+        isGIFAnimating = true
+        
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            hasStarted = true
+            pulseAnimation = true
         }
         
         // Complete after animation plays

@@ -19,7 +19,6 @@ struct PetCustomizationView: View {
     @State private var newPetName = ""
     @State private var showPremiumAlert = false
     @State private var showCreditsSheet = false
-    @State private var showActivitySheet = false
     @State private var selectedActivity: PetActivity?
     @State private var showHealthBoostAnimation = false
     @State private var healthBoostAmount = 0
@@ -62,14 +61,12 @@ struct PetCustomizationView: View {
         .sheet(isPresented: $showMinigames) {
             MinigamesView()
         }
-        .sheet(isPresented: $showActivitySheet) {
-            if let activity = selectedActivity {
-                ActivityPlaySheet(
-                    activity: activity,
-                    petType: selectedPetType,
-                    onComplete: { handleActivityComplete() }
-                )
-            }
+        .sheet(item: $selectedActivity) { activity in
+            ActivityPlaySheet(
+                activity: activity,
+                petType: selectedPetType,
+                onComplete: { handleActivityComplete() }
+            )
         }
         .alert("Premium Required", isPresented: $showPremiumAlert) {
             Button("Cancel", role: .cancel) {}
@@ -284,7 +281,6 @@ struct PetCustomizationView: View {
                     ForEach(PetActivity.allCases) { activity in
                         Button(action: {
                             selectedActivity = activity
-                            showActivitySheet = true
                         }) {
                             VStack(spacing: 10) {
                                 ZStack {
@@ -620,7 +616,7 @@ struct PetCustomizationView: View {
     }
     
     private func handleActivityComplete() {
-        showActivitySheet = false
+        selectedActivity = nil
         
         if userSettings.usePlayCredit() {
             healthBoostAmount = 20
