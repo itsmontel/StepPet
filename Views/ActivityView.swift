@@ -166,6 +166,11 @@ class PhotoStorageManager {
             try? FileManager.default.removeItem(at: photosDirectory.appendingPathComponent(file))
         }
     }
+    
+    func deletePhoto(identifier: String) {
+        let fileURL = photosDirectory.appendingPathComponent(identifier)
+        try? FileManager.default.removeItem(at: fileURL)
+    }
 }
 
 // MARK: - Premium Weather Effects Overlay
@@ -790,44 +795,17 @@ struct CountdownOverlay: View {
     let onComplete: () -> Void
     let onCancel: () -> Void
     
-    @State private var numberScale: CGFloat = 0.3
+    @State private var numberScale: CGFloat = 0.5
     @State private var numberOpacity: Double = 0
-    @State private var ringScale: CGFloat = 0.8
-    @State private var ringOpacity: Double = 0
-    @State private var particles: [CountdownParticle] = []
-    @State private var backgroundBlur: CGFloat = 0
-    @State private var pulseRings: [PulseRing] = []
-    @State private var cancelButtonOpacity: Double = 0
     @State private var isCancelled: Bool = false
     
     private let accentColor = Color(red: 0.4, green: 0.8, blue: 0.6)
     
     var body: some View {
         ZStack {
-            // Blurred background
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
-            
             // Dark overlay
-            Color.black.opacity(0.5)
+            Color.black.opacity(0.7)
                 .ignoresSafeArea()
-            
-            // Particle effects
-            ForEach(particles) { particle in
-                Circle()
-                    .fill(particle.color)
-                    .frame(width: particle.size, height: particle.size)
-                    .position(x: particle.x, y: particle.y)
-                    .blur(radius: particle.blur)
-            }
-            
-            // Pulse rings
-            ForEach(pulseRings) { ring in
-                Circle()
-                    .stroke(accentColor.opacity(ring.opacity), lineWidth: 3)
-                    .frame(width: ring.size, height: ring.size)
-            }
             
             // Main countdown content
             VStack(spacing: 30) {
@@ -835,12 +813,12 @@ struct CountdownOverlay: View {
                 ZStack {
                     // Background ring
                     Circle()
-                        .stroke(Color.white.opacity(0.1), lineWidth: 8)
-                        .frame(width: 200, height: 200)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 8)
+                        .frame(width: 180, height: 180)
                     
                     // Progress ring
                     Circle()
-                        .trim(from: 0, to: progressValue)
+                        .trim(from: 0, to: CGFloat(3 - countdownValue) / 3.0)
                         .stroke(
                             LinearGradient(
                                 colors: [accentColor, accentColor.opacity(0.6)],
@@ -849,52 +827,27 @@ struct CountdownOverlay: View {
                             ),
                             style: StrokeStyle(lineWidth: 8, lineCap: .round)
                         )
-                        .frame(width: 200, height: 200)
+                        .frame(width: 180, height: 180)
                         .rotationEffect(.degrees(-90))
-                        .scaleEffect(ringScale)
-                        .opacity(ringOpacity)
-                    
-                    // Glowing orb at progress end
-                    Circle()
-                        .fill(accentColor)
-                        .frame(width: 16, height: 16)
-                        .shadow(color: accentColor, radius: 10)
-                        .offset(y: -100)
-                        .rotationEffect(.degrees(progressValue * CGFloat(360) - CGFloat(90)))
-                        .opacity(ringOpacity)
                     
                     // Number display
-                    Text(displayText)
-                        .font(.system(size: countdownValue > 0 ? 100 : 70, weight: .bold, design: .rounded))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.white, Color.white.opacity(0.9)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .shadow(color: accentColor.opacity(0.5), radius: 20)
+                    Text(countdownValue > 0 ? "\(countdownValue)" : "GO!")
+                        .font(.system(size: countdownValue > 0 ? 80 : 50, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .shadow(color: accentColor.opacity(0.5), radius: 15)
                         .scaleEffect(numberScale)
                         .opacity(numberOpacity)
                 }
                 
                 // Status text
                 Text(statusText)
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundColor(.white.opacity(0.7))
-                    .tracking(4)
+                    .tracking(3)
                     .textCase(.uppercase)
-                    .opacity(numberOpacity)
                 
                 // Cancel button
-                Button(action: {
-                    HapticFeedback.light.trigger()
-                    isCancelled = true
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        isShowing = false
-                    }
-                    onCancel()
-                }) {
+                Button(action: cancelCountdown) {
                     Text("Cancel")
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(.white)
@@ -904,28 +857,13 @@ struct CountdownOverlay: View {
                             Capsule()
                                 .fill(Color.red.opacity(0.8))
                         )
-                        .shadow(color: Color.red.opacity(0.4), radius: 10)
                 }
-                .padding(.top, 20)
-                .opacity(cancelButtonOpacity)
+                .padding(.top, 10)
             }
         }
         .onAppear {
-            startPremiumCountdown()
-            
-            // Fade in cancel button
-            withAnimation(.easeIn(duration: 0.3).delay(0.2)) {
-                cancelButtonOpacity = 1.0
-            }
+            startCountdown()
         }
-    }
-    
-    private var progressValue: CGFloat {
-        CGFloat(3 - countdownValue) / 3.0
-    }
-    
-    private var displayText: String {
-        countdownValue > 0 ? "\(countdownValue)" : "GO!"
     }
     
     private var statusText: String {
@@ -937,180 +875,78 @@ struct CountdownOverlay: View {
         }
     }
     
-    private func startPremiumCountdown() {
-        // Initial entrance
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-            numberScale = 1.0
-            numberOpacity = 1.0
-            ringScale = 1.0
-            ringOpacity = 1.0
+    private func cancelCountdown() {
+        isCancelled = true
+        withAnimation(.easeOut(duration: 0.2)) {
+            isShowing = false
         }
-        
-        spawnParticles()
-        animateSequence(remaining: countdownValue)
+        onCancel()
     }
     
-    private func animateSequence(remaining: Int) {
-        // Check if cancelled
-        guard !isCancelled else { return }
+    private func startCountdown() {
+        // Show initial number
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            numberScale = 1.0
+            numberOpacity = 1.0
+        }
+        HapticFeedback.medium.trigger()
+        
+        // Schedule countdown
+        runCountdownStep(remaining: countdownValue)
+    }
+    
+    private func runCountdownStep(remaining: Int) {
+        guard !isCancelled, isShowing else { return }
         
         if remaining > 0 {
-            // Haptic
-            HapticFeedback.medium.trigger()
-            
-            // Add pulse ring
-            addPulseRing()
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) {
-                // Check again before continuing
-                guard !self.isCancelled else { return }
+            // Wait, then animate to next number
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+                guard !self.isCancelled, self.isShowing else { return }
                 
-                // Shrink out
-                withAnimation(.easeIn(duration: 0.15)) {
-                    numberScale = 1.3
-                    numberOpacity = 0
+                // Shrink out current number
+                withAnimation(.easeIn(duration: 0.12)) {
+                    self.numberScale = 0.3
+                    self.numberOpacity = 0
                 }
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    // Check again before continuing
-                    guard !self.isCancelled else { return }
+                // After shrink, show next number
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                    guard !self.isCancelled, self.isShowing else { return }
                     
-                    countdownValue = remaining - 1
-                    numberScale = 0.5
+                    self.countdownValue = remaining - 1
                     
                     // Pop in new number
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
-                        numberScale = 1.0
-                        numberOpacity = 1.0
+                        self.numberScale = 1.0
+                        self.numberOpacity = 1.0
                     }
+                    HapticFeedback.medium.trigger()
                     
-                    animateSequence(remaining: remaining - 1)
+                    // Continue countdown
+                    self.runCountdownStep(remaining: remaining - 1)
                 }
             }
         } else {
-            // Check if cancelled before completing
-            guard !isCancelled else { return }
-            
-            // GO! animation
+            // Countdown complete - GO!
             HapticFeedback.success.trigger()
             
-            // Burst of particles
-            for _ in 0..<30 {
-                spawnBurstParticle()
-            }
-            
-            // Multiple pulse rings
-            for i in 0..<3 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.1) {
-                    guard !self.isCancelled else { return }
-                    addPulseRing()
-                }
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-                // Final check before starting workout
+            // Wait a moment then complete
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                 guard !self.isCancelled else { return }
                 
-                withAnimation(.easeOut(duration: 0.4)) {
-                    numberScale = 2.0
-                    numberOpacity = 0
-                    ringOpacity = 0
+                withAnimation(.easeOut(duration: 0.3)) {
+                    self.numberScale = 1.5
+                    self.numberOpacity = 0
                 }
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     guard !self.isCancelled else { return }
-                    isShowing = false
-                    onComplete()
+                    self.isShowing = false
+                    self.onComplete()
                 }
             }
         }
     }
-    
-    private func spawnParticles() {
-        let centerX = UIScreen.main.bounds.width / 2
-        let centerY = UIScreen.main.bounds.height / 2
-        
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-            if !isShowing {
-                timer.invalidate()
-                return
-            }
-            
-            let angle = Double.random(in: 0...360) * .pi / 180
-            let distance = CGFloat.random(in: 80...150)
-            
-            let particle = CountdownParticle(
-                x: centerX + cos(angle) * distance,
-                y: centerY + sin(angle) * distance,
-                size: CGFloat.random(in: 4...12),
-                color: [accentColor, .white, accentColor.opacity(0.5)].randomElement()!,
-                blur: CGFloat.random(in: 0...3)
-            )
-            
-            if particles.count < 40 {
-                particles.append(particle)
-            }
-            
-            // Remove old particles
-            if particles.count > 30 {
-                particles.removeFirst()
-            }
-        }
-    }
-    
-    private func spawnBurstParticle() {
-        let centerX = UIScreen.main.bounds.width / 2
-        let centerY = UIScreen.main.bounds.height / 2
-        let angle = Double.random(in: 0...360) * .pi / 180
-        
-        let particle = CountdownParticle(
-            x: centerX,
-            y: centerY,
-            size: CGFloat.random(in: 6...16),
-            color: [accentColor, .white, .yellow].randomElement()!,
-            blur: 0
-        )
-        
-        particles.append(particle)
-        
-        withAnimation(.easeOut(duration: 0.6)) {
-            if let index = particles.firstIndex(where: { $0.id == particle.id }) {
-                particles[index].x = centerX + CGFloat(cos(angle) * 200)
-                particles[index].y = centerY + CGFloat(sin(angle) * 200)
-            }
-        }
-    }
-    
-    private func addPulseRing() {
-        let ring = PulseRing(size: 200, opacity: 0.8)
-        pulseRings.append(ring)
-        
-        withAnimation(.easeOut(duration: 0.8)) {
-            if let index = pulseRings.firstIndex(where: { $0.id == ring.id }) {
-                pulseRings[index].size = 400
-                pulseRings[index].opacity = 0
-            }
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            pulseRings.removeAll { $0.id == ring.id }
-        }
-    }
-}
-
-struct CountdownParticle: Identifiable {
-    let id = UUID()
-    var x: CGFloat
-    var y: CGFloat
-    var size: CGFloat
-    let color: Color
-    let blur: CGFloat
-}
-
-struct PulseRing: Identifiable {
-    let id = UUID()
-    var size: CGFloat
-    var opacity: Double
 }
 
 // MARK: - Walk Record Model (Enhanced)
@@ -2842,7 +2678,6 @@ struct ActivityHistoryView: View {
     
     @State private var selectedPeriod = 0
     @State private var selectedWalk: WalkRecord?
-    @State private var showDetailView = false
     @State private var walkToDelete: WalkRecord?
     @State private var showDeleteConfirmation = false
     
@@ -3017,7 +2852,6 @@ struct ActivityHistoryView: View {
                                 PremiumActivityCard(walk: walk)
                                     .onTapGesture {
                                         selectedWalk = walk
-                                        showDetailView = true
                                         HapticFeedback.light.trigger()
                                     }
                                     .contextMenu {
@@ -3070,10 +2904,8 @@ struct ActivityHistoryView: View {
                 Text("Are you sure you want to delete this activity? This can't be undone.")
             }
         }
-        .sheet(isPresented: $showDetailView) {
-            if let walk = selectedWalk {
-                ActivityDetailView(walk: walk, walkHistory: walkHistory)
-            }
+        .sheet(item: $selectedWalk) { walk in
+            ActivityDetailView(walk: walk, walkHistory: walkHistory)
         }
     }
     
@@ -3313,23 +3145,31 @@ struct ActivityDetailView: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     @State private var loadedPhotos: [UIImage] = []
-    @State private var selectedPhotoIndex: Int?
-    @State private var showFullScreenPhoto = false
+    @State private var isLoadingPhotos: Bool = true
+    @State private var selectedPhotoItem: SelectedPhotoItem?
     @State private var showDeleteConfirmation = false
+    @State private var showEditSheet = false
+    @State private var currentWalk: WalkRecord
     
-    private var activityColor: Color { walk.workoutType == "run" ? .orange : .green }
+    init(walk: WalkRecord, walkHistory: WalkHistoryManager) {
+        self.walk = walk
+        self.walkHistory = walkHistory
+        self._currentWalk = State(initialValue: walk)
+    }
+    
+    private var activityColor: Color { currentWalk.workoutType == "run" ? .orange : .green }
     
     // Calculate proper region for the route
     private var routeRegion: MKCoordinateRegion {
-        guard !walk.coordinates.isEmpty else {
+        guard !currentWalk.coordinates.isEmpty else {
             return MKCoordinateRegion(
                 center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
                 span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
             )
         }
         
-        let lats = walk.coordinates.map { $0.latitude }
-        let lons = walk.coordinates.map { $0.longitude }
+        let lats = currentWalk.coordinates.map { $0.latitude }
+        let lons = currentWalk.coordinates.map { $0.longitude }
         
         let minLat = lats.min() ?? 0
         let maxLat = lats.max() ?? 0
@@ -3356,9 +3196,9 @@ struct ActivityDetailView: View {
                 VStack(spacing: 0) {
                     // Hero Map
                     ZStack(alignment: .bottom) {
-                        if !walk.coordinates.isEmpty {
+                        if !currentWalk.coordinates.isEmpty {
                             Map(initialPosition: .region(routeRegion)) {
-                                MapPolyline(coordinates: walk.coordinates)
+                                MapPolyline(coordinates: currentWalk.coordinates)
                                     .stroke(
                                         LinearGradient(
                                             colors: [activityColor, activityColor.opacity(0.6)],
@@ -3368,7 +3208,7 @@ struct ActivityDetailView: View {
                                         lineWidth: 5
                                     )
                                 
-                                if let first = walk.coordinates.first {
+                                if let first = currentWalk.coordinates.first {
                                     Annotation("Start", coordinate: first) {
                                         ZStack {
                                             Circle().fill(.white).frame(width: 24, height: 24)
@@ -3377,7 +3217,7 @@ struct ActivityDetailView: View {
                                     }
                                 }
                                 
-                                if let last = walk.coordinates.last {
+                                if let last = currentWalk.coordinates.last {
                                     Annotation("End", coordinate: last) {
                                         ZStack {
                                             Circle().fill(.white).frame(width: 24, height: 24)
@@ -3429,24 +3269,24 @@ struct ActivityDetailView: View {
                                         .fill(activityColor)
                                         .frame(width: 50, height: 50)
                                     
-                                    Image(systemName: walk.workoutType == "run" ? "figure.run" : "figure.walk")
+                                    Image(systemName: currentWalk.workoutType == "run" ? "figure.run" : "figure.walk")
                                         .font(.system(size: 24, weight: .semibold))
                                         .foregroundColor(.white)
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("\(walk.workoutType.capitalized)")
+                                    Text("\(currentWalk.workoutType.capitalized)")
                                         .font(.system(size: 24, weight: .bold, design: .rounded))
                                         .foregroundColor(themeManager.primaryTextColor)
                                     
-                                    Text(formatFullDate(walk.date))
+                                    Text(formatFullDate(currentWalk.date))
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(themeManager.secondaryTextColor)
                                 }
                                 
                                 Spacer()
                                 
-                                if let mood = walk.mood {
+                                if let mood = currentWalk.mood {
                                     VStack(spacing: 2) {
                                         Text(mood.emoji)
                                             .font(.system(size: 32))
@@ -3465,17 +3305,17 @@ struct ActivityDetailView: View {
                             GridItem(.flexible()),
                             GridItem(.flexible())
                         ], spacing: 12) {
-                            DetailStatCard(title: "Distance", value: String(format: "%.2f", walk.distanceInMiles), unit: "mi", icon: "location.fill", color: .green)
-                            DetailStatCard(title: "Duration", value: walk.formattedDurationLong, unit: "", icon: "clock.fill", color: .blue)
-                            DetailStatCard(title: "Pace", value: walk.pace, unit: "/mi", icon: "speedometer", color: .purple)
-                            DetailStatCard(title: "Calories", value: "\(walk.calories)", unit: "cal", icon: "flame.fill", color: .orange)
-                            DetailStatCard(title: "Avg Speed", value: String(format: "%.1f", walk.averageSpeed), unit: "mph", icon: "gauge.with.dots.needle.bottom.50percent", color: .cyan)
-                            DetailStatCard(title: "Steps", value: "\(Int(walk.distance / 0.762))", unit: "est", icon: "figure.walk", color: .pink)
+                            DetailStatCard(title: "Distance", value: String(format: "%.2f", currentWalk.distanceInMiles), unit: "mi", icon: "location.fill", color: .green)
+                            DetailStatCard(title: "Duration", value: currentWalk.formattedDurationLong, unit: "", icon: "clock.fill", color: .blue)
+                            DetailStatCard(title: "Pace", value: currentWalk.pace, unit: "/mi", icon: "speedometer", color: .purple)
+                            DetailStatCard(title: "Calories", value: "\(currentWalk.calories)", unit: "cal", icon: "flame.fill", color: .orange)
+                            DetailStatCard(title: "Avg Speed", value: String(format: "%.1f", currentWalk.averageSpeed), unit: "mph", icon: "gauge.with.dots.needle.bottom.50percent", color: .cyan)
+                            DetailStatCard(title: "Steps", value: "\(Int(currentWalk.distance / 0.762))", unit: "est", icon: "figure.walk", color: .pink)
                         }
                         .padding(.horizontal, 20)
                         
                         // Weather Card
-                        if let weather = walk.weather {
+                        if let weather = currentWalk.weather {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Weather Conditions")
                                     .font(.system(size: 16, weight: .bold, design: .rounded))
@@ -3517,20 +3357,47 @@ struct ActivityDetailView: View {
                         }
                         
                         // Photos Section
-                        if !loadedPhotos.isEmpty {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Text("Photos")
-                                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                                        .foregroundColor(themeManager.primaryTextColor)
-                                    
-                                    Spacer()
-                                    
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("Photos")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .foregroundColor(themeManager.primaryTextColor)
+                                
+                                Spacer()
+                                
+                                if !loadedPhotos.isEmpty {
                                     Text("\(loadedPhotos.count) photos")
                                         .font(.system(size: 12, weight: .medium))
                                         .foregroundColor(themeManager.secondaryTextColor)
                                 }
-                                
+                            }
+                            
+                            if isLoadingPhotos {
+                                HStack {
+                                    Spacer()
+                                    ProgressView()
+                                        .padding()
+                                    Spacer()
+                                }
+                            } else if loadedPhotos.isEmpty {
+                                VStack(spacing: 8) {
+                                    Image(systemName: "photo.on.rectangle.angled")
+                                        .font(.system(size: 36))
+                                        .foregroundColor(themeManager.secondaryTextColor.opacity(0.5))
+                                    Text("No photos yet")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(themeManager.secondaryTextColor)
+                                    Text("Tap Edit to add photos")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(themeManager.secondaryTextColor.opacity(0.7))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 24)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(themeManager.cardBackgroundColor)
+                                )
+                            } else {
                                 // Photo Grid
                                 LazyVGrid(columns: [
                                     GridItem(.flexible(), spacing: 8),
@@ -3543,28 +3410,30 @@ struct ActivityDetailView: View {
                                             .frame(height: 150)
                                             .clipShape(RoundedRectangle(cornerRadius: 12))
                                             .onTapGesture {
-                                                selectedPhotoIndex = index
-                                                showFullScreenPhoto = true
+                                                selectedPhotoItem = SelectedPhotoItem(
+                                                    index: index,
+                                                    photos: loadedPhotos
+                                                )
                                             }
                                     }
                                 }
                             }
-                            .padding(.horizontal, 20)
                         }
+                        .padding(.horizontal, 20)
                         
                         // Notes/Journal Section
-                        if let notes = walk.notes, !notes.isEmpty {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Image(systemName: "note.text")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(activityColor)
-                                    
-                                    Text("Journal Entry")
-                                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                                        .foregroundColor(themeManager.primaryTextColor)
-                                }
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "note.text")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(activityColor)
                                 
+                                Text("Journal Entry")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .foregroundColor(themeManager.primaryTextColor)
+                            }
+                            
+                            if let notes = currentWalk.notes, !notes.isEmpty {
                                 Text(notes)
                                     .font(.system(size: 15, weight: .regular))
                                     .foregroundColor(themeManager.primaryTextColor)
@@ -3575,9 +3444,27 @@ struct ActivityDetailView: View {
                                         RoundedRectangle(cornerRadius: 16)
                                             .fill(activityColor.opacity(0.08))
                                     )
+                            } else {
+                                VStack(spacing: 8) {
+                                    Image(systemName: "pencil.line")
+                                        .font(.system(size: 36))
+                                        .foregroundColor(themeManager.secondaryTextColor.opacity(0.5))
+                                    Text("No journal entry")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(themeManager.secondaryTextColor)
+                                    Text("Tap Edit to add your thoughts")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(themeManager.secondaryTextColor.opacity(0.7))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 24)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(themeManager.cardBackgroundColor)
+                                )
                             }
-                            .padding(.horizontal, 20)
                         }
+                        .padding(.horizontal, 20)
                         
                         Spacer(minLength: 40)
                     }
@@ -3599,6 +3486,15 @@ struct ActivityDetailView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: 12) {
+                        // Edit button
+                        Button {
+                            showEditSheet = true
+                        } label: {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(activityColor)
+                        }
+                        
                         // Share button
                         Button {
                             // Share functionality
@@ -3629,30 +3525,386 @@ struct ActivityDetailView: View {
             }
         }
         .onAppear {
-            loadPhotos()
+            loadPhotosAsync()
         }
-        .fullScreenCover(isPresented: $showFullScreenPhoto) {
-            if let index = selectedPhotoIndex {
-                FullScreenPhotoView(photos: loadedPhotos, selectedIndex: index)
-            }
+        .fullScreenCover(item: $selectedPhotoItem) { item in
+            FullScreenPhotoView(photos: item.photos, selectedIndex: item.index)
+        }
+        .sheet(isPresented: $showEditSheet) {
+            EditActivityView(
+                walk: currentWalk,
+                loadedPhotos: $loadedPhotos,
+                onSave: { updatedWalk in
+                    currentWalk = updatedWalk
+                    walkHistory.updateWalk(updatedWalk)
+                    loadPhotosAsync()
+                }
+            )
         }
     }
     
     private func deleteActivity() {
         HapticFeedback.medium.trigger()
-        walkHistory.deleteWalk(id: walk.id)
+        walkHistory.deleteWalk(id: currentWalk.id)
         dismiss()
     }
     
-    private func loadPhotos() {
-        guard let photoIds = walk.photoIdentifiers else { return }
-        loadedPhotos = photoIds.compactMap { PhotoStorageManager.shared.loadPhoto(identifier: $0) }
+    private func loadPhotosAsync() {
+        isLoadingPhotos = true
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let photoIds = currentWalk.photoIdentifiers else {
+                DispatchQueue.main.async {
+                    self.loadedPhotos = []
+                    self.isLoadingPhotos = false
+                }
+                return
+            }
+            
+            let photos = photoIds.compactMap { PhotoStorageManager.shared.loadPhoto(identifier: $0) }
+            
+            DispatchQueue.main.async {
+                self.loadedPhotos = photos
+                self.isLoadingPhotos = false
+            }
+        }
     }
     
     private func formatFullDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE, MMMM d, yyyy 'at' h:mm a"
         return formatter.string(from: date)
+    }
+}
+
+// MARK: - Edit Activity View
+struct EditActivityView: View {
+    let walk: WalkRecord
+    @Binding var loadedPhotos: [UIImage]
+    let onSave: (WalkRecord) -> Void
+    
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    @State private var journalText: String = ""
+    @State private var selectedMood: ActivityMood?
+    @State private var newPhotos: [UIImage] = []
+    @State private var showPhotosPicker = false
+    @State private var selectedPhotosItems: [PhotosPickerItem] = []
+    @State private var photosToDelete: Set<Int> = []
+    @State private var isSaving = false
+    
+    private var activityColor: Color { walk.workoutType == "run" ? .orange : .green }
+    
+    var body: some View {
+        NavigationView {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    // Activity Header
+                    HStack {
+                        ZStack {
+                            Circle()
+                                .fill(activityColor)
+                                .frame(width: 44, height: 44)
+                            
+                            Image(systemName: walk.workoutType == "run" ? "figure.run" : "figure.walk")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Edit \(walk.workoutType.capitalized)")
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundColor(themeManager.primaryTextColor)
+                            
+                            Text(formatDate(walk.date))
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    // Mood Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("How did you feel?")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundColor(themeManager.primaryTextColor)
+                        
+                        HStack(spacing: 12) {
+                            ForEach(ActivityMood.allCases, id: \.self) { mood in
+                                Button {
+                                    HapticFeedback.light.trigger()
+                                    selectedMood = mood
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        Text(mood.emoji)
+                                            .font(.system(size: 28))
+                                        Text(mood.rawValue)
+                                            .font(.system(size: 10, weight: .medium))
+                                            .foregroundColor(selectedMood == mood ? mood.color : themeManager.secondaryTextColor)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(selectedMood == mood ? mood.color.opacity(0.15) : themeManager.cardBackgroundColor)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(selectedMood == mood ? mood.color : Color.clear, lineWidth: 2)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    // Journal Entry Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "note.text")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(activityColor)
+                            
+                            Text("Journal Entry")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundColor(themeManager.primaryTextColor)
+                        }
+                        
+                        TextEditor(text: $journalText)
+                            .font(.system(size: 15))
+                            .foregroundColor(themeManager.primaryTextColor)
+                            .scrollContentBackground(.hidden)
+                            .frame(minHeight: 120)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(themeManager.cardBackgroundColor)
+                            )
+                            .overlay(
+                                Group {
+                                    if journalText.isEmpty {
+                                        Text("How was your activity? Share your thoughts...")
+                                            .font(.system(size: 15))
+                                            .foregroundColor(themeManager.secondaryTextColor.opacity(0.6))
+                                            .padding(16)
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                                            .allowsHitTesting(false)
+                                    }
+                                }
+                            )
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    // Photos Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(activityColor)
+                            
+                            Text("Photos")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundColor(themeManager.primaryTextColor)
+                            
+                            Spacer()
+                            
+                            let totalPhotos = loadedPhotos.count + newPhotos.count - photosToDelete.count
+                            if totalPhotos > 0 {
+                                Text("\(totalPhotos) photos")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(themeManager.secondaryTextColor)
+                            }
+                        }
+                        
+                        // Existing Photos
+                        if !loadedPhotos.isEmpty {
+                            LazyVGrid(columns: [
+                                GridItem(.flexible(), spacing: 8),
+                                GridItem(.flexible(), spacing: 8),
+                                GridItem(.flexible(), spacing: 8)
+                            ], spacing: 8) {
+                                ForEach(loadedPhotos.indices, id: \.self) { index in
+                                    ZStack(alignment: .topTrailing) {
+                                        Image(uiImage: loadedPhotos[index])
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(height: 100)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .opacity(photosToDelete.contains(index) ? 0.4 : 1.0)
+                                        
+                                        Button {
+                                            HapticFeedback.light.trigger()
+                                            if photosToDelete.contains(index) {
+                                                photosToDelete.remove(index)
+                                            } else {
+                                                photosToDelete.insert(index)
+                                            }
+                                        } label: {
+                                            Image(systemName: photosToDelete.contains(index) ? "arrow.uturn.backward.circle.fill" : "xmark.circle.fill")
+                                                .font(.system(size: 22))
+                                                .foregroundColor(photosToDelete.contains(index) ? .blue : .red)
+                                                .background(Circle().fill(.white).padding(4))
+                                        }
+                                        .offset(x: 4, y: -4)
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // New Photos
+                        if !newPhotos.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("New Photos")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(activityColor)
+                                
+                                LazyVGrid(columns: [
+                                    GridItem(.flexible(), spacing: 8),
+                                    GridItem(.flexible(), spacing: 8),
+                                    GridItem(.flexible(), spacing: 8)
+                                ], spacing: 8) {
+                                    ForEach(newPhotos.indices, id: \.self) { index in
+                                        ZStack(alignment: .topTrailing) {
+                                            Image(uiImage: newPhotos[index])
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                                .frame(height: 100)
+                                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            
+                                            Button {
+                                                HapticFeedback.light.trigger()
+                                                newPhotos.remove(at: index)
+                                            } label: {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.system(size: 22))
+                                                    .foregroundColor(.red)
+                                                    .background(Circle().fill(.white).padding(4))
+                                            }
+                                            .offset(x: 4, y: -4)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Add Photo Button
+                        PhotosPicker(
+                            selection: $selectedPhotosItems,
+                            maxSelectionCount: 10,
+                            matching: .images
+                        ) {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 20))
+                                Text("Add Photos")
+                                    .font(.system(size: 15, weight: .semibold))
+                            }
+                            .foregroundColor(activityColor)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(activityColor, style: StrokeStyle(lineWidth: 2, dash: [8]))
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    Spacer(minLength: 100)
+                }
+                .padding(.top, 20)
+            }
+            .background(themeManager.backgroundColor.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(themeManager.secondaryTextColor)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        saveChanges()
+                    } label: {
+                        if isSaving {
+                            ProgressView()
+                                .tint(activityColor)
+                        } else {
+                            Text("Save")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(activityColor)
+                        }
+                    }
+                    .disabled(isSaving)
+                }
+            }
+        }
+        .onAppear {
+            journalText = walk.notes ?? ""
+            selectedMood = walk.mood
+        }
+        .onChange(of: selectedPhotosItems) { _, items in
+            Task {
+                for item in items {
+                    if let data = try? await item.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        await MainActor.run {
+                            newPhotos.append(image)
+                        }
+                    }
+                }
+                await MainActor.run {
+                    selectedPhotosItems = []
+                }
+            }
+        }
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, yyyy"
+        return formatter.string(from: date)
+    }
+    
+    private func saveChanges() {
+        isSaving = true
+        HapticFeedback.medium.trigger()
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Delete marked photos
+            var photoIds = walk.photoIdentifiers ?? []
+            let sortedIndicesToDelete = photosToDelete.sorted(by: >)
+            for index in sortedIndicesToDelete {
+                if index < photoIds.count {
+                    PhotoStorageManager.shared.deletePhoto(identifier: photoIds[index])
+                    photoIds.remove(at: index)
+                }
+            }
+            
+            // Save new photos
+            for newPhoto in newPhotos {
+                if let identifier = PhotoStorageManager.shared.savePhoto(newPhoto, for: walk.id) {
+                    photoIds.append(identifier)
+                }
+            }
+            
+            // Create updated walk record
+            var updatedWalk = walk
+            updatedWalk.notes = journalText.isEmpty ? nil : journalText
+            updatedWalk.mood = selectedMood
+            updatedWalk.photoIdentifiers = photoIds.isEmpty ? nil : photoIds
+            
+            DispatchQueue.main.async {
+                isSaving = false
+                onSave(updatedWalk)
+                dismiss()
+            }
+        }
     }
 }
 
@@ -3704,6 +3956,13 @@ struct DetailStatCard: View {
 }
 
 // MARK: - Full Screen Photo View
+// MARK: - Selected Photo Item (for fullscreen presentation)
+struct SelectedPhotoItem: Identifiable {
+    let id = UUID()
+    let index: Int
+    let photos: [UIImage]
+}
+
 struct FullScreenPhotoView: View {
     let photos: [UIImage]
     let selectedIndex: Int

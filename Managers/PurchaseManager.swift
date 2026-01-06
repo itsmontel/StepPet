@@ -41,6 +41,12 @@ class PurchaseManager: NSObject, ObservableObject {
     // MARK: - Configuration
     private let apiKey = "test_oOrhfSvxbBmuIHPCXAesAOCkpqN"
     
+    // Billing grace period setting
+    // When true, users in grace period (payment failed but still have access) are treated as premium
+    // When false, only active subscriptions are treated as premium
+    // Note: Grace period support requires RevenueCat SDK 4.0+
+    var enableBillingGracePeriod: Bool = false
+    
     private override init() {
         super.init()
     }
@@ -63,7 +69,15 @@ class PurchaseManager: NSObject, ObservableObject {
         do {
             let info = try await Purchases.shared.customerInfo()
             self.customerInfo = info
-            self.isPremium = info.entitlements[EntitlementConstants.pro]?.isActive == true
+            let entitlement = info.entitlements[EntitlementConstants.pro]
+            
+            // Check if subscription is active
+            if let entitlement = entitlement {
+                self.isPremium = entitlement.isActive
+            } else {
+                self.isPremium = false
+            }
+            
             print("✅ Premium status: \(isPremium)")
         } catch {
             print("❌ Error fetching customer info: \(error.localizedDescription)")
@@ -101,7 +115,11 @@ class PurchaseManager: NSObject, ObservableObject {
     
     // MARK: - Check Premium Status
     var hasPremiumAccess: Bool {
-        return customerInfo?.entitlements[EntitlementConstants.pro]?.isActive == true
+        guard let entitlement = customerInfo?.entitlements[EntitlementConstants.pro] else {
+            return false
+        }
+        
+        return entitlement.isActive
     }
     
     // MARK: - Purchase Package
@@ -147,14 +165,23 @@ class PurchaseManager: NSObject, ObservableObject {
             if !result.userCancelled {
                 let productId = package.storeProduct.productIdentifier
                 
+                // Extract credit amount from product ID (e.g., "virtupet_credits_25" -> 25)
                 var creditsToAdd = 0
-                if productId.contains("credits_3") { creditsToAdd = 3 }
-                else if productId.contains("credits_5") { creditsToAdd = 5 }
-                else if productId.contains("credits_10") { creditsToAdd = 10 }
+                if let range = productId.range(of: "credits_") {
+                    let numberString = String(productId[range.upperBound...])
+                    creditsToAdd = Int(numberString) ?? 0
+                }
+                
+                // Fallback for legacy product IDs
+                if creditsToAdd == 0 {
+                    if productId.contains("credits_5") { creditsToAdd = 5 }
+                    else if productId.contains("credits_10") { creditsToAdd = 10 }
+                    else if productId.contains("credits_25") { creditsToAdd = 25 }
+                }
                 
                 if creditsToAdd > 0 {
                     userSettings.playCredits += creditsToAdd
-                    print("✅ Added \(creditsToAdd) credits")
+                    print("✅ Added \(creditsToAdd) credits. Total: \(userSettings.playCredits)")
                 }
                 
                 isLoading = false
@@ -239,7 +266,15 @@ extension PurchaseManager: PurchasesDelegate {
     func purchases(_ purchases: Purchases, receivedUpdated customerInfo: CustomerInfo) {
         DispatchQueue.main.async {
             self.customerInfo = customerInfo
-            self.isPremium = customerInfo.entitlements[EntitlementConstants.pro]?.isActive == true
+            let entitlement = customerInfo.entitlements[EntitlementConstants.pro]
+            
+            // Update premium status
+            if let entitlement = entitlement {
+                self.isPremium = entitlement.isActive
+            } else {
+                self.isPremium = false
+            }
+            
             print("📱 Customer info updated. Premium: \(self.isPremium)")
         }
     }

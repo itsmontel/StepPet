@@ -595,156 +595,244 @@ struct ChallengesView: View {
     // MARK: - Credits Sheet
     private var creditsSheet: some View {
         NavigationView {
-            VStack(spacing: 16) {
-                // Current Credits
-                VStack(spacing: 8) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.yellow)
-                        
-                        Text("\(userSettings.totalCredits)")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundColor(themeManager.primaryTextColor)
-                    }
-                    
-                    Text("Total Credits")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(themeManager.secondaryTextColor)
-                    
-                    // Breakdown
-                    HStack(spacing: 16) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "gift.fill")
-                                .font(.system(size: 11))
-                                .foregroundColor(.green)
-                            Text("\(userSettings.dailyFreeCredits) daily")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.green)
-                        }
-                        
-                        HStack(spacing: 4) {
-                            Image(systemName: "bag.fill")
-                                .font(.system(size: 11))
-                                .foregroundColor(.orange)
-                            Text("\(userSettings.playCredits) purchased")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.orange)
-                        }
-                    }
-                }
-                .padding(.top, 12)
-                
-                // Info cards
-                VStack(spacing: 8) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "clock.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.green)
-                        
-                        Text(userSettings.isPremium ? "10 free credits daily • Resets at midnight" : "5 free credits daily • Resets at midnight")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(themeManager.primaryTextColor)
-                        
-                        Spacer()
-                    }
-                    .padding(10)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.green.opacity(0.08)))
-                    
-                    HStack(spacing: 8) {
-                        Image(systemName: "gamecontroller.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.blue)
-                        
-                        Text("Games: 1 credit = +3 health")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(themeManager.primaryTextColor)
-                        
-                        Spacer()
-                    }
-                    .padding(10)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.blue.opacity(0.08)))
-                    
-                    HStack(spacing: 8) {
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.pink)
-                        
-                        Text("Pet Activities: 1 credit = +5 health")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(themeManager.primaryTextColor)
-                        
-                        Spacer()
-                    }
-                    .padding(10)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.pink.opacity(0.08)))
-                }
-                .padding(.horizontal, 16)
-                
-                // Packages
-                VStack(spacing: 8) {
-                    ForEach(CreditPackage.packages) { package in
-                        Button(action: { purchaseCredits(package: package) }) {
-                            HStack {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "bolt.fill")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.yellow)
-                                    
-                                    Text("\(package.credits)")
-                                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                                        .foregroundColor(themeManager.primaryTextColor)
-                                }
-                                .frame(width: 50)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+                    // Hero Section with Credit Balance
+                    VStack(spacing: 14) {
+                        // Animated coin with app theme colors
+                        ZStack {
+                            // Glow effect using theme colors
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [themeManager.primaryColor.opacity(0.2), themeManager.primaryColor.opacity(0.05), Color.clear],
+                                        center: .center,
+                                        startRadius: 15,
+                                        endRadius: 60
+                                    )
+                                )
+                                .frame(width: 120, height: 120)
+                            
+                            // Coin icon with theme gradient
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [themeManager.primaryColor, themeManager.primaryLightColor],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 75, height: 75)
+                                    .shadow(color: themeManager.primaryColor.opacity(0.3), radius: 12, y: 6)
                                 
-                                VStack(alignment: .leading, spacing: 0) {
-                                    Text("\(package.credits) Credits")
-                                        .font(.system(size: 13, weight: .semibold))
+                                Image(systemName: "bolt.fill")
+                                    .font(.system(size: 34, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .shadow(color: Color.black.opacity(0.2), radius: 2, y: 2)
+                            }
+                        }
+                        
+                        // Credit count
+                        VStack(spacing: 3) {
+                            Text("\(userSettings.totalCredits)")
+                                .font(.system(size: 48, weight: .black, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [themeManager.primaryDarkColor, themeManager.primaryColor, themeManager.primaryLightColor],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                            
+                            Text("Credits Available")
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                        }
+                        
+                        // Credit breakdown pills with theme colors
+                        HStack(spacing: 10) {
+                            HStack(spacing: 5) {
+                                Image(systemName: "gift.fill")
+                                    .font(.system(size: 11))
+                                Text("\(userSettings.dailyFreeCredits) free")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                            }
+                            .foregroundColor(themeManager.successColor)
+                            .padding(.horizontal, 13)
+                            .padding(.vertical, 7)
+                            .background(
+                                Capsule()
+                                    .fill(themeManager.successColor.opacity(0.12))
+                            )
+                            
+                            HStack(spacing: 5) {
+                                Image(systemName: "bag.fill")
+                                    .font(.system(size: 11))
+                                Text("\(userSettings.playCredits) bought")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                            }
+                            .foregroundColor(themeManager.primaryColor)
+                            .padding(.horizontal, 13)
+                            .padding(.vertical, 7)
+                            .background(
+                                Capsule()
+                                    .fill(themeManager.primaryColor.opacity(0.12))
+                            )
+                        }
+                    }
+                    .padding(.top, 8)
+                    
+                    // Credit Packages Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(themeManager.primaryColor)
+                            
+                            Text("Get More Credits")
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .foregroundColor(themeManager.primaryTextColor)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 4)
+                        
+                        VStack(spacing: 10) {
+                            ForEach(Array(CreditPackage.packages.enumerated()), id: \.element.id) { index, package in
+                                Button(action: { purchaseCredits(package: package) }) {
+                                    creditPackageCard(package: package, index: index)
+                                }
+                                .buttonStyle(ScaleButtonStyle())
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    
+                    // How Credits Work Section with theme colors
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "info.circle.fill")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(themeManager.infoColor)
+                            
+                            Text("How Credits Work")
+                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                .foregroundColor(themeManager.primaryTextColor)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 4)
+                        
+                        VStack(spacing: 10) {
+                            // Daily credits info
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(themeManager.successColor.opacity(0.12))
+                                        .frame(width: 38, height: 38)
+                                    Image(systemName: "clock.fill")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(themeManager.successColor)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("Daily Free Credits")
+                                        .font(.system(size: 13, weight: .bold, design: .rounded))
                                         .foregroundColor(themeManager.primaryTextColor)
-                                    
-                                    if let savings = package.savings {
-                                        Text(savings)
-                                            .font(.system(size: 9, weight: .bold))
-                                            .foregroundColor(.green)
-                                    }
+                                    Text(userSettings.isPremium ? "10 credits reset at midnight" : "5 credits reset at midnight")
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundColor(themeManager.secondaryTextColor)
+                                }
+                                
+                                Spacer()
+                            }
+                            
+                            Divider().opacity(0.3)
+                            
+                            // Games info
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(themeManager.infoColor.opacity(0.12))
+                                        .frame(width: 38, height: 38)
+                                    Image(systemName: "gamecontroller.fill")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(themeManager.infoColor)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("Mini Games")
+                                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                                        .foregroundColor(themeManager.primaryTextColor)
+                                    Text("1 credit = +3 pet health")
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundColor(themeManager.secondaryTextColor)
                                 }
                                 
                                 Spacer()
                                 
-                                Text(package.price)
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Capsule().fill(themeManager.accentColor))
+                                Text("+3 ❤️")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                    .foregroundColor(themeManager.infoColor)
                             }
-                            .padding(12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(themeManager.accentColor.opacity(0.08))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(package.isPopular ? themeManager.accentColor : Color.clear, lineWidth: 1.5)
-                                    )
-                            )
-                            .overlay(alignment: .topTrailing) {
-                                if package.isPopular {
-                                    Text("BEST")
-                                        .font(.system(size: 7, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 5)
-                                        .padding(.vertical, 2)
-                                        .background(Capsule().fill(themeManager.accentColor))
-                                        .offset(x: -4, y: -4)
+                            
+                            Divider().opacity(0.3)
+                            
+                            // Activities info
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(themeManager.accentPink.opacity(0.12))
+                                        .frame(width: 38, height: 38)
+                                    Image(systemName: "heart.fill")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(themeManager.accentPink)
                                 }
+                                
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("Pet Activities")
+                                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                                        .foregroundColor(themeManager.primaryTextColor)
+                                    Text("1 credit = +5 pet health")
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundColor(themeManager.secondaryTextColor)
+                                }
+                                
+                                Spacer()
+                                
+                                Text("+5 ❤️")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                    .foregroundColor(themeManager.accentPink)
                             }
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .padding(15)
+                        .background(
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(themeManager.cardBackgroundColor)
+                                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.04), radius: 8, y: 3)
+                        )
                     }
+                    .padding(.horizontal, 16)
+                    
+                    // Footer
+                    VStack(spacing: 6) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "lock.shield.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(themeManager.successColor)
+                            Text("Secure purchase via App Store")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                        }
+                        
+                        Text("Credits never expire! 🎉")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(themeManager.successColor)
+                    }
+                    .padding(.top, 4)
+                    .padding(.bottom, 20)
                 }
-                .padding(.horizontal, 16)
-                
-                Spacer()
             }
             .background(themeManager.backgroundColor.ignoresSafeArea())
             .navigationTitle("Credits")
@@ -752,10 +840,123 @@ struct ChallengesView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { showCreditsSheet = false }
-                        .font(.system(size: 14))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(themeManager.accentColor)
                 }
             }
         }
+    }
+    
+    // MARK: - Credit Package Card
+    @ViewBuilder
+    private func creditPackageCard(package: CreditPackage, index: Int) -> some View {
+        HStack(spacing: 14) {
+            // Credit coin stack with theme colors
+            ZStack {
+                // Multiple coins effect
+                ForEach(0..<min(3, max(1, package.credits / 8)), id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            LinearGradient(
+                                colors: [themeManager.primaryColor, themeManager.primaryLightColor],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 40 - CGFloat(i * 4), height: 40 - CGFloat(i * 4))
+                        .offset(x: CGFloat(i * 3), y: CGFloat(i * -3))
+                        .shadow(color: themeManager.primaryColor.opacity(0.2), radius: 2, y: 1)
+                }
+                
+                Text("\(package.credits)")
+                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .foregroundColor(.white)
+                    .shadow(color: Color.black.opacity(0.3), radius: 1, y: 1)
+            }
+            .frame(width: 50, height: 50)
+            
+            // Package info
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text("\(package.credits) Credits")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    if package.isPopular {
+                        HStack(spacing: 3) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 8))
+                            Text("POPULAR")
+                                .font(.system(size: 9, weight: .black))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [themeManager.primaryDarkColor, themeManager.primaryColor],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                        )
+                    }
+                }
+                
+                if let savings = package.savings {
+                    Text(savings)
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.successColor)
+                } else {
+                    Text("Perfect for trying out!")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                }
+            }
+            
+            Spacer()
+            
+            // Price button with theme gradient
+            Text(package.price)
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 9)
+                .background(
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: package.isPopular ? 
+                                    [themeManager.primaryDarkColor, themeManager.primaryColor, themeManager.primaryLightColor] :
+                                    [themeManager.primaryColor, themeManager.primaryLightColor],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .shadow(color: themeManager.primaryColor.opacity(0.35), radius: 8, y: 4)
+                )
+        }
+        .padding(15)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(themeManager.cardBackgroundColor)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(
+                            package.isPopular ?
+                            LinearGradient(
+                                colors: [themeManager.primaryDarkColor, themeManager.primaryColor, themeManager.primaryLightColor],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ) :
+                            LinearGradient(colors: [Color.clear], startPoint: .leading, endPoint: .trailing),
+                            lineWidth: package.isPopular ? 2.5 : 0
+                        )
+                )
+                .shadow(color: Color.black.opacity(themeManager.isDarkMode ? 0 : 0.06), radius: package.isPopular ? 12 : 8, y: package.isPopular ? 6 : 3)
+        )
     }
     
     // MARK: - Health Boost Overlay
