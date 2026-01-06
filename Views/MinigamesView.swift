@@ -212,11 +212,11 @@ struct MinigamesView: View {
         let settingsGameType: UserSettings.MinigameType
         switch game {
         case .bubblePop:
-            settingsGameType = .bubblePop
+            settingsGameType = .moodCatch // Bubble Pop doesn't exist, map to Mood Catch
         case .memoryMatch:
             settingsGameType = .memoryMatch
         case .treatCatch:
-            settingsGameType = .patternMatch // Using patternMatch for treat catch
+            settingsGameType = .moodCatch
         }
         
         // Record the game played
@@ -226,8 +226,9 @@ struct MinigamesView: View {
         achievementManager.checkGameAchievements(
             totalMinigamesPlayed: userSettings.totalMinigamesPlayed,
             totalPetActivitiesPlayed: userSettings.totalPetActivitiesPlayed,
-            bubblePopPlayed: userSettings.bubblePopPlayed,
+            moodCatchPlayed: userSettings.moodCatchPlayed,
             memoryMatchPlayed: userSettings.memoryMatchPlayed,
+            skyDashPlayed: userSettings.skyDashPlayed,
             patternMatchPlayed: userSettings.patternMatchPlayed,
             feedActivityCount: userSettings.feedActivityCount,
             playBallActivityCount: userSettings.playBallActivityCount,

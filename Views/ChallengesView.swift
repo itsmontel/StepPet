@@ -171,14 +171,16 @@ struct ChallengesView: View {
         // Map game name to UserSettings.MinigameType
         let gameType: UserSettings.MinigameType
         switch currentPlayingGame {
-        case "bubble_pop":
-            gameType = .bubblePop
+        case "treat_catch":
+            gameType = .moodCatch
         case "memory_match":
             gameType = .memoryMatch
-        case "pattern_match", "treat_catch", "sky_dash":
-            gameType = .patternMatch // Using patternMatch for other games
+        case "sky_dash":
+            gameType = .skyDash
+        case "pattern_match":
+            gameType = .patternMatch
         default:
-            gameType = .bubblePop
+            gameType = .moodCatch
         }
         
         // Record the game played
@@ -188,8 +190,9 @@ struct ChallengesView: View {
         achievementManager.checkGameAchievements(
             totalMinigamesPlayed: userSettings.totalMinigamesPlayed,
             totalPetActivitiesPlayed: userSettings.totalPetActivitiesPlayed,
-            bubblePopPlayed: userSettings.bubblePopPlayed,
+            moodCatchPlayed: userSettings.moodCatchPlayed,
             memoryMatchPlayed: userSettings.memoryMatchPlayed,
+            skyDashPlayed: userSettings.skyDashPlayed,
             patternMatchPlayed: userSettings.patternMatchPlayed,
             feedActivityCount: userSettings.feedActivityCount,
             playBallActivityCount: userSettings.playBallActivityCount,
@@ -1513,9 +1516,9 @@ struct ActivityPlaySheet: View {
         switch activity {
         case .feed:
             activityType = .feed
-        case .play:
+        case .playBall:
             activityType = .playBall
-        case .watch:
+        case .watchTV:
             activityType = .watchTV
         }
         
@@ -1526,8 +1529,9 @@ struct ActivityPlaySheet: View {
         achievementManager.checkGameAchievements(
             totalMinigamesPlayed: userSettings.totalMinigamesPlayed,
             totalPetActivitiesPlayed: userSettings.totalPetActivitiesPlayed,
-            bubblePopPlayed: userSettings.bubblePopPlayed,
+            moodCatchPlayed: userSettings.moodCatchPlayed,
             memoryMatchPlayed: userSettings.memoryMatchPlayed,
+            skyDashPlayed: userSettings.skyDashPlayed,
             patternMatchPlayed: userSettings.patternMatchPlayed,
             feedActivityCount: userSettings.feedActivityCount,
             playBallActivityCount: userSettings.playBallActivityCount,

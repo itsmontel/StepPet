@@ -361,8 +361,9 @@ class AchievementManager: ObservableObject {
     func checkGameAchievements(
         totalMinigamesPlayed: Int,
         totalPetActivitiesPlayed: Int,
-        bubblePopPlayed: Int,
+        moodCatchPlayed: Int,
         memoryMatchPlayed: Int,
+        skyDashPlayed: Int,
         patternMatchPlayed: Int,
         feedActivityCount: Int,
         playBallActivityCount: Int,
@@ -388,8 +389,9 @@ class AchievementManager: ObservableObject {
         updateProgress(achievementId: "ultimate_pet_parent", progress: totalPetActivitiesPlayed)
         
         // Specific game achievements
-        updateProgress(achievementId: "bubble_master", progress: bubblePopPlayed)
+        updateProgress(achievementId: "mood_master", progress: moodCatchPlayed)
         updateProgress(achievementId: "memory_champion", progress: memoryMatchPlayed)
+        updateProgress(achievementId: "sky_legend", progress: skyDashPlayed)
         updateProgress(achievementId: "pattern_expert", progress: patternMatchPlayed)
         
         // Specific activity achievements

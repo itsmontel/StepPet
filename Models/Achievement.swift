@@ -185,8 +185,9 @@ struct Achievement: Identifiable, Codable {
         Achievement(id: "ultimate_pet_parent", title: "Ultimate Pet Parent", description: "Do 1,000 pet activities", category: .games, rarity: .legendary, icon: "sparkles", targetProgress: 1000),
         
         // Specific game achievements
-        Achievement(id: "bubble_master", title: "Bubble Master", description: "Play Bubble Pop 50 times", category: .games, rarity: .rare, icon: "bubble.left.fill", targetProgress: 50),
+        Achievement(id: "mood_master", title: "Mood Master", description: "Play Mood Catch 50 times", category: .games, rarity: .rare, icon: "heart.circle.fill", targetProgress: 50),
         Achievement(id: "memory_champion", title: "Memory Champion", description: "Play Memory Match 50 times", category: .games, rarity: .rare, icon: "brain.head.profile", targetProgress: 50),
+        Achievement(id: "sky_legend", title: "Sky Legend", description: "Play Sky Dash 50 times", category: .games, rarity: .rare, icon: "arrow.up.forward.circle.fill", targetProgress: 50),
         Achievement(id: "pattern_expert", title: "Pattern Expert", description: "Play Pattern Match 50 times", category: .games, rarity: .rare, icon: "square.grid.3x3.fill", targetProgress: 50),
         
         // Specific activity achievements

@@ -99,10 +99,13 @@ class UserSettings: ObservableObject {
     @Published var totalPetActivitiesPlayed: Int {
         didSet { save() }
     }
-    @Published var bubblePopPlayed: Int {
+    @Published var moodCatchPlayed: Int {
         didSet { save() }
     }
     @Published var memoryMatchPlayed: Int {
+        didSet { save() }
+    }
+    @Published var skyDashPlayed: Int {
         didSet { save() }
     }
     @Published var patternMatchPlayed: Int {
@@ -177,8 +180,9 @@ class UserSettings: ObservableObject {
             // Game & Activity tracking properties
             self.totalMinigamesPlayed = savedSettings.totalMinigamesPlayed ?? 0
             self.totalPetActivitiesPlayed = savedSettings.totalPetActivitiesPlayed ?? 0
-            self.bubblePopPlayed = savedSettings.bubblePopPlayed ?? 0
+            self.moodCatchPlayed = savedSettings.moodCatchPlayed ?? 0
             self.memoryMatchPlayed = savedSettings.memoryMatchPlayed ?? 0
+            self.skyDashPlayed = savedSettings.skyDashPlayed ?? 0
             self.patternMatchPlayed = savedSettings.patternMatchPlayed ?? 0
             self.feedActivityCount = savedSettings.feedActivityCount ?? 0
             self.playBallActivityCount = savedSettings.playBallActivityCount ?? 0
@@ -246,8 +250,9 @@ class UserSettings: ObservableObject {
             // Game & Activity tracking properties - defaults
             self.totalMinigamesPlayed = 0
             self.totalPetActivitiesPlayed = 0
-            self.bubblePopPlayed = 0
+            self.moodCatchPlayed = 0
             self.memoryMatchPlayed = 0
+            self.skyDashPlayed = 0
             self.patternMatchPlayed = 0
             self.feedActivityCount = 0
             self.playBallActivityCount = 0
@@ -368,8 +373,9 @@ class UserSettings: ObservableObject {
             lastHealthCheckDate: lastHealthCheckDate,
             totalMinigamesPlayed: totalMinigamesPlayed,
             totalPetActivitiesPlayed: totalPetActivitiesPlayed,
-            bubblePopPlayed: bubblePopPlayed,
+            moodCatchPlayed: moodCatchPlayed,
             memoryMatchPlayed: memoryMatchPlayed,
+            skyDashPlayed: skyDashPlayed,
             patternMatchPlayed: patternMatchPlayed,
             feedActivityCount: feedActivityCount,
             playBallActivityCount: playBallActivityCount,
@@ -400,8 +406,9 @@ class UserSettings: ObservableObject {
     // MARK: - Game & Activity Tracking Methods
     
     enum MinigameType: String {
-        case bubblePop = "bubble_pop"
+        case moodCatch = "mood_catch"
         case memoryMatch = "memory_match"
+        case skyDash = "sky_dash"
         case patternMatch = "pattern_match"
     }
     
@@ -417,10 +424,12 @@ class UserSettings: ObservableObject {
         
         // Track specific game
         switch type {
-        case .bubblePop:
-            bubblePopPlayed += 1
+        case .moodCatch:
+            moodCatchPlayed += 1
         case .memoryMatch:
             memoryMatchPlayed += 1
+        case .skyDash:
+            skyDashPlayed += 1
         case .patternMatch:
             patternMatchPlayed += 1
         }
@@ -606,8 +615,9 @@ struct SavedUserSettings: Codable {
     // Game & Activity tracking
     var totalMinigamesPlayed: Int?
     var totalPetActivitiesPlayed: Int?
-    var bubblePopPlayed: Int?
+    var moodCatchPlayed: Int?
     var memoryMatchPlayed: Int?
+    var skyDashPlayed: Int?
     var patternMatchPlayed: Int?
     var feedActivityCount: Int?
     var playBallActivityCount: Int?

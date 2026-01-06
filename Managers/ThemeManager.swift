@@ -660,6 +660,7 @@ class ThemeManager: ObservableObject {
         case .health: return Color(hex: "EC4899")
         case .consistency: return Color(hex: "A855F7")
         case .milestones: return Color(hex: "FFD93D")
+        case .games: return Color(hex: "00D9FF")
         case .special: return Color(hex: "FF6B4A")
         }
     }
@@ -678,6 +679,8 @@ class ThemeManager: ObservableObject {
             return purpleGradient
         case .milestones:
             return goldGradient
+        case .games:
+            return LinearGradient(colors: [Color(hex: "00D9FF"), Color(hex: "667EEA")], startPoint: .topLeading, endPoint: .bottomTrailing)
         case .special:
             return sunsetGradient
         }
