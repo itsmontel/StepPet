@@ -92,6 +92,53 @@ class UserSettings: ObservableObject {
         didSet { save() }
     }
     
+    // Game & Activity tracking properties
+    @Published var totalMinigamesPlayed: Int {
+        didSet { save() }
+    }
+    @Published var totalPetActivitiesPlayed: Int {
+        didSet { save() }
+    }
+    @Published var bubblePopPlayed: Int {
+        didSet { save() }
+    }
+    @Published var memoryMatchPlayed: Int {
+        didSet { save() }
+    }
+    @Published var patternMatchPlayed: Int {
+        didSet { save() }
+    }
+    @Published var feedActivityCount: Int {
+        didSet { save() }
+    }
+    @Published var playBallActivityCount: Int {
+        didSet { save() }
+    }
+    @Published var watchTVActivityCount: Int {
+        didSet { save() }
+    }
+    @Published var totalCreditsUsed: Int {
+        didSet { save() }
+    }
+    @Published var consecutiveGameDays: Int {
+        didSet { save() }
+    }
+    @Published var lastGamePlayDate: Date? {
+        didSet { save() }
+    }
+    @Published var todayFedPet: Bool {
+        didSet { save() }
+    }
+    @Published var todayPlayedBall: Bool {
+        didSet { save() }
+    }
+    @Published var todayWatchedTV: Bool {
+        didSet { save() }
+    }
+    @Published var lastActivityDate: Date? {
+        didSet { save() }
+    }
+    
     private let userDefaultsKey = "StepPetUserSettings"
     
     init() {
@@ -126,6 +173,30 @@ class UserSettings: ObservableObject {
             self.consecutiveNoSickDays = savedSettings.consecutiveNoSickDays ?? 0
             self.rescueCount = savedSettings.rescueCount ?? 0
             self.lastHealthCheckDate = savedSettings.lastHealthCheckDate
+            
+            // Game & Activity tracking properties
+            self.totalMinigamesPlayed = savedSettings.totalMinigamesPlayed ?? 0
+            self.totalPetActivitiesPlayed = savedSettings.totalPetActivitiesPlayed ?? 0
+            self.bubblePopPlayed = savedSettings.bubblePopPlayed ?? 0
+            self.memoryMatchPlayed = savedSettings.memoryMatchPlayed ?? 0
+            self.patternMatchPlayed = savedSettings.patternMatchPlayed ?? 0
+            self.feedActivityCount = savedSettings.feedActivityCount ?? 0
+            self.playBallActivityCount = savedSettings.playBallActivityCount ?? 0
+            self.watchTVActivityCount = savedSettings.watchTVActivityCount ?? 0
+            self.totalCreditsUsed = savedSettings.totalCreditsUsed ?? 0
+            self.consecutiveGameDays = savedSettings.consecutiveGameDays ?? 0
+            self.lastGamePlayDate = savedSettings.lastGamePlayDate
+            self.todayFedPet = savedSettings.todayFedPet ?? false
+            self.todayPlayedBall = savedSettings.todayPlayedBall ?? false
+            self.todayWatchedTV = savedSettings.todayWatchedTV ?? false
+            self.lastActivityDate = savedSettings.lastActivityDate
+            
+            // Reset daily activity tracking if it's a new day
+            if let lastActDate = lastActivityDate, !Calendar.current.isDateInToday(lastActDate) {
+                self.todayFedPet = false
+                self.todayPlayedBall = false
+                self.todayWatchedTV = false
+            }
             
             // Reset daily boost if it's a new day
             if let lastDate = lastPlayBoostDate, !Calendar.current.isDateInToday(lastDate) {
@@ -171,6 +242,23 @@ class UserSettings: ObservableObject {
             self.consecutiveNoSickDays = 0
             self.rescueCount = 0
             self.lastHealthCheckDate = nil
+            
+            // Game & Activity tracking properties - defaults
+            self.totalMinigamesPlayed = 0
+            self.totalPetActivitiesPlayed = 0
+            self.bubblePopPlayed = 0
+            self.memoryMatchPlayed = 0
+            self.patternMatchPlayed = 0
+            self.feedActivityCount = 0
+            self.playBallActivityCount = 0
+            self.watchTVActivityCount = 0
+            self.totalCreditsUsed = 0
+            self.consecutiveGameDays = 0
+            self.lastGamePlayDate = nil
+            self.todayFedPet = false
+            self.todayPlayedBall = false
+            self.todayWatchedTV = false
+            self.lastActivityDate = nil
         }
         
         // Sync haptics setting with global HapticFeedback
@@ -277,7 +365,22 @@ class UserSettings: ObservableObject {
             consecutiveHealthyDays: consecutiveHealthyDays,
             consecutiveNoSickDays: consecutiveNoSickDays,
             rescueCount: rescueCount,
-            lastHealthCheckDate: lastHealthCheckDate
+            lastHealthCheckDate: lastHealthCheckDate,
+            totalMinigamesPlayed: totalMinigamesPlayed,
+            totalPetActivitiesPlayed: totalPetActivitiesPlayed,
+            bubblePopPlayed: bubblePopPlayed,
+            memoryMatchPlayed: memoryMatchPlayed,
+            patternMatchPlayed: patternMatchPlayed,
+            feedActivityCount: feedActivityCount,
+            playBallActivityCount: playBallActivityCount,
+            watchTVActivityCount: watchTVActivityCount,
+            totalCreditsUsed: totalCreditsUsed,
+            consecutiveGameDays: consecutiveGameDays,
+            lastGamePlayDate: lastGamePlayDate,
+            todayFedPet: todayFedPet,
+            todayPlayedBall: todayPlayedBall,
+            todayWatchedTV: todayWatchedTV,
+            lastActivityDate: lastActivityDate
         )
         
         if let data = try? JSONEncoder().encode(settings) {
@@ -292,6 +395,92 @@ class UserSettings: ObservableObject {
         }
         petsUsed.insert(type.rawValue)
         save()
+    }
+    
+    // MARK: - Game & Activity Tracking Methods
+    
+    enum MinigameType: String {
+        case bubblePop = "bubble_pop"
+        case memoryMatch = "memory_match"
+        case patternMatch = "pattern_match"
+    }
+    
+    enum PetActivityType: String {
+        case feed = "feed"
+        case playBall = "play_ball"
+        case watchTV = "watch_tv"
+    }
+    
+    func recordMinigamePlayed(type: MinigameType) {
+        totalMinigamesPlayed += 1
+        totalCreditsUsed += 1
+        
+        // Track specific game
+        switch type {
+        case .bubblePop:
+            bubblePopPlayed += 1
+        case .memoryMatch:
+            memoryMatchPlayed += 1
+        case .patternMatch:
+            patternMatchPlayed += 1
+        }
+        
+        // Track consecutive game days
+        let today = Calendar.current.startOfDay(for: Date())
+        if let lastDate = lastGamePlayDate {
+            let lastDay = Calendar.current.startOfDay(for: lastDate)
+            let daysDiff = Calendar.current.dateComponents([.day], from: lastDay, to: today).day ?? 0
+            
+            if daysDiff == 1 {
+                // Consecutive day
+                consecutiveGameDays += 1
+            } else if daysDiff > 1 {
+                // Streak broken
+                consecutiveGameDays = 1
+            }
+            // daysDiff == 0 means same day, don't increment
+        } else {
+            consecutiveGameDays = 1
+        }
+        lastGamePlayDate = Date()
+        
+        save()
+    }
+    
+    func recordPetActivity(type: PetActivityType) {
+        totalPetActivitiesPlayed += 1
+        totalCreditsUsed += 1
+        
+        // Track specific activity
+        switch type {
+        case .feed:
+            feedActivityCount += 1
+            todayFedPet = true
+        case .playBall:
+            playBallActivityCount += 1
+            todayPlayedBall = true
+        case .watchTV:
+            watchTVActivityCount += 1
+            todayWatchedTV = true
+        }
+        
+        lastActivityDate = Date()
+        save()
+    }
+    
+    // Check if all 3 activities were done today
+    var didAllActivitiesToday: Bool {
+        return todayFedPet && todayPlayedBall && todayWatchedTV
+    }
+    
+    // Reset daily activity tracking
+    func checkAndResetDailyActivityTracking() {
+        if let lastDate = lastActivityDate, !Calendar.current.isDateInToday(lastDate) {
+            todayFedPet = false
+            todayPlayedBall = false
+            todayWatchedTV = false
+            save()
+        }
     }
     
     func updatePetHealth(steps: Int) {
@@ -413,6 +602,23 @@ struct SavedUserSettings: Codable {
     var consecutiveNoSickDays: Int?
     var rescueCount: Int?
     var lastHealthCheckDate: Date?
+    
+    // Game & Activity tracking
+    var totalMinigamesPlayed: Int?
+    var totalPetActivitiesPlayed: Int?
+    var bubblePopPlayed: Int?
+    var memoryMatchPlayed: Int?
+    var patternMatchPlayed: Int?
+    var feedActivityCount: Int?
+    var playBallActivityCount: Int?
+    var watchTVActivityCount: Int?
+    var totalCreditsUsed: Int?
+    var consecutiveGameDays: Int?
+    var lastGamePlayDate: Date?
+    var todayFedPet: Bool?
+    var todayPlayedBall: Bool?
+    var todayWatchedTV: Bool?
+    var lastActivityDate: Date?
 }
 
 // MARK: - Activity Level

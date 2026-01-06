@@ -29,6 +29,7 @@ struct ChallengesView: View {
     @State private var showBubblePop = false
     @State private var showPatternMatch = false
     @State private var showSkyDash = false
+    @State private var currentPlayingGame: String = "" // Track which game is being played
     
     private var filteredChallenges: [Achievement] {
         var challenges = achievementManager.achievements
@@ -154,12 +155,49 @@ struct ChallengesView: View {
     }
     
     private func handleMinigameComplete(_ healthBonus: Int) {
+        // Track the game that was played for achievements
+        trackMinigamePlayed()
+        
         showTreatCatch = false
         showMemoryMatch = false
         showBubblePop = false
         showPatternMatch = false
         showSkyDash = false
+        currentPlayingGame = ""
         HapticFeedback.success.trigger()
+    }
+    
+    private func trackMinigamePlayed() {
+        // Map game name to UserSettings.MinigameType
+        let gameType: UserSettings.MinigameType
+        switch currentPlayingGame {
+        case "bubble_pop":
+            gameType = .bubblePop
+        case "memory_match":
+            gameType = .memoryMatch
+        case "pattern_match", "treat_catch", "sky_dash":
+            gameType = .patternMatch // Using patternMatch for other games
+        default:
+            gameType = .bubblePop
+        }
+        
+        // Record the game played
+        userSettings.recordMinigamePlayed(type: gameType)
+        
+        // Check game achievements
+        achievementManager.checkGameAchievements(
+            totalMinigamesPlayed: userSettings.totalMinigamesPlayed,
+            totalPetActivitiesPlayed: userSettings.totalPetActivitiesPlayed,
+            bubblePopPlayed: userSettings.bubblePopPlayed,
+            memoryMatchPlayed: userSettings.memoryMatchPlayed,
+            patternMatchPlayed: userSettings.patternMatchPlayed,
+            feedActivityCount: userSettings.feedActivityCount,
+            playBallActivityCount: userSettings.playBallActivityCount,
+            watchTVActivityCount: userSettings.watchTVActivityCount,
+            totalCreditsUsed: userSettings.totalCreditsUsed,
+            consecutiveGameDays: userSettings.consecutiveGameDays,
+            didAllActivitiesToday: userSettings.didAllActivitiesToday
+        )
     }
     
     // Start a minigame (deducts credit and adds +5 health)
@@ -314,6 +352,7 @@ struct ChallengesView: View {
                     emoji: "",
                     hasCredits: userSettings.totalCredits > 0
                 ) {
+                    currentPlayingGame = "treat_catch"
                     startMinigame { showTreatCatch = true }
                 }
                 
@@ -327,6 +366,7 @@ struct ChallengesView: View {
                     emoji: "🧠",
                     hasCredits: userSettings.totalCredits > 0
                 ) {
+                    currentPlayingGame = "memory_match"
                     startMinigame { showMemoryMatch = true }
                 }
                 
@@ -340,6 +380,7 @@ struct ChallengesView: View {
                     emoji: "🌟",
                     hasCredits: userSettings.totalCredits > 0
                 ) {
+                    currentPlayingGame = "sky_dash"
                     startMinigame { showSkyDash = true }
                 }
                 
@@ -353,6 +394,7 @@ struct ChallengesView: View {
                     emoji: "🧩",
                     hasCredits: userSettings.totalCredits > 0
                 ) {
+                    currentPlayingGame = "pattern_match"
                     startMinigame { showPatternMatch = true }
                 }
             }
@@ -1169,6 +1211,7 @@ struct ActivityPlaySheet: View {
     
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
+    @EnvironmentObject var achievementManager: AchievementManager
     @Environment(\.dismiss) var dismiss
     
     @State private var hasStarted = false
@@ -1442,6 +1485,9 @@ struct ActivityPlaySheet: View {
             return
         }
         
+        // Track pet activity for achievements
+        trackPetActivity()
+        
         HapticFeedback.medium.trigger()
         
         // Start GIF animation and update state
@@ -1459,6 +1505,37 @@ struct ActivityPlaySheet: View {
             }
             HapticFeedback.success.trigger()
         }
+    }
+    
+    private func trackPetActivity() {
+        // Map PetActivity to UserSettings.PetActivityType
+        let activityType: UserSettings.PetActivityType
+        switch activity {
+        case .feed:
+            activityType = .feed
+        case .play:
+            activityType = .playBall
+        case .watch:
+            activityType = .watchTV
+        }
+        
+        // Record the pet activity
+        userSettings.recordPetActivity(type: activityType)
+        
+        // Check game achievements
+        achievementManager.checkGameAchievements(
+            totalMinigamesPlayed: userSettings.totalMinigamesPlayed,
+            totalPetActivitiesPlayed: userSettings.totalPetActivitiesPlayed,
+            bubblePopPlayed: userSettings.bubblePopPlayed,
+            memoryMatchPlayed: userSettings.memoryMatchPlayed,
+            patternMatchPlayed: userSettings.patternMatchPlayed,
+            feedActivityCount: userSettings.feedActivityCount,
+            playBallActivityCount: userSettings.playBallActivityCount,
+            watchTVActivityCount: userSettings.watchTVActivityCount,
+            totalCreditsUsed: userSettings.totalCreditsUsed,
+            consecutiveGameDays: userSettings.consecutiveGameDays,
+            didAllActivitiesToday: userSettings.didAllActivitiesToday
+        )
     }
 }
 

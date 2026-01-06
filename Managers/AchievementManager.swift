@@ -200,8 +200,9 @@ class AchievementManager: ObservableObject {
         updateProgress(achievementId: "three_month_user", progress: daysUsed)
         updateProgress(achievementId: "six_month_user", progress: daysUsed)
         updateProgress(achievementId: "one_year_user", progress: daysUsed)
-        updateProgress(achievementId: "first_anniversary", progress: daysUsed)
+        updateProgress(achievementId: "two_year_user", progress: daysUsed)
         updateProgress(achievementId: "hundred_goals", progress: goalsAchieved)
+        updateProgress(achievementId: "five_hundred_goals", progress: goalsAchieved)
         updateProgress(achievementId: "thousand_goals", progress: goalsAchieved)
         
         // Special achievements
@@ -354,6 +355,63 @@ class AchievementManager: ObservableObject {
     // MARK: - Unlock Premium Supporter
     func unlockPremiumSupporter() {
         updateProgress(achievementId: "premium_supporter", progress: 1)
+    }
+    
+    // MARK: - Check Game & Activity Achievements
+    func checkGameAchievements(
+        totalMinigamesPlayed: Int,
+        totalPetActivitiesPlayed: Int,
+        bubblePopPlayed: Int,
+        memoryMatchPlayed: Int,
+        patternMatchPlayed: Int,
+        feedActivityCount: Int,
+        playBallActivityCount: Int,
+        watchTVActivityCount: Int,
+        totalCreditsUsed: Int,
+        consecutiveGameDays: Int,
+        didAllActivitiesToday: Bool
+    ) {
+        // Mini-game achievements
+        updateProgress(achievementId: "first_minigame", progress: min(totalMinigamesPlayed, 1))
+        updateProgress(achievementId: "game_enthusiast", progress: totalMinigamesPlayed)
+        updateProgress(achievementId: "arcade_regular", progress: totalMinigamesPlayed)
+        updateProgress(achievementId: "gaming_pro", progress: totalMinigamesPlayed)
+        updateProgress(achievementId: "minigame_master", progress: totalMinigamesPlayed)
+        updateProgress(achievementId: "minigame_legend", progress: totalMinigamesPlayed)
+        
+        // Pet activity achievements
+        updateProgress(achievementId: "first_activity", progress: min(totalPetActivitiesPlayed, 1))
+        updateProgress(achievementId: "pet_carer", progress: totalPetActivitiesPlayed)
+        updateProgress(achievementId: "devoted_owner", progress: totalPetActivitiesPlayed)
+        updateProgress(achievementId: "best_friend", progress: totalPetActivitiesPlayed)
+        updateProgress(achievementId: "pet_activity_pro", progress: totalPetActivitiesPlayed)
+        updateProgress(achievementId: "ultimate_pet_parent", progress: totalPetActivitiesPlayed)
+        
+        // Specific game achievements
+        updateProgress(achievementId: "bubble_master", progress: bubblePopPlayed)
+        updateProgress(achievementId: "memory_champion", progress: memoryMatchPlayed)
+        updateProgress(achievementId: "pattern_expert", progress: patternMatchPlayed)
+        
+        // Specific activity achievements
+        updateProgress(achievementId: "feeding_time", progress: feedActivityCount)
+        updateProgress(achievementId: "playful_spirit", progress: playBallActivityCount)
+        updateProgress(achievementId: "couch_buddies", progress: watchTVActivityCount)
+        
+        // Credit achievements
+        updateProgress(achievementId: "credit_spender", progress: totalCreditsUsed)
+        updateProgress(achievementId: "credit_collector", progress: totalCreditsUsed)
+        updateProgress(achievementId: "credit_master", progress: totalCreditsUsed)
+        updateProgress(achievementId: "credit_goat", progress: totalCreditsUsed)
+        
+        // Gaming streak achievements
+        updateProgress(achievementId: "weekly_gamer", progress: consecutiveGameDays)
+        updateProgress(achievementId: "monthly_gamer", progress: consecutiveGameDays)
+        updateProgress(achievementId: "gaming_devotee", progress: consecutiveGameDays)
+        
+        // Social butterfly - all 3 activities in one day
+        if didAllActivitiesToday {
+            updateProgress(achievementId: "social_butterfly", progress: 1)
+        }
     }
     
     // MARK: - Reset Daily Achievements

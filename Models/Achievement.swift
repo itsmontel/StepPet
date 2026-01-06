@@ -14,6 +14,7 @@ enum AchievementCategory: String, CaseIterable, Codable {
     case health = "Health"
     case consistency = "Consistency"
     case milestones = "Milestones"
+    case games = "Games & Activities"
     case special = "Special"
     
     var icon: String {
@@ -24,6 +25,7 @@ enum AchievementCategory: String, CaseIterable, Codable {
         case .health: return "heart.fill"
         case .consistency: return "calendar"
         case .milestones: return "flag.fill"
+        case .games: return "gamecontroller.fill"
         case .special: return "sparkles"
         }
     }
@@ -36,6 +38,7 @@ enum AchievementCategory: String, CaseIterable, Codable {
         case .health: return .red
         case .consistency: return .purple
         case .milestones: return .yellow
+        case .games: return .cyan
         case .special: return .pink
         }
     }
@@ -135,21 +138,22 @@ struct Achievement: Identifiable, Codable {
         Achievement(id: "daily_walker", title: "Daily Walker", description: "Walk at least 1,000 steps every day for a week", category: .consistency, rarity: .common, icon: "calendar.badge.clock", targetProgress: 7),
         Achievement(id: "monthly_active", title: "Monthly Active", description: "Walk at least 1,000 steps every day for a month", category: .consistency, rarity: .rare, icon: "calendar", targetProgress: 30),
         Achievement(id: "morning_routine", title: "Morning Routine", description: "Walk 3,000 steps before 9 AM for 7 days", category: .consistency, rarity: .uncommon, icon: "alarm.fill", targetProgress: 7),
-        Achievement(id: "lunch_walker", title: "Lunch Walker", description: "Walk 2,000 steps during lunch hours for 5 days", category: .consistency, rarity: .uncommon, icon: "fork.knife", targetProgress: 5),
+        Achievement(id: "lunch_walker", title: "Lunch Walker", description: "Walk 2,000 steps during lunch hours for 5 days", category: .consistency, rarity: .uncommon, icon: "takeoutbag.and.cup.and.straw.fill", targetProgress: 5),
         Achievement(id: "evening_stroll", title: "Evening Stroll", description: "Walk 3,000 steps after 6 PM for 7 days", category: .consistency, rarity: .uncommon, icon: "sunset.fill", targetProgress: 7),
         Achievement(id: "all_day_active", title: "All Day Active", description: "Walk steps in every 4-hour block for 3 days", category: .consistency, rarity: .rare, icon: "clock.fill", targetProgress: 3),
         Achievement(id: "goal_crusher", title: "Goal Crusher", description: "Exceed your daily goal by 50% for 5 days", category: .consistency, rarity: .rare, icon: "bolt.heart.fill", targetProgress: 5),
         Achievement(id: "steady_pace", title: "Steady Pace", description: "Hit exactly 10,000 steps (±500) for 3 days", category: .consistency, rarity: .uncommon, icon: "speedometer", targetProgress: 3),
         
-        // MARK: - Milestone Achievements (8 achievements)
+        // MARK: - Milestone Achievements (9 achievements)
         Achievement(id: "one_week_user", title: "One Week User", description: "Use VirtuPet for 7 days", category: .milestones, rarity: .common, icon: "7.circle.fill", targetProgress: 7),
-        Achievement(id: "one_month_user", title: "One Month User", description: "Use VirtuPet for 30 days", category: .milestones, rarity: .uncommon, icon: "30.circle.fill", targetProgress: 30),
+        Achievement(id: "one_month_user", title: "One Month User", description: "Use VirtuPet for 30 days", category: .milestones, rarity: .uncommon, icon: "calendar", targetProgress: 30),
         Achievement(id: "three_month_user", title: "Three Month User", description: "Use VirtuPet for 90 days", category: .milestones, rarity: .rare, icon: "calendar.badge.plus", targetProgress: 90),
         Achievement(id: "six_month_user", title: "Six Month User", description: "Use VirtuPet for 180 days", category: .milestones, rarity: .epic, icon: "calendar.badge.exclamationmark", targetProgress: 180),
-        Achievement(id: "one_year_user", title: "One Year User", description: "Use VirtuPet for 365 days", category: .milestones, rarity: .legendary, icon: "star.circle.fill", targetProgress: 365),
+        Achievement(id: "one_year_user", title: "One Year User", description: "Use VirtuPet for 365 days", category: .milestones, rarity: .legendary, icon: "calendar.circle.fill", targetProgress: 365),
         Achievement(id: "hundred_goals", title: "100 Goals", description: "Achieve your daily goal 100 times", category: .milestones, rarity: .rare, icon: "100.circle.fill", targetProgress: 100),
-        Achievement(id: "thousand_goals", title: "1000 Goals", description: "Achieve your daily goal 1000 times", category: .milestones, rarity: .legendary, icon: "crown.fill", targetProgress: 1000),
-        Achievement(id: "first_anniversary", title: "First Anniversary", description: "Celebrate one year with your pet", category: .milestones, rarity: .legendary, icon: "gift.fill", targetProgress: 365),
+        Achievement(id: "five_hundred_goals", title: "500 Goals", description: "Achieve your daily goal 500 times", category: .milestones, rarity: .epic, icon: "checkmark.seal.fill", targetProgress: 500),
+        Achievement(id: "thousand_goals", title: "1000 Goals", description: "Achieve your daily goal 1000 times", category: .milestones, rarity: .legendary, icon: "rosette", targetProgress: 1000),
+        Achievement(id: "two_year_user", title: "Two Year Veteran", description: "Use VirtuPet for 730 days", category: .milestones, rarity: .legendary, icon: "gift.fill", targetProgress: 730),
         
         // MARK: - Special Achievements (10 achievements)
         Achievement(id: "new_years_walk", title: "New Year's Walk", description: "Hit your goal on January 1st", category: .special, rarity: .rare, icon: "party.popper.fill", targetProgress: 1),
@@ -161,7 +165,46 @@ struct Achievement: Identifiable, Codable {
         Achievement(id: "close_call", title: "Close Call", description: "Complete your goal in the last hour of the day", category: .special, rarity: .uncommon, icon: "clock.badge.exclamationmark.fill", targetProgress: 1),
         Achievement(id: "overachiever", title: "Overachiever", description: "Exceed your weekly goal by 25%", category: .special, rarity: .uncommon, icon: "arrow.up.right.circle.fill", targetProgress: 1),
         Achievement(id: "pet_lover", title: "Pet Lover", description: "Try all 5 different pets", category: .special, rarity: .rare, icon: "pawprint.fill", targetProgress: 5),
-        Achievement(id: "premium_supporter", title: "Premium Supporter", description: "Upgrade to VirtuPet Premium", category: .special, rarity: .epic, icon: "crown.fill", targetProgress: 1)
+        Achievement(id: "premium_supporter", title: "Premium Supporter", description: "Upgrade to VirtuPet Premium", category: .special, rarity: .epic, icon: "crown.fill", targetProgress: 1),
+        
+        // MARK: - Games & Activities Achievements (26 achievements)
+        // Mini-game achievements
+        Achievement(id: "first_minigame", title: "Game On!", description: "Play your first mini-game", category: .games, rarity: .common, icon: "gamecontroller.fill", targetProgress: 1),
+        Achievement(id: "game_enthusiast", title: "Game Enthusiast", description: "Play 25 mini-games", category: .games, rarity: .common, icon: "arcade.stick", targetProgress: 25),
+        Achievement(id: "arcade_regular", title: "Arcade Regular", description: "Play 100 mini-games", category: .games, rarity: .uncommon, icon: "arcade.stick.console.fill", targetProgress: 100),
+        Achievement(id: "gaming_pro", title: "Gaming Pro", description: "Play 250 mini-games", category: .games, rarity: .rare, icon: "trophy.fill", targetProgress: 250),
+        Achievement(id: "minigame_master", title: "Mini-Game Master", description: "Play 500 mini-games", category: .games, rarity: .epic, icon: "medal.fill", targetProgress: 500),
+        Achievement(id: "minigame_legend", title: "Mini-Game Legend", description: "Play 1,000 mini-games", category: .games, rarity: .legendary, icon: "crown.fill", targetProgress: 1000),
+        
+        // Pet activity achievements
+        Achievement(id: "first_activity", title: "Caring Owner", description: "Do your first pet activity", category: .games, rarity: .common, icon: "heart.circle.fill", targetProgress: 1),
+        Achievement(id: "pet_carer", title: "Pet Carer", description: "Do 25 pet activities", category: .games, rarity: .common, icon: "hands.sparkles.fill", targetProgress: 25),
+        Achievement(id: "devoted_owner", title: "Devoted Owner", description: "Do 100 pet activities", category: .games, rarity: .uncommon, icon: "star.circle.fill", targetProgress: 100),
+        Achievement(id: "best_friend", title: "Best Friend", description: "Do 250 pet activities with your pet", category: .games, rarity: .rare, icon: "person.2.fill", targetProgress: 250),
+        Achievement(id: "pet_activity_pro", title: "Pet Activity Pro", description: "Do 500 pet activities", category: .games, rarity: .epic, icon: "medal.star.fill", targetProgress: 500),
+        Achievement(id: "ultimate_pet_parent", title: "Ultimate Pet Parent", description: "Do 1,000 pet activities", category: .games, rarity: .legendary, icon: "sparkles", targetProgress: 1000),
+        
+        // Specific game achievements
+        Achievement(id: "bubble_master", title: "Bubble Master", description: "Play Bubble Pop 50 times", category: .games, rarity: .rare, icon: "bubble.left.fill", targetProgress: 50),
+        Achievement(id: "memory_champion", title: "Memory Champion", description: "Play Memory Match 50 times", category: .games, rarity: .rare, icon: "brain.head.profile", targetProgress: 50),
+        Achievement(id: "pattern_expert", title: "Pattern Expert", description: "Play Pattern Match 50 times", category: .games, rarity: .rare, icon: "square.grid.3x3.fill", targetProgress: 50),
+        
+        // Specific activity achievements
+        Achievement(id: "feeding_time", title: "Feeding Time", description: "Feed your pet 25 times", category: .games, rarity: .uncommon, icon: "fork.knife", targetProgress: 25),
+        Achievement(id: "playful_spirit", title: "Playful Spirit", description: "Play ball with your pet 25 times", category: .games, rarity: .uncommon, icon: "tennisball.fill", targetProgress: 25),
+        Achievement(id: "couch_buddies", title: "Couch Buddies", description: "Watch TV with your pet 25 times", category: .games, rarity: .uncommon, icon: "tv.fill", targetProgress: 25),
+        
+        // Combined achievements - Daily gaming streaks
+        Achievement(id: "weekly_gamer", title: "Weekly Gamer", description: "Play at least one game 7 days in a row", category: .games, rarity: .uncommon, icon: "calendar.badge.clock", targetProgress: 7),
+        Achievement(id: "monthly_gamer", title: "Monthly Gamer", description: "Play at least one game 30 days in a row", category: .games, rarity: .epic, icon: "calendar.badge.checkmark", targetProgress: 30),
+        Achievement(id: "gaming_devotee", title: "Gaming Devotee", description: "Play at least one game 100 days in a row", category: .games, rarity: .legendary, icon: "infinity.circle.fill", targetProgress: 100),
+        
+        // Other combined achievements
+        Achievement(id: "social_butterfly", title: "Social Butterfly", description: "Do all 3 pet activities in one day", category: .games, rarity: .uncommon, icon: "sparkle", targetProgress: 1),
+        Achievement(id: "credit_spender", title: "Credit Spender", description: "Use 100 credits total", category: .games, rarity: .uncommon, icon: "creditcard.fill", targetProgress: 100),
+        Achievement(id: "credit_collector", title: "Credit Collector", description: "Use 500 credits total", category: .games, rarity: .epic, icon: "banknote.fill", targetProgress: 500),
+        Achievement(id: "credit_master", title: "Credit Master", description: "Use 1,000 credits total", category: .games, rarity: .legendary, icon: "dollarsign.circle.fill", targetProgress: 1000),
+        Achievement(id: "credit_goat", title: "Credit GOAT", description: "Use 2,000 credits total", category: .games, rarity: .legendary, icon: "bolt.circle.fill", targetProgress: 2000)
     ]
 }
 

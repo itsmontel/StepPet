@@ -50,6 +50,7 @@ enum MinigameType: String, CaseIterable, Identifiable {
 struct MinigamesView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
+    @EnvironmentObject var achievementManager: AchievementManager
     @Environment(\.dismiss) var dismiss
     
     @State private var selectedGame: MinigameType?
@@ -189,6 +190,11 @@ struct MinigamesView: View {
     
     // MARK: - Handle Game Complete
     private func handleGameComplete(healthBonus: Int) {
+        // Track the game that was played for achievements
+        if let game = selectedGame {
+            trackGamePlayed(game)
+        }
+        
         // Close all game sheets
         showTreatCatch = false
         showMemoryMatch = false
@@ -198,6 +204,38 @@ struct MinigamesView: View {
         // Just a fun game to play!
         HapticFeedback.success.trigger()
         selectedGame = nil
+    }
+    
+    // MARK: - Track Game for Achievements
+    private func trackGamePlayed(_ game: MinigameType) {
+        // Map MinigameType to UserSettings.MinigameType
+        let settingsGameType: UserSettings.MinigameType
+        switch game {
+        case .bubblePop:
+            settingsGameType = .bubblePop
+        case .memoryMatch:
+            settingsGameType = .memoryMatch
+        case .treatCatch:
+            settingsGameType = .patternMatch // Using patternMatch for treat catch
+        }
+        
+        // Record the game played
+        userSettings.recordMinigamePlayed(type: settingsGameType)
+        
+        // Check game achievements
+        achievementManager.checkGameAchievements(
+            totalMinigamesPlayed: userSettings.totalMinigamesPlayed,
+            totalPetActivitiesPlayed: userSettings.totalPetActivitiesPlayed,
+            bubblePopPlayed: userSettings.bubblePopPlayed,
+            memoryMatchPlayed: userSettings.memoryMatchPlayed,
+            patternMatchPlayed: userSettings.patternMatchPlayed,
+            feedActivityCount: userSettings.feedActivityCount,
+            playBallActivityCount: userSettings.playBallActivityCount,
+            watchTVActivityCount: userSettings.watchTVActivityCount,
+            totalCreditsUsed: userSettings.totalCreditsUsed,
+            consecutiveGameDays: userSettings.consecutiveGameDays,
+            didAllActivitiesToday: userSettings.didAllActivitiesToday
+        )
     }
 }
 
