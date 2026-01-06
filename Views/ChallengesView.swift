@@ -112,11 +112,11 @@ struct ChallengesView: View {
         }
         .sheet(isPresented: $showCreditsSheet) { creditsSheet }
         .sheet(item: $selectedActivity) { activity in
-            ActivityPlaySheet(
-                activity: activity,
-                petType: userSettings.pet.type,
-                onComplete: { handleActivityComplete() }
-            )
+                ActivityPlaySheet(
+                    activity: activity,
+                    petType: userSettings.pet.type,
+                    onComplete: { handleActivityComplete() }
+                )
         }
         .fullScreenCover(isPresented: $showTreatCatch) {
             TreatCatchGameView(onComplete: handleMinigameComplete)

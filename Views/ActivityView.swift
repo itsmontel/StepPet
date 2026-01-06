@@ -1489,7 +1489,7 @@ struct ActivityView: View {
             }
         }
         .sheet(item: $selectedRecentWalk) { walk in
-            ActivityDetailView(walk: walk, walkHistory: walkHistory)
+                ActivityDetailView(walk: walk, walkHistory: walkHistory)
         }
         .alert("Location Access Required", isPresented: $showPermissionAlert) {
             Button("Open Settings") {

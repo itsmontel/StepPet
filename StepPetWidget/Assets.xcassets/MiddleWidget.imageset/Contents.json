@@ -1,0 +1,14 @@
+{
+  "images" : [
+    {
+      "filename" : "MiddleWidget.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
+
+

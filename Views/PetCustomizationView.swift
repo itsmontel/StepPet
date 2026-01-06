@@ -62,11 +62,11 @@ struct PetCustomizationView: View {
             MinigamesView()
         }
         .sheet(item: $selectedActivity) { activity in
-            ActivityPlaySheet(
-                activity: activity,
-                petType: selectedPetType,
-                onComplete: { handleActivityComplete() }
-            )
+                ActivityPlaySheet(
+                    activity: activity,
+                    petType: selectedPetType,
+                    onComplete: { handleActivityComplete() }
+                )
         }
         .alert("Premium Required", isPresented: $showPremiumAlert) {
             Button("Cancel", role: .cancel) {}
