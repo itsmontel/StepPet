@@ -9,6 +9,33 @@ import WidgetKit
 import SwiftUI
 import UIKit
 
+// MARK: - Color Hex Extension
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
+}
+
 // MARK: - Bundle Helper (ensures assets load in widgets + previews)
 private final class WidgetBundleToken: NSObject {}
 private enum WidgetResources {
@@ -389,26 +416,245 @@ struct CuteMediumWidget: View {
     let remainingSteps: Int
     let moodDisplay: CuteMoodDisplay
     
+    private var formattedSteps: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: remainingSteps)) ?? "\(remainingSteps)"
+    }
+    
+    private var petImageName: String {
+        "\(entry.petType.lowercased())\(entry.petMood.lowercased())"
+    }
+    
     var body: some View {
-        Image("MiddleWidget")
-            .resizable()
-            .scaledToFill()
-            .ignoresSafeArea()
+        ZStack {
+            // Background PNG - fills entire widget
+            Image("MiddleWidget")
+                .resizable()
+                .scaledToFill()
+            
+            // Data overlay
+            VStack {
+                // Top right - VirtuPet title
+                HStack {
+                    Spacer()
+                    Text("VirtuPet")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(hex: "FF8E53"))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(Color.white.opacity(0.85))
+                        )
+                }
+                .padding(.top, 10)
+                .padding(.trailing, 12)
+                
+                Spacer()
+                
+                // Bottom right - Stats
+                HStack {
+                    Spacer()
+                    
+                    VStack(alignment: .trailing, spacing: 8) {
+                        // Steps remaining
+                        VStack(alignment: .trailing, spacing: 1) {
+                            Text(formattedSteps)
+                                .font(.system(size: 26, weight: .black, design: .rounded))
+                                .foregroundColor(Color(hex: "FF6B4A"))
+                            
+                            Text("steps left")
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundColor(Color(hex: "8B7355"))
+                        }
+                        
+                        // Pet health with mini pet image
+                        HStack(spacing: 6) {
+                            // Mini pet image
+                            Image(petImageName)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 28, height: 28)
+                                .clipShape(Circle())
+                            
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(entry.petName)
+                                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                                    .foregroundColor(Color(hex: "8B7355"))
+                                
+                                HStack(spacing: 3) {
+                                    Image(systemName: "heart.fill")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(moodDisplay.color)
+                                    
+                                    Text("\(entry.health)%")
+                                        .font(.system(size: 14, weight: .black, design: .rounded))
+                                        .foregroundColor(moodDisplay.color)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.9))
+                        )
+                    }
+                    .padding(.trailing, 12)
+                    .padding(.bottom, 12)
+                }
+            }
+        }
     }
 }
 
-// MARK: - 🔴 Large Widget (Just PNG)
+// MARK: - 🔴 Large Widget (Full Featured!)
 struct CuteLargeWidget: View {
     let entry: StepPetEntry
     let progress: Double
     let remainingSteps: Int
     let moodDisplay: CuteMoodDisplay
     
+    private var formattedSteps: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: remainingSteps)) ?? "\(remainingSteps)"
+    }
+    
+    private var petImageName: String {
+        "\(entry.petType.lowercased())\(entry.petMood.lowercased())"
+    }
+    
     var body: some View {
-        Image("Virtupetwidget")
-            .resizable()
-            .scaledToFill()
-            .ignoresSafeArea()
+        ZStack {
+            // Background PNG - fills entire widget
+            Image("Virtupetwidget")
+                .resizable()
+                .scaledToFill()
+            
+            // Data overlay
+            VStack {
+                // Top row - Title left, Stats right
+                HStack(alignment: .top) {
+                    // Top left - VirtuPet title
+                    HStack(spacing: 4) {
+                        Text("🐾")
+                            .font(.system(size: 12))
+                        Text("VirtuPet")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(Color(hex: "FF8E53"))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color.white.opacity(0.9))
+                    )
+                    
+                    Spacer()
+                    
+                    // Top right - Stats card
+                    VStack(alignment: .trailing, spacing: 10) {
+                        // Steps remaining
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text(formattedSteps)
+                                .font(.system(size: 32, weight: .black, design: .rounded))
+                                .foregroundColor(Color(hex: "FF6B4A"))
+                            
+                            Text("steps left")
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .foregroundColor(Color(hex: "8B7355"))
+                        }
+                        
+                        // Progress bar
+                        VStack(alignment: .trailing, spacing: 2) {
+                            ZStack(alignment: .leading) {
+                                Capsule()
+                                    .fill(Color(hex: "E8DDD0"))
+                                    .frame(width: 85, height: 5)
+                                
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color(hex: "FF6B4A"), Color(hex: "FFD93D")],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .frame(width: 85 * progress, height: 5)
+                            }
+                            
+                            Text("\(Int(progress * 100))% complete")
+                                .font(.system(size: 8, weight: .bold, design: .rounded))
+                                .foregroundColor(Color(hex: "8B7355"))
+                        }
+                        
+                        // Pet health with mini pet image
+                        HStack(spacing: 8) {
+                            // Mini pet image
+                            Image(petImageName)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 32, height: 32)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(moodDisplay.color, lineWidth: 2)
+                                )
+                            
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(entry.petName)
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundColor(Color(hex: "8B7355"))
+                                
+                                HStack(spacing: 3) {
+                                    Image(systemName: "heart.fill")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(moodDisplay.color)
+                                    
+                                    Text("\(entry.health)%")
+                                        .font(.system(size: 16, weight: .black, design: .rounded))
+                                        .foregroundColor(moodDisplay.color)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Color.white.opacity(0.92))
+                        )
+                        
+                        // Streak if active
+                        if entry.streak > 0 {
+                            HStack(spacing: 4) {
+                                Text("🔥")
+                                    .font(.system(size: 11))
+                                Text("\(entry.streak) day streak!")
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundColor(Color(hex: "FF6B4A"))
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(Color(hex: "FF6B4A").opacity(0.15))
+                            )
+                        }
+                    }
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white.opacity(0.85))
+                    )
+                }
+                .padding(.top, 12)
+                .padding(.horizontal, 12)
+                
+                Spacer()
+            }
+        }
     }
 }
 
