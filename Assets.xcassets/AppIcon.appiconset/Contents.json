@@ -1,55 +1,55 @@
 {
   "images" : [
     {
-      "filename" : "se7en40.png",
+      "filename" : "Virtupet40.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "20x20"
     },
     {
-      "filename" : "se7en60.png",
+      "filename" : "Virtupet60.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "20x20"
     },
     {
-      "filename" : "se7en58.png",
+      "filename" : "Virtupet58.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "29x29"
     },
     {
-      "filename" : "se7en87.png",
+      "filename" : "Virtupet87.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "29x29"
     },
     {
-      "filename" : "se7en80.png",
+      "filename" : "Virtupet80.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "40x40"
     },
     {
-      "filename" : "se7en120.png",
+      "filename" : "Virtupet120.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "40x40"
     },
     {
-      "filename" : "se7en120.png",
+      "filename" : "Virtupet120.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "60x60"
     },
     {
-      "filename" : "se7en180.png",
+      "filename" : "Virtupet180.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "60x60"
     },
     {
-      "filename" : "se7en1024.png",
+      "filename" : "Virtupet1024.png",
       "idiom" : "ios-marketing",
       "scale" : "1x",
       "size" : "1024x1024"

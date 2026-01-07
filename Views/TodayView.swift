@@ -229,7 +229,7 @@ struct TodayView: View {
                             )
                         )
                     
-                    Text("\(userSettings.playCredits)")
+                    Text("\(userSettings.totalCredits)")
                         .font(.system(size: 14, weight: .black, design: .rounded))
                         .foregroundColor(themeManager.primaryTextColor)
                 }

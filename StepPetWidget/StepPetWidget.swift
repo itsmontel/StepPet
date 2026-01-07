@@ -527,132 +527,136 @@ struct CuteLargeWidget: View {
     }
     
     var body: some View {
-        ZStack {
-            // Background PNG - fills entire widget
-            Image("Virtupetwidget")
-                .resizable()
-                .scaledToFill()
-            
-            // Data overlay
-            VStack {
-                // Top row - Title left, Stats right
-                HStack(alignment: .top) {
-                    // Top left - VirtuPet title
-                    HStack(spacing: 4) {
-                        Text("🐾")
-                            .font(.system(size: 12))
-                        Text("VirtuPet")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundColor(Color(hex: "FF8E53"))
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(Color.white.opacity(0.9))
-                    )
-                    
-                    Spacer()
-                    
-                    // Top right - Stats card
-                    VStack(alignment: .trailing, spacing: 10) {
-                        // Steps remaining
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(formattedSteps)
-                                .font(.system(size: 32, weight: .black, design: .rounded))
-                                .foregroundColor(Color(hex: "FF6B4A"))
-                            
-                            Text("steps left")
-                                .font(.system(size: 10, weight: .bold, design: .rounded))
-                                .foregroundColor(Color(hex: "8B7355"))
-                        }
-                        
-                        // Progress bar
-                        VStack(alignment: .trailing, spacing: 2) {
-                            ZStack(alignment: .leading) {
-                                Capsule()
-                                    .fill(Color(hex: "E8DDD0"))
-                                    .frame(width: 85, height: 5)
-                                
-                                Capsule()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color(hex: "FF6B4A"), Color(hex: "FFD93D")],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                                    .frame(width: 85 * progress, height: 5)
-                            }
-                            
-                            Text("\(Int(progress * 100))% complete")
-                                .font(.system(size: 8, weight: .bold, design: .rounded))
-                                .foregroundColor(Color(hex: "8B7355"))
-                        }
-                        
-                        // Pet health with mini pet image
-                        HStack(spacing: 8) {
-                            // Mini pet image
-                            Image(petImageName)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 32, height: 32)
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(moodDisplay.color, lineWidth: 2)
-                                )
-                            
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(entry.petName)
-                                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                                    .foregroundColor(Color(hex: "8B7355"))
-                                
-                                HStack(spacing: 3) {
-                                    Image(systemName: "heart.fill")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(moodDisplay.color)
-                                    
-                                    Text("\(entry.health)%")
-                                        .font(.system(size: 16, weight: .black, design: .rounded))
-                                        .foregroundColor(moodDisplay.color)
-                                }
-                            }
+        GeometryReader { geo in
+            ZStack {
+                // Background PNG - fills entire widget using GeometryReader
+                Image("Virtupetwidget")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
+                
+                // Data overlay
+                VStack {
+                    // Top row - Title left, Stats right
+                    HStack(alignment: .top) {
+                        // Top left - VirtuPet title
+                        HStack(spacing: 4) {
+                            Text("🐾")
+                                .font(.system(size: 12))
+                            Text("VirtuPet")
+                                .font(.system(size: 14, weight: .bold, design: .rounded))
+                                .foregroundColor(Color(hex: "FF8E53"))
                         }
                         .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 6)
                         .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(Color.white.opacity(0.92))
+                            Capsule()
+                                .fill(Color.white.opacity(0.9))
                         )
                         
-                        // Streak if active
-                        if entry.streak > 0 {
-                            HStack(spacing: 4) {
-                                Text("🔥")
-                                    .font(.system(size: 11))
-                                Text("\(entry.streak) day streak!")
-                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                        Spacer()
+                        
+                        // Top right - Stats card
+                        VStack(alignment: .trailing, spacing: 10) {
+                            // Steps remaining
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(formattedSteps)
+                                    .font(.system(size: 32, weight: .black, design: .rounded))
                                     .foregroundColor(Color(hex: "FF6B4A"))
+                                
+                                Text("steps left")
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundColor(Color(hex: "8B7355"))
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            
+                            // Progress bar
+                            VStack(alignment: .trailing, spacing: 2) {
+                                ZStack(alignment: .leading) {
+                                    Capsule()
+                                        .fill(Color(hex: "E8DDD0"))
+                                        .frame(width: 85, height: 5)
+                                    
+                                    Capsule()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color(hex: "FF6B4A"), Color(hex: "FFD93D")],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                        .frame(width: 85 * progress, height: 5)
+                                }
+                                
+                                Text("\(Int(progress * 100))% complete")
+                                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                                    .foregroundColor(Color(hex: "8B7355"))
+                            }
+                            
+                            // Pet health with mini pet image
+                            HStack(spacing: 8) {
+                                // Mini pet image
+                                Image(petImageName)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 32, height: 32)
+                                    .clipShape(Circle())
+                                    .overlay(
+                                        Circle()
+                                            .stroke(moodDisplay.color, lineWidth: 2)
+                                    )
+                                
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(entry.petName)
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                        .foregroundColor(Color(hex: "8B7355"))
+                                    
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "heart.fill")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(moodDisplay.color)
+                                        
+                                        Text("\(entry.health)%")
+                                            .font(.system(size: 16, weight: .black, design: .rounded))
+                                            .foregroundColor(moodDisplay.color)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
                             .background(
-                                Capsule()
-                                    .fill(Color(hex: "FF6B4A").opacity(0.15))
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color.white.opacity(0.92))
                             )
+                            
+                            // Streak if active
+                            if entry.streak > 0 {
+                                HStack(spacing: 4) {
+                                    Text("🔥")
+                                        .font(.system(size: 11))
+                                    Text("\(entry.streak) day streak!")
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                        .foregroundColor(Color(hex: "FF6B4A"))
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule()
+                                        .fill(Color(hex: "FF6B4A").opacity(0.15))
+                                )
+                            }
                         }
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.white.opacity(0.85))
+                        )
                     }
-                    .padding(12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.white.opacity(0.85))
-                    )
+                    .padding(.top, 12)
+                    .padding(.horizontal, 12)
+                    
+                    Spacer()
                 }
-                .padding(.top, 12)
-                .padding(.horizontal, 12)
-                
-                Spacer()
             }
         }
     }
