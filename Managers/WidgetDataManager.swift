@@ -14,6 +14,16 @@ class WidgetDataManager {
     // App Group identifier - must match in both targets
     private let appGroupIdentifier = "group.com.yourcompany.VirtuPet"
     
+    // Throttling to prevent too many widget reloads
+    private var lastReloadTime: Date = .distantPast
+    private let minimumReloadInterval: TimeInterval = 30 // Minimum 30 seconds between reloads
+    private var pendingReload = false
+    
+    // Track last synced values to avoid unnecessary updates
+    private var lastSyncedSteps: Int = -1
+    private var lastSyncedHealth: Int = -1
+    private var lastSyncedStreak: Int = -1
+    
     private var sharedDefaults: UserDefaults? {
         UserDefaults(suiteName: appGroupIdentifier)
     }
@@ -38,6 +48,7 @@ class WidgetDataManager {
             return
         }
         
+        // Always update the shared defaults
         defaults.set(petType, forKey: "widgetPetType")
         defaults.set(petMood, forKey: "widgetPetMood")
         defaults.set(petName, forKey: "widgetPetName")
@@ -46,14 +57,51 @@ class WidgetDataManager {
         defaults.set(goalSteps, forKey: "widgetGoalSteps")
         defaults.set(health, forKey: "widgetHealth")
         defaults.set(streak, forKey: "widgetStreak")
+        defaults.set(Date(), forKey: "widgetLastUpdated")
         
         // Force synchronize
         defaults.synchronize()
         
-        // Reload widget timelines
-        WidgetCenter.shared.reloadAllTimelines()
+        // Check if significant data changed (to prioritize important updates)
+        let significantChange = (todaySteps != lastSyncedSteps) || 
+                               (health != lastSyncedHealth) || 
+                               (streak != lastSyncedStreak)
+        
+        if significantChange {
+            lastSyncedSteps = todaySteps
+            lastSyncedHealth = health
+            lastSyncedStreak = streak
+        }
+        
+        // Throttle widget reloads to prevent battery drain
+        let now = Date()
+        let timeSinceLastReload = now.timeIntervalSince(lastReloadTime)
+        
+        // Force immediate reload for significant changes, otherwise throttle
+        if significantChange && timeSinceLastReload >= minimumReloadInterval {
+            performWidgetReload()
+        } else if !pendingReload && timeSinceLastReload < minimumReloadInterval {
+            // Schedule a pending reload
+            pendingReload = true
+            let delay = minimumReloadInterval - timeSinceLastReload + 1
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.performWidgetReload()
+                self?.pendingReload = false
+            }
+        }
         
         print("✅ Widget data updated: \(petName) the \(petType), \(todaySteps)/\(goalSteps) steps, \(health)% health")
+    }
+    
+    private func performWidgetReload() {
+        lastReloadTime = Date()
+        WidgetCenter.shared.reloadAllTimelines()
+        print("🔄 Widget timelines reloaded")
+    }
+    
+    /// Force an immediate widget reload (use sparingly)
+    func forceReload() {
+        performWidgetReload()
     }
     
     /// Convenience method using UserSettings

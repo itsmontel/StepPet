@@ -620,6 +620,13 @@ struct PatternMatchGameView: View {
     
     // MARK: - Game Logic
     private func startGame() {
+        // Deduct credit when actually starting the game
+        guard userSettings.useGameCredit() else {
+            // If no credits, close the game
+            dismiss()
+            return
+        }
+        
         currentLevel = 1
         attemptsLeft = 3
         isNewBestLevel = false

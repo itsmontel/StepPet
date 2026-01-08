@@ -39,6 +39,7 @@
 		E81A00012D5E00000011 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010011 /* NotificationManager.swift */; };
 		E81A00012D5E00000012 /* GIFImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010012 /* GIFImage.swift */; };
 		E81A00012D5E00000013 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010013 /* VideoPlayerView.swift */; };
+		E81A00012D5E00000014 /* WidgetIntroPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010014 /* WidgetIntroPopup.swift */; };
 		E81A00012D5E00000020 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010020 /* Assets.xcassets */; };
 		E81A00012D5E00000020A /* Widgetonboarding.PNG in Resources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010020A /* Widgetonboarding.PNG */; };
 		E81A00012D5E00000021 /* AnimationGIF in Resources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010021 /* AnimationGIF */; };
@@ -56,7 +57,6 @@
 		E81A00012D5E00000048 /* StepOnboardingWhyChooseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010048 /* StepOnboardingWhyChooseView.swift */; };
 		E81A00012D5E00000049 /* StepOnboardingNotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010049 /* StepOnboardingNotificationView.swift */; };
 		E81A00012D5E0000004A /* StepOnboardingHealthKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001004A /* StepOnboardingHealthKitView.swift */; };
-		E81A00012D5E0000004B /* StepOnboardingWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001004B /* StepOnboardingWidgetView.swift */; };
 		E81A00012D5E0000005E /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001005E /* InsightsView.swift */; };
 		E81A00012D5E0000005F /* ChallengesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E0001005F /* ChallengesView.swift */; };
 		E81A00012D5E00000060 /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010060 /* ActivityView.swift */; };
@@ -122,6 +122,7 @@
 		E81A00012D5E00010011 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010012 /* GIFImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIFImage.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010013 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010014 /* WidgetIntroPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIntroPopup.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010020 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E81A00012D5E00010020A /* Widgetonboarding.PNG */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Widgetonboarding.PNG; sourceTree = "<group>"; };
 		E81A00012D5E00010021 /* AnimationGIF */ = {isa = PBXFileReference; lastKnownFileType = folder; path = AnimationGIF; sourceTree = "<group>"; };
@@ -141,7 +142,6 @@
 		E81A00012D5E00010048 /* StepOnboardingWhyChooseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingWhyChooseView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010049 /* StepOnboardingNotificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingNotificationView.swift; sourceTree = "<group>"; };
 		E81A00012D5E0001004A /* StepOnboardingHealthKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingHealthKitView.swift; sourceTree = "<group>"; };
-		E81A00012D5E0001004B /* StepOnboardingWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepOnboardingWidgetView.swift; sourceTree = "<group>"; };
 		E81A00012D5E0001005E /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		E81A00012D5E0001005F /* ChallengesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengesView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010060 /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
@@ -246,6 +246,7 @@
 				E81A00012D5E00010060 /* ActivityView.swift */,
 				E81A00012D5E00010007 /* SettingsView.swift */,
 				E81A00012D5E00010008 /* OnboardingView.swift */,
+				E81A00012D5E00010014 /* WidgetIntroPopup.swift */,
 				E81A00012D5E00030007 /* Onboarding */,
 			);
 			path = Views;
@@ -301,7 +302,6 @@
 				E81A00012D5E00010048 /* StepOnboardingWhyChooseView.swift */,
 				E81A00012D5E00010049 /* StepOnboardingNotificationView.swift */,
 				E81A00012D5E0001004A /* StepOnboardingHealthKitView.swift */,
-				E81A00012D5E0001004B /* StepOnboardingWidgetView.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -473,13 +473,13 @@
 				E81A00012D5E00000048 /* StepOnboardingWhyChooseView.swift in Sources */,
 				E81A00012D5E00000049 /* StepOnboardingNotificationView.swift in Sources */,
 				E81A00012D5E0000004A /* StepOnboardingHealthKitView.swift in Sources */,
-				E81A00012D5E0000004B /* StepOnboardingWidgetView.swift in Sources */,
 				E81A00012D5E0000005E /* InsightsView.swift in Sources */,
 				E81A00012D5E0000005F /* ChallengesView.swift in Sources */,
 				E81A00012D5E00000060 /* ActivityView.swift in Sources */,
 				E81A00012D5E00000061 /* PetActivity.swift in Sources */,
 				E81A00012D5E00000062 /* WorkoutActivityAttributes.swift in Sources */,
 				E81A00012D5E00000064 /* PurchaseManager.swift in Sources */,
+				E81A00012D5E00000014 /* WidgetIntroPopup.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

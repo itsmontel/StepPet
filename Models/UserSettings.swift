@@ -150,6 +150,21 @@ class UserSettings: ObservableObject {
         didSet { save() }
     }
     
+    // Streak animation tracking - persists until animation plays
+    @Published var streakDidIncreaseToday: Bool {
+        didSet { save() }
+    }
+    
+    // App usage tracking - total seconds spent in app
+    @Published var totalAppUsageSeconds: Int {
+        didSet { save() }
+    }
+    
+    // Widget popup tracking - shows after 15 minutes (900 seconds) of usage
+    @Published var hasShownWidgetPopup: Bool {
+        didSet { save() }
+    }
+    
     private let userDefaultsKey = "StepPetUserSettings"
     
     init() {
@@ -206,6 +221,13 @@ class UserSettings: ObservableObject {
             // Goal celebration tracking
             self.hasShownGoalCelebrationToday = savedSettings.hasShownGoalCelebrationToday ?? false
             self.lastGoalCelebrationDate = savedSettings.lastGoalCelebrationDate
+            
+            // Streak animation tracking
+            self.streakDidIncreaseToday = savedSettings.streakDidIncreaseToday ?? false
+            
+            // App usage tracking
+            self.totalAppUsageSeconds = savedSettings.totalAppUsageSeconds ?? 0
+            self.hasShownWidgetPopup = savedSettings.hasShownWidgetPopup ?? false
             
             // Reset daily activity tracking if it's a new day
             if let lastActDate = lastActivityDate, !Calendar.current.isDateInToday(lastActDate) {
@@ -285,6 +307,13 @@ class UserSettings: ObservableObject {
             // Goal celebration tracking - defaults
             self.hasShownGoalCelebrationToday = false
             self.lastGoalCelebrationDate = nil
+            
+            // Streak animation tracking - defaults
+            self.streakDidIncreaseToday = false
+            
+            // App usage tracking - defaults
+            self.totalAppUsageSeconds = 0
+            self.hasShownWidgetPopup = false
         }
         
         // Sync haptics setting with global HapticFeedback
@@ -409,7 +438,10 @@ class UserSettings: ObservableObject {
             todayWatchedTV: todayWatchedTV,
             lastActivityDate: lastActivityDate,
             hasShownGoalCelebrationToday: hasShownGoalCelebrationToday,
-            lastGoalCelebrationDate: lastGoalCelebrationDate
+            lastGoalCelebrationDate: lastGoalCelebrationDate,
+            streakDidIncreaseToday: streakDidIncreaseToday,
+            totalAppUsageSeconds: totalAppUsageSeconds,
+            hasShownWidgetPopup: hasShownWidgetPopup
         )
         
         if let data = try? JSONEncoder().encode(settings) {
@@ -656,6 +688,13 @@ struct SavedUserSettings: Codable {
     // Goal celebration tracking
     var hasShownGoalCelebrationToday: Bool?
     var lastGoalCelebrationDate: Date?
+    
+    // Streak animation tracking
+    var streakDidIncreaseToday: Bool?
+    
+    // App usage tracking
+    var totalAppUsageSeconds: Int?
+    var hasShownWidgetPopup: Bool?
 }
 
 // MARK: - Activity Level

@@ -1356,52 +1356,102 @@ struct ActivityView: View {
     
     // MARK: - Premium Gate View
     private var premiumGateView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 20) {
             Spacer()
-                .frame(maxHeight: 60)
+                .frame(maxHeight: 40)
             
-            // Lock icon
+            // Animated pet with decorative circles
             ZStack {
+                // Outer decorative ring
                 Circle()
-                    .fill(themeManager.accentColor.opacity(0.1))
-                    .frame(width: 120, height: 120)
+                    .stroke(
+                        LinearGradient(
+                            colors: [themeManager.accentColor.opacity(0.3), themeManager.accentColor.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 3
+                    )
+                    .frame(width: 160, height: 160)
                 
+                // Middle glow
                 Circle()
-                    .fill(themeManager.accentColor.opacity(0.2))
-                    .frame(width: 90, height: 90)
+                    .fill(
+                        RadialGradient(
+                            colors: [themeManager.accentColor.opacity(0.15), themeManager.accentColor.opacity(0.05), .clear],
+                            center: .center,
+                            startRadius: 20,
+                            endRadius: 80
+                        )
+                    )
+                    .frame(width: 140, height: 140)
                 
-                Image(systemName: "figure.walk.circle.fill")
-                    .font(.system(size: 50))
-                    .foregroundColor(themeManager.accentColor)
+                // Inner circle with pet
+                ZStack {
+                    Circle()
+                        .fill(themeManager.cardBackgroundColor)
+                        .frame(width: 110, height: 110)
+                        .shadow(color: themeManager.accentColor.opacity(0.2), radius: 20, y: 5)
+                    
+                    // Pet animation
+                    AnimatedPetVideoView(
+                        petType: userSettings.pet.type,
+                        moodState: .happy
+                    )
+                    .frame(width: 80, height: 80)
+                    .clipShape(Circle())
+                }
+                
+                // Walking icon badge
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        ZStack {
+                            Circle()
+                                .fill(themeManager.accentColor)
+                                .frame(width: 44, height: 44)
+                                .shadow(color: themeManager.accentColor.opacity(0.5), radius: 8, y: 3)
+                            
+                            Image(systemName: "figure.walk")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        .offset(x: 10, y: 10)
+                    }
+                }
+                .frame(width: 130, height: 130)
             }
             
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 Text("Activity Tracking")
-                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .font(.system(size: 26, weight: .black, design: .rounded))
                     .foregroundColor(themeManager.primaryTextColor)
                 
                 Text("Premium Feature")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(themeManager.accentColor)
                 
-                Text("Track your walks with \(userSettings.pet.name), see detailed stats, route maps, and more!")
-                    .font(.system(size: 15, weight: .medium))
+                Text("Track walks & capture memories with \(userSettings.pet.name)!")
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(themeManager.secondaryTextColor)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+                    .padding(.horizontal, 30)
             }
             
-            // Features list
-            VStack(alignment: .leading, spacing: 12) {
-                FeatureRow(icon: "map.fill", text: "GPS route tracking", color: .blue)
-                FeatureRow(icon: "clock.fill", text: "Duration & pace stats", color: .orange)
-                FeatureRow(icon: "flame.fill", text: "Calories burned", color: .red)
-                FeatureRow(icon: "photo.fill", text: "Walk photo journal", color: .purple)
+            // Features list - matching Insights style
+            VStack(alignment: .leading, spacing: 10) {
+                ActivityFeatureRow(icon: "map.fill", text: "GPS route tracking & maps", color: .blue)
+                ActivityFeatureRow(icon: "clock.fill", text: "Duration & pace stats", color: .orange)
+                ActivityFeatureRow(icon: "flame.fill", text: "Calories burned tracking", color: .red)
+                ActivityFeatureRow(icon: "photo.fill", text: "Walk photo journal", color: .purple)
+                ActivityFeatureRow(icon: "heart.text.square.fill", text: "Mood & journal entries", color: .pink)
+                ActivityFeatureRow(icon: "chart.line.uptrend.xyaxis", text: "Activity history & trends", color: .green)
             }
-            .padding(.horizontal, 40)
-            .padding(.vertical, 20)
+            .padding(.horizontal, 30)
+            .padding(.vertical, 12)
             
-            // Upgrade button
+            // Upgrade button - matching Insights style
             Button(action: {
                 HapticFeedback.medium.trigger()
                 showPremiumSheet = true
@@ -1422,7 +1472,7 @@ struct ActivityView: View {
                 )
             }
             
-            Spacer()
+            Spacer(minLength: 100)
         }
         .sheet(isPresented: $showPremiumSheet) {
             PremiumView()
@@ -4448,23 +4498,34 @@ struct HistoryStatCard: View {
         .environmentObject(UserSettings())
 }
 
-// MARK: - Feature Row Helper
-private struct FeatureRow: View {
+// MARK: - Activity Feature Row Helper (matches InsightFeatureRow style)
+private struct ActivityFeatureRow: View {
     let icon: String
     let text: String
     let color: Color
     
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(color)
+        HStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 32, height: 32)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(color)
+            }
             
             Text(text)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.primary)
             
             Spacer()
+            
+            // Green checkmark
+            Image(systemName: "checkmark")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.green)
         }
     }
 }

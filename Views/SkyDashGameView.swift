@@ -540,6 +540,13 @@ struct SkyDashGameView: View {
     
     // MARK: - Game Logic
     private func startGame() {
+        // Deduct credit when actually starting the game
+        guard userSettings.useGameCredit() else {
+            // If no credits, close the game
+            dismiss()
+            return
+        }
+        
         gameState = .playing
         distance = 0
         isNewHighScore = false

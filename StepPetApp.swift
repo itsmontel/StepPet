@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 @main
 struct VirtuPetApp: App {
@@ -16,6 +17,8 @@ struct VirtuPetApp: App {
     @StateObject private var achievementManager = AchievementManager()
     @StateObject private var stepDataManager = StepDataManager()
     @StateObject private var purchaseManager = PurchaseManager.shared
+    
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some Scene {
         WindowGroup {
@@ -39,6 +42,9 @@ struct VirtuPetApp: App {
             .onChange(of: purchaseManager.isPremium) { _, isPremium in
                 // Sync premium status with UserSettings
                 userSettings.isPremium = isPremium
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                handleScenePhaseChange(newPhase)
             }
         }
     }
@@ -92,6 +98,36 @@ struct VirtuPetApp: App {
             if daysDifference > 1 {
                 userSettings.streakData.currentStreak = 0
             }
+        }
+    }
+    
+    private func handleScenePhaseChange(_ phase: ScenePhase) {
+        switch phase {
+        case .active:
+            // App came to foreground - refresh data and update widgets
+            if userSettings.hasCompletedOnboarding {
+                healthKitManager.fetchTodaySteps()
+                
+                // Sync latest data to widget
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    let todaySteps = healthKitManager.todaySteps
+                    WidgetDataManager.shared.syncFromUserSettings(userSettings, todaySteps: todaySteps)
+                }
+            }
+            
+        case .background:
+            // App went to background - ensure widgets are updated with latest data
+            let todaySteps = healthKitManager.todaySteps
+            WidgetDataManager.shared.syncFromUserSettings(userSettings, todaySteps: todaySteps)
+            
+            // Force reload all widget timelines
+            WidgetCenter.shared.reloadAllTimelines()
+            
+        case .inactive:
+            break
+            
+        @unknown default:
+            break
         }
     }
 }

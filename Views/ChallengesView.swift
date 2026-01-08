@@ -203,9 +203,10 @@ struct ChallengesView: View {
         )
     }
     
-    // Start a minigame (deducts credit and adds +5 health)
+    // Start a minigame (no longer deducts credit - happens in game view)
     private func startMinigame(_ game: () -> Void) {
-        guard userSettings.useGameCredit() else {
+        // Just check if they have credits before opening
+        guard userSettings.totalCredits > 0 else {
             showCreditsSheet = true
             return
         }

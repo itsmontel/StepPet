@@ -1094,7 +1094,7 @@ struct PremiumView: View {
                         PremiumFeatureRow(text: "Detailed Statistics & Trends")
                         PremiumFeatureRow(text: "Activity Tracking & Walk History")
                         PremiumFeatureRow(text: "Premium Insights & Analytics")
-                        PremiumFeatureRow(text: "Dark Mode")
+                        PremiumFeatureRow(text: "Dark Mode & Custom Colour Themes")
                     }
                     .padding(.horizontal, 20)
                     

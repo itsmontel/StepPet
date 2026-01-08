@@ -33,13 +33,18 @@ struct TodayView: View {
     
     // Trigger for streak animation (set to true to animate, view handles geometry)
     @State private var pendingStreakAnimation = false
-    @State private var streakDidIncreaseToday = false
     
     // Streak calendar popup
     @State private var showStreakCalendar = false
     
     // Test paywall popup
     @State private var showTestPaywall = false
+    
+    // Widget intro popup
+    @State private var showWidgetPopup = false
+    
+    // App usage tracking timer
+    @State private var usageTimer: Timer? = nil
     
     // Tutorial manager
     @EnvironmentObject var tutorialManager: TutorialManager
@@ -129,6 +134,10 @@ struct TodayView: View {
         .onAppear {
             refreshData()
             animateValues()
+            startUsageTracking()
+        }
+        .onDisappear {
+            stopUsageTracking()
         }
         .onChange(of: healthKitManager.todaySteps) { _, newValue in
             updateData(steps: newValue)
@@ -152,7 +161,7 @@ struct TodayView: View {
                     withAnimation { showCelebration = false }
                     
                     // Trigger streak animation after celebration is dismissed (if streak increased)
-                    if streakDidIncreaseToday {
+                    if userSettings.streakDidIncreaseToday {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             pendingStreakAnimation = true
                         }
@@ -167,7 +176,7 @@ struct TodayView: View {
                         }
                         
                         // Reset the flag
-                        streakDidIncreaseToday = false
+                        userSettings.streakDidIncreaseToday = false
                     }
                 }
                 .environmentObject(themeManager)
@@ -199,6 +208,12 @@ struct TodayView: View {
                 .environmentObject(themeManager)
                 .environmentObject(userSettings)
         }
+        .overlay {
+            if showWidgetPopup {
+                WidgetIntroPopup(isPresented: $showWidgetPopup)
+                    .environmentObject(themeManager)
+            }
+        }
     }
     
     // MARK: - Header Section (Compact)
@@ -223,28 +238,52 @@ struct TodayView: View {
             
             Spacer()
             
-            // Test Paywall Button (for testing)
+            // Test Buttons (for testing)
             #if DEBUG
-            Button(action: {
-                HapticFeedback.light.trigger()
-                showTestPaywall = true
-            }) {
-                Image(systemName: "creditcard.fill")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(8)
-                    .background(
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [themeManager.primaryColor, themeManager.primaryLightColor],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
+            HStack(spacing: 8) {
+                // Test Widget Popup Button
+                Button(action: {
+                    showWidgetPopupForTesting()
+                }) {
+                    Image(systemName: "apps.iphone")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.green, .mint],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
                                 )
-                            )
-                    )
+                        )
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Test Paywall Button
+                Button(action: {
+                    HapticFeedback.light.trigger()
+                    showTestPaywall = true
+                }) {
+                    Image(systemName: "creditcard.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [themeManager.primaryColor, themeManager.primaryLightColor],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        )
+                }
+                .buttonStyle(PlainButtonStyle())
             }
-            .buttonStyle(PlainButtonStyle())
             #endif
             
             // Credits (clickable - navigates to Pet section) with gradient
@@ -937,6 +976,37 @@ struct TodayView: View {
         }
     }
     
+    // MARK: - App Usage Tracking
+    private func startUsageTracking() {
+        // Track usage every second
+        usageTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            userSettings.totalAppUsageSeconds += 1
+            
+            // Check if 15 minutes (900 seconds) reached and popup not shown yet
+            if userSettings.totalAppUsageSeconds >= 900 && !userSettings.hasShownWidgetPopup {
+                userSettings.hasShownWidgetPopup = true
+                DispatchQueue.main.async {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        showWidgetPopup = true
+                    }
+                }
+            }
+        }
+    }
+    
+    private func stopUsageTracking() {
+        usageTimer?.invalidate()
+        usageTimer = nil
+    }
+    
+    // Test function to show widget popup
+    private func showWidgetPopupForTesting() {
+        HapticFeedback.medium.trigger()
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            showWidgetPopup = true
+        }
+    }
+    
     // MARK: - Streak Animation Overlay
     @ViewBuilder
     private func streakAnimationOverlay(in geometry: GeometryProxy) -> some View {
@@ -1122,8 +1192,9 @@ struct TodayView: View {
             let newStreak = userSettings.streakData.currentStreak
             
             // Track if streak increased (for animation after celebration dismissal)
+            // Using persisted flag so it survives view re-renders
             if newStreak > previousStreak {
-                streakDidIncreaseToday = true
+                userSettings.streakDidIncreaseToday = true
                 
                 // Check for milestone celebration
                 // This will show after the streak animation which is triggered when celebration is dismissed

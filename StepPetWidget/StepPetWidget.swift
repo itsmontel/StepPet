@@ -266,20 +266,33 @@ struct Provider: TimelineProvider {
         let health = sharedDefaults?.integer(forKey: "widgetHealth") ?? 100
         let streak = sharedDefaults?.integer(forKey: "widgetStreak") ?? 0
         
-        let entry = StepPetEntry(
-            date: Date(),
-            petType: petType,
-            petMood: petMood,
-            petName: petName,
-            userName: userName,
-            todaySteps: todaySteps,
-            goalSteps: goalSteps,
-            health: health,
-            streak: streak
-        )
+        // Create multiple timeline entries for more frequent updates
+        // This gives iOS more "scheduled" times to refresh the widget
+        var entries: [StepPetEntry] = []
+        let currentDate = Date()
         
-        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
-        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+        // Create entries every 5 minutes for the next hour
+        // This ensures the widget has regular refresh points
+        for minuteOffset in stride(from: 0, through: 60, by: 5) {
+            let entryDate = Calendar.current.date(byAdding: .minute, value: minuteOffset, to: currentDate)!
+            
+            let entry = StepPetEntry(
+                date: entryDate,
+                petType: petType,
+                petMood: petMood,
+                petName: petName,
+                userName: userName,
+                todaySteps: todaySteps,
+                goalSteps: goalSteps,
+                health: health,
+                streak: streak
+            )
+            entries.append(entry)
+        }
+        
+        // Request refresh after the last entry (in about 1 hour)
+        // Use .atEnd to tell iOS to refresh as soon as the last entry is displayed
+        let timeline = Timeline(entries: entries, policy: .atEnd)
         completion(timeline)
     }
 }

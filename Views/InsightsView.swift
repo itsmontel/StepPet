@@ -208,29 +208,70 @@ struct InsightsView: View {
     
     // MARK: - Premium Gate View
     private var premiumGateView: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 16) {
-                Spacer().frame(height: 40)
+        VStack(spacing: 14) {
+            Spacer().frame(height: 20)
                 
-                // Animated icon
+                // Animated pet with decorative circles (matching Activity page)
                 ZStack {
+                    // Outer decorative ring
                     Circle()
-                        .fill(themeManager.accentColor.opacity(0.1))
-                        .frame(width: 100, height: 100)
-                    
-                    Circle()
-                        .fill(themeManager.accentColor.opacity(0.2))
-                        .frame(width: 70, height: 70)
-                    
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .font(.system(size: 34))
-                        .foregroundStyle(
+                        .stroke(
                             LinearGradient(
-                                colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.6)],
+                                colors: [themeManager.accentColor.opacity(0.3), themeManager.accentColor.opacity(0.1)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 3
+                        )
+                        .frame(width: 160, height: 160)
+                    
+                    // Middle glow
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [themeManager.accentColor.opacity(0.15), themeManager.accentColor.opacity(0.05), .clear],
+                                center: .center,
+                                startRadius: 20,
+                                endRadius: 80
                             )
                         )
+                        .frame(width: 140, height: 140)
+                    
+                    // Inner circle with pet
+                    ZStack {
+                        Circle()
+                            .fill(themeManager.cardBackgroundColor)
+                            .frame(width: 110, height: 110)
+                            .shadow(color: themeManager.accentColor.opacity(0.2), radius: 20, y: 5)
+                        
+                        // Pet animation (thinking pose)
+                        AnimatedPetVideoView(
+                            petType: userSettings.pet.type,
+                            moodState: .content
+                        )
+                        .frame(width: 80, height: 80)
+                        .clipShape(Circle())
+                    }
+                    
+                    // Insights chart icon badge
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            ZStack {
+                                Circle()
+                                    .fill(themeManager.accentColor)
+                                    .frame(width: 44, height: 44)
+                                    .shadow(color: themeManager.accentColor.opacity(0.5), radius: 8, y: 3)
+                                
+                                Image(systemName: "chart.line.uptrend.xyaxis")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                            .offset(x: 10, y: 10)
+                        }
+                    }
+                    .frame(width: 130, height: 130)
                 }
                 
                 VStack(spacing: 8) {
@@ -282,9 +323,8 @@ struct InsightsView: View {
                     )
                 }
                 
-                Spacer(minLength: 100)
+                Spacer()
             }
-        }
         .sheet(isPresented: $showPremiumSheet) {
             PremiumView()
                 .environmentObject(themeManager)
