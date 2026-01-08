@@ -56,6 +56,9 @@ struct VirtuPetApp: App {
         stepDataManager.loadData()
         achievementManager.loadAchievements()
         
+        // Setup notification categories
+        NotificationManager.shared.setupNotificationCategories()
+        
         // Setup notifications if enabled
         if userSettings.notificationsEnabled {
             NotificationManager.shared.requestAuthorization()

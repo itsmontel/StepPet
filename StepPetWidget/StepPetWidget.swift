@@ -231,6 +231,7 @@ struct Provider: TimelineProvider {
             petType: "dog",
             petMood: "fullhealth",
             petName: "Buddy",
+            userName: "Friend",
             todaySteps: 7500,
             goalSteps: 10000,
             health: 85,
@@ -244,6 +245,7 @@ struct Provider: TimelineProvider {
             petType: "dog",
             petMood: "fullhealth",
             petName: "Buddy",
+            userName: "Friend",
             todaySteps: 7500,
             goalSteps: 10000,
             health: 85,
@@ -258,6 +260,7 @@ struct Provider: TimelineProvider {
         let petType = sharedDefaults?.string(forKey: "widgetPetType") ?? "dog"
         let petMood = sharedDefaults?.string(forKey: "widgetPetMood") ?? "fullhealth"
         let petName = sharedDefaults?.string(forKey: "widgetPetName") ?? "Buddy"
+        let userName = sharedDefaults?.string(forKey: "widgetUserName") ?? "Friend"
         let todaySteps = sharedDefaults?.integer(forKey: "widgetTodaySteps") ?? 0
         let goalSteps = sharedDefaults?.integer(forKey: "widgetGoalSteps") ?? 10000
         let health = sharedDefaults?.integer(forKey: "widgetHealth") ?? 100
@@ -268,6 +271,7 @@ struct Provider: TimelineProvider {
             petType: petType,
             petMood: petMood,
             petName: petName,
+            userName: userName,
             todaySteps: todaySteps,
             goalSteps: goalSteps,
             health: health,
@@ -286,6 +290,7 @@ struct StepPetEntry: TimelineEntry {
     let petType: String
     let petMood: String
     let petName: String
+    let userName: String
     let todaySteps: Int
     let goalSteps: Int
     let health: Int
@@ -427,7 +432,7 @@ struct CuteMediumWidget: View {
     }
     
     var body: some View {
-        ZStack {
+            ZStack {
             // Background PNG - fills entire widget
             Image("MiddleWidget")
                 .resizable()
@@ -541,7 +546,7 @@ struct CuteLargeWidget: View {
                     // Top row - Title left, Stats right
                     HStack(alignment: .top) {
                         // Top left - VirtuPet title
-                        HStack(spacing: 4) {
+                            HStack(spacing: 4) {
                             Text("🐾")
                                 .font(.system(size: 12))
                             Text("VirtuPet")
@@ -549,9 +554,9 @@ struct CuteLargeWidget: View {
                                 .foregroundColor(Color(hex: "FF8E53"))
                         }
                         .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
                                 .fill(Color.white.opacity(0.9))
                         )
                         
@@ -572,19 +577,19 @@ struct CuteLargeWidget: View {
                             
                             // Progress bar
                             VStack(alignment: .trailing, spacing: 2) {
-                                ZStack(alignment: .leading) {
+                            ZStack(alignment: .leading) {
                                     Capsule()
                                         .fill(Color(hex: "E8DDD0"))
                                         .frame(width: 85, height: 5)
                                     
                                     Capsule()
-                                        .fill(
-                                            LinearGradient(
+                                    .fill(
+                                        LinearGradient(
                                                 colors: [Color(hex: "FF6B4A"), Color(hex: "FFD93D")],
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            )
+                                            startPoint: .leading,
+                                            endPoint: .trailing
                                         )
+                                    )
                                         .frame(width: 85 * progress, height: 5)
                                 }
                                 
@@ -668,8 +673,8 @@ struct StepPetWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
-            StepPetWidgetEntryView(entry: entry)
-                .containerBackground(for: .widget) {
+                StepPetWidgetEntryView(entry: entry)
+                    .containerBackground(for: .widget) {
                     Color.clear
                 }
         }
@@ -688,23 +693,23 @@ typealias VirtuPetEntry = StepPetEntry
 #Preview(as: .systemSmall) {
     StepPetWidget()
 } timeline: {
-    StepPetEntry(date: .now, petType: "dog", petMood: "fullhealth", petName: "Buddy", todaySteps: 7500, goalSteps: 10000, health: 100, streak: 5)
-    StepPetEntry(date: .now, petType: "cat", petMood: "happy", petName: "Whiskers", todaySteps: 3200, goalSteps: 10000, health: 65, streak: 0)
-    StepPetEntry(date: .now, petType: "bunny", petMood: "sad", petName: "Fluffy", todaySteps: 1500, goalSteps: 10000, health: 35, streak: 0)
+    StepPetEntry(date: .now, petType: "dog", petMood: "fullhealth", petName: "Buddy", userName: "Alex", todaySteps: 7500, goalSteps: 10000, health: 100, streak: 5)
+    StepPetEntry(date: .now, petType: "cat", petMood: "happy", petName: "Whiskers", userName: "Sam", todaySteps: 3200, goalSteps: 10000, health: 65, streak: 0)
+    StepPetEntry(date: .now, petType: "bunny", petMood: "sad", petName: "Fluffy", userName: "Jordan", todaySteps: 1500, goalSteps: 10000, health: 35, streak: 0)
 }
 
 #Preview(as: .systemMedium) {
     StepPetWidget()
 } timeline: {
-    StepPetEntry(date: .now, petType: "dog", petMood: "fullhealth", petName: "Buddy", todaySteps: 7500, goalSteps: 10000, health: 100, streak: 7)
-    StepPetEntry(date: .now, petType: "bunny", petMood: "content", petName: "Fluffy", todaySteps: 12500, goalSteps: 10000, health: 80, streak: 14)
-    StepPetEntry(date: .now, petType: "hamster", petMood: "sick", petName: "Nibbles", todaySteps: 500, goalSteps: 10000, health: 20, streak: 0)
+    StepPetEntry(date: .now, petType: "dog", petMood: "fullhealth", petName: "Buddy", userName: "Alex", todaySteps: 7500, goalSteps: 10000, health: 100, streak: 7)
+    StepPetEntry(date: .now, petType: "bunny", petMood: "content", petName: "Fluffy", userName: "Sam", todaySteps: 12500, goalSteps: 10000, health: 80, streak: 14)
+    StepPetEntry(date: .now, petType: "hamster", petMood: "sick", petName: "Nibbles", userName: "Jordan", todaySteps: 500, goalSteps: 10000, health: 20, streak: 0)
 }
 
 #Preview(as: .systemLarge) {
     StepPetWidget()
 } timeline: {
-    StepPetEntry(date: .now, petType: "dog", petMood: "fullhealth", petName: "Buddy", todaySteps: 8500, goalSteps: 10000, health: 95, streak: 12)
-    StepPetEntry(date: .now, petType: "horse", petMood: "happy", petName: "Spirit", todaySteps: 15000, goalSteps: 10000, health: 100, streak: 30)
-    StepPetEntry(date: .now, petType: "cat", petMood: "content", petName: "Luna", todaySteps: 5000, goalSteps: 10000, health: 70, streak: 3)
+    StepPetEntry(date: .now, petType: "dog", petMood: "fullhealth", petName: "Buddy", userName: "Alex", todaySteps: 8500, goalSteps: 10000, health: 95, streak: 12)
+    StepPetEntry(date: .now, petType: "horse", petMood: "happy", petName: "Spirit", userName: "Sam", todaySteps: 15000, goalSteps: 10000, health: 100, streak: 30)
+    StepPetEntry(date: .now, petType: "cat", petMood: "content", petName: "Luna", userName: "Jordan", todaySteps: 5000, goalSteps: 10000, health: 70, streak: 3)
 }

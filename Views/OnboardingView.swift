@@ -35,6 +35,8 @@ struct OnboardingView: View {
                 currentStep = .whyChooseStepPet
             case .healthKitPermission:
                 currentStep = .notificationPermission
+            case .widgets:
+                currentStep = .healthKitPermission
             }
         }
         HapticFeedback.light.trigger()
@@ -148,6 +150,17 @@ struct OnboardingView: View {
                     
                 case .healthKitPermission:
                     StepOnboardingHealthKitView(
+                        onContinue: {
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                currentStep = .widgets
+                            }
+                            HapticFeedback.light.trigger()
+                        },
+                        onBack: goBack
+                    )
+                    
+                case .widgets:
+                    StepOnboardingWidgetView(
                         onContinue: {
                             completeOnboarding()
                         },

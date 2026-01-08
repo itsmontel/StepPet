@@ -31,6 +31,10 @@ struct TodayView: View {
     @State private var showMilestoneCelebration = false
     @State private var milestoneStreakValue: Int = 0
     
+    // Trigger for streak animation (set to true to animate, view handles geometry)
+    @State private var pendingStreakAnimation = false
+    @State private var streakDidIncreaseToday = false
+    
     // Streak calendar popup
     @State private var showStreakCalendar = false
     
@@ -115,6 +119,12 @@ struct TodayView: View {
                 // Streak animation overlay
                 streakAnimationOverlay(in: geometry)
             }
+            .onChange(of: pendingStreakAnimation) { _, shouldAnimate in
+                if shouldAnimate {
+                    pendingStreakAnimation = false
+                    triggerStreakAnimation(in: geometry)
+                }
+            }
         }
         .onAppear {
             refreshData()
@@ -125,14 +135,40 @@ struct TodayView: View {
             animateValues()
         }
         .onChange(of: currentHealth) { oldValue, newValue in
-            if newValue >= 100 && oldValue < 100 {
+            // Only show celebration if:
+            // 1. Health reached 100% (from below 100%)
+            // 2. We haven't shown the celebration today yet
+            // 3. Goal celebrations are enabled
+            if newValue >= 100 && oldValue < 100 && !userSettings.hasShownGoalCelebrationToday && userSettings.goalCelebrations {
                 triggerCelebration()
+                // Mark celebration as shown for today
+                userSettings.hasShownGoalCelebrationToday = true
+                userSettings.lastGoalCelebrationDate = Date()
             }
         }
         .overlay {
             if showCelebration {
                 CelebrationOverlay(petName: userSettings.pet.name) {
                     withAnimation { showCelebration = false }
+                    
+                    // Trigger streak animation after celebration is dismissed (if streak increased)
+                    if streakDidIncreaseToday {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            pendingStreakAnimation = true
+                        }
+                        
+                        // Show milestone celebration after streak animation completes
+                        if milestoneStreakValue > 0 {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) {
+                                withAnimation {
+                                    showMilestoneCelebration = true
+                                }
+                            }
+                        }
+                        
+                        // Reset the flag
+                        streakDidIncreaseToday = false
+                    }
                 }
                 .environmentObject(themeManager)
             }
@@ -1085,14 +1121,14 @@ struct TodayView: View {
             userSettings.streakData.updateStreak(goalAchieved: true, date: Date())
             let newStreak = userSettings.streakData.currentStreak
             
-            // Check for milestone celebration (only if streak actually increased)
-            if newStreak > previousStreak && StreakMilestoneCelebrationView.shouldShowCelebration(for: newStreak) {
-                // Delay to show after regular celebration
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            // Track if streak increased (for animation after celebration dismissal)
+            if newStreak > previousStreak {
+                streakDidIncreaseToday = true
+                
+                // Check for milestone celebration
+                // This will show after the streak animation which is triggered when celebration is dismissed
+                if StreakMilestoneCelebrationView.shouldShowCelebration(for: newStreak) {
                     milestoneStreakValue = newStreak
-                    withAnimation {
-                        showMilestoneCelebration = true
-                    }
                 }
             }
         }

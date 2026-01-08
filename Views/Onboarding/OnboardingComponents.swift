@@ -45,6 +45,7 @@ enum StepPetOnboardingStep: CaseIterable {
     case whyChooseStepPet
     case notificationPermission
     case healthKitPermission
+    case widgets
     
     var stepNumber: Int {
         switch self {
@@ -58,10 +59,11 @@ enum StepPetOnboardingStep: CaseIterable {
         case .whyChooseStepPet: return 8
         case .notificationPermission: return 9
         case .healthKitPermission: return 10
+        case .widgets: return 11
         }
     }
     
-    static var totalSteps: Int { 10 }
+    static var totalSteps: Int { 11 }
 }
 
 // MARK: - Onboarding Background

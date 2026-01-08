@@ -142,6 +142,14 @@ class UserSettings: ObservableObject {
         didSet { save() }
     }
     
+    // Goal celebration tracking - prevents repeated popups
+    @Published var hasShownGoalCelebrationToday: Bool {
+        didSet { save() }
+    }
+    @Published var lastGoalCelebrationDate: Date? {
+        didSet { save() }
+    }
+    
     private let userDefaultsKey = "StepPetUserSettings"
     
     init() {
@@ -195,11 +203,20 @@ class UserSettings: ObservableObject {
             self.todayWatchedTV = savedSettings.todayWatchedTV ?? false
             self.lastActivityDate = savedSettings.lastActivityDate
             
+            // Goal celebration tracking
+            self.hasShownGoalCelebrationToday = savedSettings.hasShownGoalCelebrationToday ?? false
+            self.lastGoalCelebrationDate = savedSettings.lastGoalCelebrationDate
+            
             // Reset daily activity tracking if it's a new day
             if let lastActDate = lastActivityDate, !Calendar.current.isDateInToday(lastActDate) {
                 self.todayFedPet = false
                 self.todayPlayedBall = false
                 self.todayWatchedTV = false
+            }
+            
+            // Reset goal celebration flag if it's a new day
+            if let lastCelebDate = lastGoalCelebrationDate, !Calendar.current.isDateInToday(lastCelebDate) {
+                self.hasShownGoalCelebrationToday = false
             }
             
             // Reset daily boost if it's a new day
@@ -264,6 +281,10 @@ class UserSettings: ObservableObject {
             self.todayPlayedBall = false
             self.todayWatchedTV = false
             self.lastActivityDate = nil
+            
+            // Goal celebration tracking - defaults
+            self.hasShownGoalCelebrationToday = false
+            self.lastGoalCelebrationDate = nil
         }
         
         // Sync haptics setting with global HapticFeedback
@@ -386,7 +407,9 @@ class UserSettings: ObservableObject {
             todayFedPet: todayFedPet,
             todayPlayedBall: todayPlayedBall,
             todayWatchedTV: todayWatchedTV,
-            lastActivityDate: lastActivityDate
+            lastActivityDate: lastActivityDate,
+            hasShownGoalCelebrationToday: hasShownGoalCelebrationToday,
+            lastGoalCelebrationDate: lastGoalCelebrationDate
         )
         
         if let data = try? JSONEncoder().encode(settings) {
@@ -629,6 +652,10 @@ struct SavedUserSettings: Codable {
     var todayPlayedBall: Bool?
     var todayWatchedTV: Bool?
     var lastActivityDate: Date?
+    
+    // Goal celebration tracking
+    var hasShownGoalCelebrationToday: Bool?
+    var lastGoalCelebrationDate: Date?
 }
 
 // MARK: - Activity Level

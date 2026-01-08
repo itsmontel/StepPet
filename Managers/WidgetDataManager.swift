@@ -27,6 +27,7 @@ class WidgetDataManager {
         petType: String,
         petMood: String,
         petName: String,
+        userName: String,
         todaySteps: Int,
         goalSteps: Int,
         health: Int,
@@ -40,6 +41,7 @@ class WidgetDataManager {
         defaults.set(petType, forKey: "widgetPetType")
         defaults.set(petMood, forKey: "widgetPetMood")
         defaults.set(petName, forKey: "widgetPetName")
+        defaults.set(userName, forKey: "widgetUserName")
         defaults.set(todaySteps, forKey: "widgetTodaySteps")
         defaults.set(goalSteps, forKey: "widgetGoalSteps")
         defaults.set(health, forKey: "widgetHealth")
@@ -59,6 +61,7 @@ class WidgetDataManager {
         let petType = userSettings.pet.type.rawValue.lowercased()
         let petMood = userSettings.pet.moodState.rawValue.lowercased()
         let petName = userSettings.pet.name
+        let userName = userSettings.userName
         let goalSteps = userSettings.dailyStepGoal
         let health = userSettings.pet.health
         let streak = userSettings.streakData.currentStreak
@@ -67,6 +70,7 @@ class WidgetDataManager {
             petType: petType,
             petMood: petMood,
             petName: petName,
+            userName: userName,
             todaySteps: todaySteps,
             goalSteps: goalSteps,
             health: health,
