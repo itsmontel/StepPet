@@ -20,13 +20,24 @@ struct VirtuPetApp: App {
     
     @Environment(\.scenePhase) private var scenePhase
     
+    // Splash screen state
+    @State private var showSplash = true
+    
     var body: some Scene {
         WindowGroup {
             ZStack {
-                if userSettings.hasCompletedOnboarding {
-                    ContentView()
+                if showSplash {
+                    SplashScreenView()
+                        .transition(.opacity)
                 } else {
-                    OnboardingView()
+                    ZStack {
+                        if userSettings.hasCompletedOnboarding {
+                            ContentView()
+                        } else {
+                            OnboardingView()
+                        }
+                    }
+                    .transition(.opacity)
                 }
             }
             .environmentObject(themeManager)
@@ -38,6 +49,13 @@ struct VirtuPetApp: App {
             .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
             .onAppear {
                 setupApp()
+                
+                // Dismiss splash after a short delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        showSplash = false
+                    }
+                }
             }
             .onChange(of: purchaseManager.isPremium) { _, isPremium in
                 // Sync premium status with UserSettings

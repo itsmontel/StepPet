@@ -40,6 +40,7 @@
 		E81A00012D5E00000012 /* GIFImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010012 /* GIFImage.swift */; };
 		E81A00012D5E00000013 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010013 /* VideoPlayerView.swift */; };
 		E81A00012D5E00000014 /* WidgetIntroPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010014 /* WidgetIntroPopup.swift */; };
+		E81A00012D5E00000015 /* SplashScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010015 /* SplashScreenView.swift */; };
 		E81A00012D5E00000020 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010020 /* Assets.xcassets */; };
 		E81A00012D5E00000020A /* Widgetonboarding.PNG in Resources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010020A /* Widgetonboarding.PNG */; };
 		E81A00012D5E00000021 /* AnimationGIF in Resources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010021 /* AnimationGIF */; };
@@ -123,6 +124,7 @@
 		E81A00012D5E00010012 /* GIFImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIFImage.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010013 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010014 /* WidgetIntroPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIntroPopup.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010015 /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010020 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E81A00012D5E00010020A /* Widgetonboarding.PNG */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Widgetonboarding.PNG; sourceTree = "<group>"; };
 		E81A00012D5E00010021 /* AnimationGIF */ = {isa = PBXFileReference; lastKnownFileType = folder; path = AnimationGIF; sourceTree = "<group>"; };
@@ -247,6 +249,7 @@
 				E81A00012D5E00010007 /* SettingsView.swift */,
 				E81A00012D5E00010008 /* OnboardingView.swift */,
 				E81A00012D5E00010014 /* WidgetIntroPopup.swift */,
+				E81A00012D5E00010015 /* SplashScreenView.swift */,
 				E81A00012D5E00030007 /* Onboarding */,
 			);
 			path = Views;
@@ -480,6 +483,7 @@
 				E81A00012D5E00000062 /* WorkoutActivityAttributes.swift in Sources */,
 				E81A00012D5E00000064 /* PurchaseManager.swift in Sources */,
 				E81A00012D5E00000014 /* WidgetIntroPopup.swift in Sources */,
+				E81A00012D5E00000015 /* SplashScreenView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
