@@ -974,32 +974,38 @@ function initWaitlistPopup() {
         }
     });
     
-    // Show popup after 10 seconds OR on scroll past 40% (if user hasn't already joined)
+    // Show popup when user scrolls to FAQ section (if user hasn't already joined)
     const hasJoined = localStorage.getItem('virtupet_waitlist_joined');
     const hasSeenPopup = sessionStorage.getItem('virtupet_popup_shown');
     
     console.warn('📋 Popup state - hasJoined:', hasJoined, 'hasSeenPopup:', hasSeenPopup);
     
     if (!hasJoined && !hasSeenPopup) {
-        console.warn('⏱️ Setting up popup timer (22 seconds)...');
+        console.warn('👀 Setting up FAQ section observer for popup...');
         
-        // Timer trigger
-        const popupTimer = setTimeout(() => {
-            openWaitlistPopup();
-            sessionStorage.setItem('virtupet_popup_shown', 'true');
-        }, 22000); // 22 seconds
+        // Get FAQ section
+        const faqSection = document.getElementById('faq');
         
-        // Scroll trigger (40% of page)
-        const scrollHandler = () => {
-            const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
-            if (scrollPercent > 40) {
-                clearTimeout(popupTimer);
-                openWaitlistPopup();
-                sessionStorage.setItem('virtupet_popup_shown', 'true');
-                window.removeEventListener('scroll', scrollHandler);
-            }
-        };
-        window.addEventListener('scroll', scrollHandler);
+        if (faqSection) {
+            // Use Intersection Observer to detect when FAQ section comes into view
+            const faqObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        console.warn('🎯 FAQ section in view - showing popup!');
+                        openWaitlistPopup();
+                        sessionStorage.setItem('virtupet_popup_shown', 'true');
+                        faqObserver.disconnect(); // Stop observing after showing popup once
+                    }
+                });
+            }, {
+                threshold: 0.1, // Trigger when 10% of the FAQ section is visible
+                rootMargin: '0px'
+            });
+            
+            faqObserver.observe(faqSection);
+        } else {
+            console.warn('⚠️ FAQ section not found');
+        }
     }
 }
 
