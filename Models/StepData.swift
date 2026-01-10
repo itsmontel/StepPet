@@ -126,31 +126,40 @@ struct StreakData: Codable {
     
     mutating func updateStreak(goalAchieved: Bool, date: Date) {
         let calendar = Calendar.current
+        // Normalize to start of day for accurate day comparison
+        let today = calendar.startOfDay(for: date)
         
         if goalAchieved {
             if let lastDate = lastGoalAchievedDate {
-                let daysDifference = calendar.dateComponents([.day], from: lastDate, to: date).day ?? 0
+                // Normalize last date to start of day for comparison
+                let lastDay = calendar.startOfDay(for: lastDate)
+                let daysDifference = calendar.dateComponents([.day], from: lastDay, to: today).day ?? 0
                 
                 if daysDifference == 1 {
-                    // Consecutive day
+                    // Consecutive day - increment streak
                     currentStreak += 1
                 } else if daysDifference == 0 {
-                    // Same day, don't increment
+                    // Same day, don't increment (already counted today)
+                    // But ensure streak is at least 1 if it was 0
+                    if currentStreak == 0 {
+                        currentStreak = 1
+                    }
                 } else {
-                    // Streak broken, start new
+                    // Streak broken (more than 1 day gap), start new streak
                     currentStreak = 1
                 }
             } else {
-                // First goal achieved
+                // First goal achieved ever - start streak at 1
                 currentStreak = 1
             }
             
             lastGoalAchievedDate = date
             longestStreak = max(longestStreak, currentStreak)
         } else {
-            // Check if it's a new day and goal not achieved
+            // Check if it's a new day and goal not achieved - reset streak
             if let lastDate = lastGoalAchievedDate {
-                let daysDifference = calendar.dateComponents([.day], from: lastDate, to: date).day ?? 0
+                let lastDay = calendar.startOfDay(for: lastDate)
+                let daysDifference = calendar.dateComponents([.day], from: lastDay, to: today).day ?? 0
                 if daysDifference > 1 {
                     currentStreak = 0
                 }

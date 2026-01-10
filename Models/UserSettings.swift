@@ -6,6 +6,11 @@
 import Foundation
 import SwiftUI
 
+// Notification for when health boost changes (games/activities)
+extension Notification.Name {
+    static let healthBoostChanged = Notification.Name("healthBoostChanged")
+}
+
 class UserSettings: ObservableObject {
     @Published var userName: String {
         didSet { save() }
@@ -160,7 +165,12 @@ class UserSettings: ObservableObject {
         didSet { save() }
     }
     
-    // Widget popup tracking - shows after 15 minutes (900 seconds) of usage
+    // App open count - tracks how many times the app has been opened
+    @Published var appOpenCount: Int {
+        didSet { save() }
+    }
+    
+    // Widget popup tracking - shows after 3 app opens
     @Published var hasShownWidgetPopup: Bool {
         didSet { save() }
     }
@@ -227,6 +237,7 @@ class UserSettings: ObservableObject {
             
             // App usage tracking
             self.totalAppUsageSeconds = savedSettings.totalAppUsageSeconds ?? 0
+            self.appOpenCount = savedSettings.appOpenCount ?? 0
             self.hasShownWidgetPopup = savedSettings.hasShownWidgetPopup ?? false
             
             // Reset daily activity tracking if it's a new day
@@ -239,6 +250,8 @@ class UserSettings: ObservableObject {
             // Reset goal celebration flag if it's a new day
             if let lastCelebDate = lastGoalCelebrationDate, !Calendar.current.isDateInToday(lastCelebDate) {
                 self.hasShownGoalCelebrationToday = false
+                // Also reset streak animation flag for new day
+                self.streakDidIncreaseToday = false
             }
             
             // Reset daily boost if it's a new day
@@ -313,6 +326,7 @@ class UserSettings: ObservableObject {
             
             // App usage tracking - defaults
             self.totalAppUsageSeconds = 0
+            self.appOpenCount = 0
             self.hasShownWidgetPopup = false
         }
         
@@ -340,6 +354,9 @@ class UserSettings: ObservableObject {
         lastPlayBoostDate = Date()
         pet.health = min(100, pet.health + 3)
         save()
+        
+        // Notify that health boost changed so widget can sync
+        NotificationCenter.default.post(name: .healthBoostChanged, object: nil)
         return true
     }
     
@@ -358,6 +375,9 @@ class UserSettings: ObservableObject {
         lastPlayBoostDate = Date()
         pet.health = min(100, pet.health + 5)
         save()
+        
+        // Notify that health boost changed so widget can sync
+        NotificationCenter.default.post(name: .healthBoostChanged, object: nil)
         return true
     }
     
@@ -441,6 +461,7 @@ class UserSettings: ObservableObject {
             lastGoalCelebrationDate: lastGoalCelebrationDate,
             streakDidIncreaseToday: streakDidIncreaseToday,
             totalAppUsageSeconds: totalAppUsageSeconds,
+            appOpenCount: appOpenCount,
             hasShownWidgetPopup: hasShownWidgetPopup
         )
         
@@ -694,6 +715,7 @@ struct SavedUserSettings: Codable {
     
     // App usage tracking
     var totalAppUsageSeconds: Int?
+    var appOpenCount: Int?
     var hasShownWidgetPopup: Bool?
 }
 

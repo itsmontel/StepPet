@@ -139,20 +139,63 @@ struct TodayView: View {
         .onDisappear {
             stopUsageTracking()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .healthBoostChanged)) { _ in
+            // Sync widget when health boost changes (games/activities)
+            WidgetDataManager.shared.syncFromUserSettings(userSettings, todaySteps: healthKitManager.todaySteps)
+        }
         .onChange(of: healthKitManager.todaySteps) { _, newValue in
             updateData(steps: newValue)
             animateValues()
         }
         .onChange(of: currentHealth) { oldValue, newValue in
-            // Only show celebration if:
-            // 1. Health reached 100% (from below 100%)
-            // 2. We haven't shown the celebration today yet
-            // 3. Goal celebrations are enabled
-            if newValue >= 100 && oldValue < 100 && !userSettings.hasShownGoalCelebrationToday && userSettings.goalCelebrations {
-                triggerCelebration()
-                // Mark celebration as shown for today
+            // Check if health just reached 100% (from below 100%) for the first time today
+            if newValue >= 100 && oldValue < 100 && !userSettings.hasShownGoalCelebrationToday {
+                // ALWAYS update streak when goal is achieved - regardless of celebration settings
+                let previousStreak = userSettings.streakData.currentStreak
+                userSettings.streakData.updateStreak(goalAchieved: true, date: Date())
+                let newStreak = userSettings.streakData.currentStreak
+                
+                // Check if streak increased
+                let streakIncreased = newStreak > previousStreak
+                
+                if streakIncreased {
+                    userSettings.streakDidIncreaseToday = true
+                    
+                    // Check for milestone celebration
+                    if StreakMilestoneCelebrationView.shouldShowCelebration(for: newStreak) {
+                        milestoneStreakValue = newStreak
+                    }
+                }
+                
+                // Mark as processed for today (prevents duplicate streak updates)
                 userSettings.hasShownGoalCelebrationToday = true
                 userSettings.lastGoalCelebrationDate = Date()
+                
+                // Show celebration popup if enabled
+                if userSettings.goalCelebrations {
+                    triggerCelebration()
+                } else {
+                    // If celebrations are disabled but streak increased, trigger animation immediately
+                    if streakIncreased {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            pendingStreakAnimation = true
+                        }
+                        
+                        // Show milestone celebration even if regular celebration is disabled
+                        if milestoneStreakValue > 0 {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) {
+                                withAnimation {
+                                    showMilestoneCelebration = true
+                                }
+                            }
+                        }
+                        
+                        // Reset the flag after animation
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                            userSettings.streakDidIncreaseToday = false
+                        }
+                    }
+                }
             }
         }
         .overlay {
@@ -981,14 +1024,17 @@ struct TodayView: View {
         // Track usage every second
         usageTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             userSettings.totalAppUsageSeconds += 1
-            
-            // Check if 15 minutes (900 seconds) reached and popup not shown yet
-            if userSettings.totalAppUsageSeconds >= 900 && !userSettings.hasShownWidgetPopup {
-                userSettings.hasShownWidgetPopup = true
-                DispatchQueue.main.async {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        showWidgetPopup = true
-                    }
+        }
+        
+        // Increment app open count
+        userSettings.appOpenCount += 1
+        
+        // Check if user has opened the app 3+ times and popup not shown yet
+        if userSettings.appOpenCount >= 3 && !userSettings.hasShownWidgetPopup {
+            userSettings.hasShownWidgetPopup = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    showWidgetPopup = true
                 }
             }
         }
@@ -1185,24 +1231,8 @@ struct TodayView: View {
         // Update previous health for next check
         userSettings.previousHealthForAchievement = currentHealth
         
-        // Update streak only when goal achieved
-        if currentHealth >= 100 {
-            let previousStreak = userSettings.streakData.currentStreak
-            userSettings.streakData.updateStreak(goalAchieved: true, date: Date())
-            let newStreak = userSettings.streakData.currentStreak
-            
-            // Track if streak increased (for animation after celebration dismissal)
-            // Using persisted flag so it survives view re-renders
-            if newStreak > previousStreak {
-                userSettings.streakDidIncreaseToday = true
-                
-                // Check for milestone celebration
-                // This will show after the streak animation which is triggered when celebration is dismissed
-                if StreakMilestoneCelebrationView.shouldShowCelebration(for: newStreak) {
-                    milestoneStreakValue = newStreak
-                }
-            }
-        }
+        // Note: Streak is now updated in onChange(of: currentHealth) when celebration is shown
+        // This ensures the streak flag is set BEFORE the celebration popup appears
     }
 }
 
