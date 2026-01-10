@@ -331,7 +331,7 @@ struct StepPetWidgetEntryView: View {
     var body: some View {
         switch family {
         case .systemSmall:
-            CuteSmallWidget(entry: entry, progress: progress, moodDisplay: moodDisplay)
+            CuteSmallWidget(entry: entry, progress: progress, remainingSteps: remainingSteps, moodDisplay: moodDisplay)
                 .containerBackground(for: .widget) {
                     Color.clear
                 }
@@ -413,17 +413,92 @@ struct StepsRemainingBadge: View {
     }
 }
 
-// MARK: - 🟡 Small Widget (Ultra Simple!)
+// MARK: - 🟡 Small Widget (Compact & Cute!)
 struct CuteSmallWidget: View {
     let entry: StepPetEntry
     let progress: Double
+    let remainingSteps: Int
     let moodDisplay: CuteMoodDisplay
     
+    private var formattedSteps: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: remainingSteps)) ?? "\(remainingSteps)"
+    }
+    
+    private var petImageName: String {
+        "\(entry.petType.lowercased())\(entry.petMood.lowercased())"
+    }
+    
     var body: some View {
-        Image("SmallWidget")
-            .resizable()
-            .scaledToFill()
-            .ignoresSafeArea()
+        GeometryReader { geo in
+            ZStack {
+                // Warm gradient background
+                LinearGradient(
+                    colors: [
+                        Color(red: 1.0, green: 0.98, blue: 0.92),
+                        Color(red: 1.0, green: 0.95, blue: 0.88)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                
+                VStack(spacing: 6) {
+                    // Pet image - prominent display
+                    ZStack {
+                        // Glow behind pet
+                        Circle()
+                            .fill(moodDisplay.color.opacity(0.2))
+                            .frame(width: 72, height: 72)
+                        
+                        Image(petImageName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 64, height: 64)
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(moodDisplay.color.opacity(0.5), lineWidth: 2)
+                            )
+                    }
+                    
+                    // Pet name with health
+                    HStack(spacing: 4) {
+                        Text(entry.petName)
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(Color(hex: "5D4E37"))
+                        
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 9))
+                            .foregroundColor(moodDisplay.color)
+                        
+                        Text("\(entry.health)%")
+                            .font(.system(size: 11, weight: .black, design: .rounded))
+                            .foregroundColor(moodDisplay.color)
+                    }
+                    
+                    // Steps remaining
+                    VStack(spacing: 1) {
+                        Text(formattedSteps)
+                            .font(.system(size: 20, weight: .black, design: .rounded))
+                            .foregroundColor(Color(hex: "FF6B4A"))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        
+                        Text("steps left")
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .foregroundColor(Color(hex: "8B7355"))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color.white.opacity(0.85))
+                    )
+                }
+                .frame(width: geo.size.width, height: geo.size.height)
+            }
+        }
     }
 }
 
