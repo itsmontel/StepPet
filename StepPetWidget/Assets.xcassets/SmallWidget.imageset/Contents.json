@@ -1,17 +1,17 @@
 {
   "images": [
     {
-      "filename": "MiddleWidget.png",
+      "filename": "SmallWidget.png",
       "idiom": "universal",
       "scale": "1x"
     },
     {
-      "filename": "MiddleWidget@2x.png",
+      "filename": "SmallWidget@2x.png",
       "idiom": "universal",
       "scale": "2x"
     },
     {
-      "filename": "MiddleWidget@3x.png",
+      "filename": "SmallWidget@3x.png",
       "idiom": "universal",
       "scale": "3x"
     }

@@ -420,7 +420,7 @@ struct CuteSmallWidget: View {
     let moodDisplay: CuteMoodDisplay
     
     var body: some View {
-        Image("Virtupetwidget")
+        Image("SmallWidget")
             .resizable()
             .scaledToFill()
             .ignoresSafeArea()
