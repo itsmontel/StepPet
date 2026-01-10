@@ -426,77 +426,52 @@ struct CuteSmallWidget: View {
         return formatter.string(from: NSNumber(value: remainingSteps)) ?? "\(remainingSteps)"
     }
     
-    private var petImageName: String {
-        "\(entry.petType.lowercased())\(entry.petMood.lowercased())"
-    }
-    
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                // Warm gradient background
-                LinearGradient(
-                    colors: [
-                        Color(red: 1.0, green: 0.98, blue: 0.92),
-                        Color(red: 1.0, green: 0.95, blue: 0.88)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                
-                VStack(spacing: 6) {
-                    // Pet image - prominent display
-                    ZStack {
-                        // Glow behind pet
-                        Circle()
-                            .fill(moodDisplay.color.opacity(0.2))
-                            .frame(width: 72, height: 72)
-                        
-                        Image(petImageName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 64, height: 64)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(moodDisplay.color.opacity(0.5), lineWidth: 2)
-                            )
-                    }
-                    
-                    // Pet name with health
-                    HStack(spacing: 4) {
-                        Text(entry.petName)
-                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundColor(Color(hex: "5D4E37"))
-                        
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 9))
-                            .foregroundColor(moodDisplay.color)
-                        
-                        Text("\(entry.health)%")
-                            .font(.system(size: 11, weight: .black, design: .rounded))
-                            .foregroundColor(moodDisplay.color)
-                    }
-                    
-                    // Steps remaining
-                    VStack(spacing: 1) {
-                        Text(formattedSteps)
-                            .font(.system(size: 20, weight: .black, design: .rounded))
-                            .foregroundColor(Color(hex: "FF6B4A"))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                        
-                        Text("steps left")
-                            .font(.system(size: 8, weight: .bold, design: .rounded))
-                            .foregroundColor(Color(hex: "8B7355"))
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.white.opacity(0.85))
-                    )
+        ZStack {
+            // Background image - pets visible
+            Image("SmallWidget")
+                .resizable()
+                .scaledToFill()
+            
+            // Content overlay - minimal to show pets
+            VStack(spacing: 0) {
+                // Top - Pet name instead of VirtuPet
+                HStack {
+                    Spacer()
+                    Text(entry.petName)
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(hex: "FF8E53"))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(Color.white.opacity(0.85))
+                        )
                 }
-                .frame(width: geo.size.width, height: geo.size.height)
+                .padding(.top, 10)
+                .padding(.trailing, 10)
+                
+                Spacer()
+                
+                // Bottom - Compact steps remaining
+                VStack(alignment: .center, spacing: 1) {
+                    Text(formattedSteps)
+                        .font(.system(size: 22, weight: .black, design: .rounded))
+                        .foregroundColor(Color(hex: "FF6B4A"))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                    
+                    Text("steps left")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(hex: "8B7355"))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.white.opacity(0.85))
+                )
+                .padding(.bottom, 12)
             }
         }
     }
