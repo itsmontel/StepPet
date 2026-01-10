@@ -81,6 +81,15 @@ class PlayerUIView: UIView {
     }
     
     private func setupPlayer(videoName: String) {
+        // Configure audio session to not interrupt other audio (Spotify, Apple Music, etc.)
+        // Since our videos are muted, we use ambient category which mixes with other audio
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+            try AVAudioSession.sharedInstance().setActive(true, options: [.notifyOthersOnDeactivation])
+        } catch {
+            print("Failed to configure audio session: \(error)")
+        }
+        
         // Try multiple folder locations
         let folders = ["Animation", "AnimationGIF", nil]
         var videoURL: URL?

@@ -44,7 +44,15 @@ struct WidgetTheme {
 // MARK: - Pet Image Helper for Live Activity
 struct LiveActivityPetImage: View {
     let petType: String
+    let petMood: String
     let size: CGFloat
+    
+    // Construct image name from pet type + mood (e.g., "dogfullhealth", "cathappy")
+    private var imageName: String {
+        let type = petType.lowercased()
+        let mood = petMood.lowercased()
+        return "\(type)\(mood)"
+    }
     
     private var emoji: String {
         switch petType.lowercased() {
@@ -59,15 +67,33 @@ struct LiveActivityPetImage: View {
     
     var body: some View {
         ZStack {
-            // Background
+            // Background glow
             Circle()
                 .fill(WidgetTheme.accent.opacity(0.2))
                 .frame(width: size, height: size)
             
-            // Emoji fallback that always shows
-            Text(emoji)
-                .font(.system(size: size * 0.55))
+            // Try to load actual pet image from widget assets
+            if let uiImage = UIImage(named: imageName) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: size * 0.85, height: size * 0.85)
+                    .clipShape(Circle())
+            } else {
+                // Fallback to emoji if image not found
+                Text(emoji)
+                    .font(.system(size: size * 0.55))
+            }
         }
+    }
+}
+
+// Convenience init for backward compatibility (without mood)
+extension LiveActivityPetImage {
+    init(petType: String, size: CGFloat) {
+        self.petType = petType
+        self.petMood = "fullhealth" // Default to full health
+        self.size = size
     }
 }
 
@@ -144,9 +170,10 @@ struct PremiumLockScreenView: View {
                     )
                     .frame(width: 80, height: 80)
                 
-                // Pet image
+                // Pet image with actual pet mood
                 LiveActivityPetImage(
                     petType: context.attributes.petType,
+                    petMood: context.attributes.petMood,
                     size: 60
                 )
             }
@@ -272,9 +299,10 @@ struct PremiumExpandedLeading: View {
     
     var body: some View {
         HStack(spacing: 8) {
-            // Pet image
+            // Pet image with mood
             LiveActivityPetImage(
                 petType: context.attributes.petType,
+                petMood: context.attributes.petMood,
                 size: 36
             )
             
@@ -413,6 +441,7 @@ struct PremiumCompactLeading: View {
     var body: some View {
         LiveActivityPetImage(
             petType: context.attributes.petType,
+            petMood: context.attributes.petMood,
             size: 24
         )
     }
@@ -448,6 +477,7 @@ struct PremiumMinimal: View {
     var body: some View {
         LiveActivityPetImage(
             petType: context.attributes.petType,
+            petMood: context.attributes.petMood,
             size: 20
         )
     }
