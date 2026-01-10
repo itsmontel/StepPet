@@ -1,12 +1,23 @@
 {
-  "images" : [
+  "images": [
     {
-      "filename" : "hamstersad.png",
-      "idiom" : "universal"
+      "filename": "hamstersad.png",
+      "idiom": "universal",
+      "scale": "1x"
+    },
+    {
+      "filename": "hamstersad@2x.png",
+      "idiom": "universal",
+      "scale": "2x"
+    },
+    {
+      "filename": "hamstersad@3x.png",
+      "idiom": "universal",
+      "scale": "3x"
     }
   ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
+  "info": {
+    "author": "xcode",
+    "version": 1
   }
 }

@@ -47,11 +47,23 @@ struct LiveActivityPetImage: View {
     let petMood: String
     let size: CGFloat
     
-    // Construct image name from pet type + mood (e.g., "dogfullhealth", "cathappy")
+    // Valid pet types and moods for validation
+    private static let validPetTypes = ["dog", "cat", "bunny", "hamster", "horse"]
+    private static let validMoods = ["fullhealth", "happy", "content", "sad", "sick"]
+    
+    // Sanitize and construct image name from pet type + mood (e.g., "dogfullhealth", "cathappy")
     private var imageName: String {
-        let type = petType.lowercased()
-        let mood = petMood.lowercased()
-        return "\(type)\(mood)"
+        // Sanitize inputs - remove any whitespace and convert to lowercase
+        let type = petType.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let mood = petMood.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Validate pet type - default to "dog" if invalid
+        let validType = Self.validPetTypes.contains(type) ? type : "dog"
+        
+        // Validate mood - default to "fullhealth" if invalid
+        let validMood = Self.validMoods.contains(mood) ? mood : "fullhealth"
+        
+        return "\(validType)\(validMood)"
     }
     
     private var emoji: String {
@@ -65,6 +77,16 @@ struct LiveActivityPetImage: View {
         }
     }
     
+    // Load image from widget extension's asset catalog
+    private var petImage: UIImage? {
+        // Try loading from the widget extension bundle specifically
+        if let image = UIImage(named: imageName, in: Bundle.main, compatibleWith: nil) {
+            return image
+        }
+        // Fallback: try without bundle specification
+        return UIImage(named: imageName)
+    }
+    
     var body: some View {
         ZStack {
             // Background glow
@@ -72,17 +94,19 @@ struct LiveActivityPetImage: View {
                 .fill(WidgetTheme.accent.opacity(0.2))
                 .frame(width: size, height: size)
             
-            // Try to load actual pet image from widget assets
-            if let uiImage = UIImage(named: imageName) {
+            // Try to load pet image from widget's asset catalog
+            if let uiImage = petImage {
                 Image(uiImage: uiImage)
+                    .renderingMode(.original)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: size * 0.85, height: size * 0.85)
                     .clipShape(Circle())
             } else {
-                // Fallback to emoji if image not found
+                // Fallback: show emoji if image not found
                 Text(emoji)
-                    .font(.system(size: size * 0.55))
+                    .font(.system(size: size * 0.5))
+                    .frame(width: size * 0.85, height: size * 0.85)
             }
         }
     }
