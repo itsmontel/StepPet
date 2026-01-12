@@ -24,6 +24,7 @@ struct SettingsView: View {
     @State private var showSubscriptionManagement = false
     @State private var showRevenueCatPaywall = false
     @State private var showAccentColorSheet = false
+    @State private var showGoalChangeAlert = false
     @State private var newUserName = ""
     @State private var newPetName = ""
     @State private var selectedGoal = 10000
@@ -909,9 +910,11 @@ struct SettingsView: View {
                     if selectedGoal != userSettings.dailyStepGoal {
                         // Set as pending goal - will apply tomorrow
                         userSettings.setPendingStepGoal(selectedGoal)
+                        achievementManager.updateProgress(achievementId: "goal_setter", progress: 1)
+                        showGoalChangeAlert = true
+                    } else {
+                        showGoalSheet = false
                     }
-                    achievementManager.updateProgress(achievementId: "goal_setter", progress: 1)
-                    showGoalSheet = false
                 }) {
                     Text(selectedGoal != userSettings.dailyStepGoal ? "Schedule Goal Change" : "Keep Current Goal")
                         .font(.system(size: 17, weight: .semibold))
@@ -935,6 +938,13 @@ struct SettingsView: View {
                         showGoalSheet = false
                     }
                 }
+            }
+            .alert("Goal Change Scheduled", isPresented: $showGoalChangeAlert) {
+                Button("Got It") {
+                    showGoalSheet = false
+                }
+            } message: {
+                Text("Your new daily goal will take effect at midnight. This ensures your current day's progress isn't affected.")
             }
         }
         .presentationDetents([.large])

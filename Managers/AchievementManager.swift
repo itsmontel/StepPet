@@ -253,71 +253,119 @@ class AchievementManager: ObservableObject {
             incrementStreakProgress(achievementId: "steady_pace", maxProgress: 3)
         }
         
+        // Goal master - hit 95-105% of goal for 7 days
+        let goalMin = Int(Double(goalSteps) * 0.95)
+        let goalMax = Int(Double(goalSteps) * 1.05)
+        if todaySteps >= goalMin && todaySteps <= goalMax && goalSteps > 0 {
+            incrementStreakProgress(achievementId: "goal_master", maxProgress: 7)
+        }
+        
+        // Step enthusiast - walk over 12,000 steps for 5 consecutive days
+        if todaySteps >= 12000 {
+            incrementStreakProgress(achievementId: "step_enthusiast", maxProgress: 5)
+        }
+        
+        // Health conscious - keep pet above 70% health for 14 consecutive days
+        if health >= 70 {
+            incrementStreakProgress(achievementId: "health_conscious", maxProgress: 14)
+        }
+        
+        // Wellness keeper - keep pet above 80% health for 10 consecutive days
+        if health >= 80 {
+            incrementStreakProgress(achievementId: "wellness_keeper", maxProgress: 10)
+        }
+        
         // Check special date achievements
         checkSpecialDateAchievements(todaySteps: todaySteps, goalSteps: goalSteps)
     }
     
     // MARK: - Increment Streak Progress
-    // Helper for achievements that require consecutive days
+    // Helper for achievements that require consecutive days (1 day interval)
     func incrementStreakProgress(achievementId: String, maxProgress: Int) {
         guard let index = achievements.firstIndex(where: { $0.id == achievementId && !$0.isUnlocked }) else {
             return
         }
         
-        let newProgress = min(achievements[index].progress + 1, maxProgress)
-        achievements[index].progress = newProgress
+        let calendar = Calendar.current
+        let today = Date()
         
-        if newProgress >= maxProgress {
-            unlock(achievementId: achievementId)
+        // Check if there was previous progress
+        if let lastDate = achievements[index].lastProgressDate {
+            // Calculate days between last progress and today
+            let components = calendar.dateComponents([.day], from: calendar.startOfDay(for: lastDate), to: calendar.startOfDay(for: today))
+            let daysDifference = components.day ?? 0
+            
+            if daysDifference == 0 {
+                // Same day - already incremented today, do nothing
+                return
+            } else if daysDifference == 1 {
+                // Consecutive day - increment progress
+                let newProgress = min(achievements[index].progress + 1, maxProgress)
+                achievements[index].progress = newProgress
+                achievements[index].lastProgressDate = today
+                
+                if newProgress >= maxProgress {
+                    unlock(achievementId: achievementId)
+                } else {
+                    saveAchievements()
+                }
+            } else {
+                // Streak broken (more than 1 day) - reset to 1
+                achievements[index].progress = 1
+                achievements[index].lastProgressDate = today
+                saveAchievements()
+            }
         } else {
+            // First time progressing this achievement
+            achievements[index].progress = 1
+            achievements[index].lastProgressDate = today
             saveAchievements()
         }
     }
     
-    // MARK: - Check Time-Based Achievements
-    func checkTimeBasedAchievements(
-        stepsBeforeNoon: Int,
-        goalSteps: Int,
-        goalAchievedAfter8PM: Bool,
-        stepsBeforeWorkday: Int,
-        stepsAtLunch: Int,
-        stepsAfterEvening: Int
-    ) {
-        // Early bird - reach 50% of goal before noon for 7 days
-        if stepsBeforeNoon >= goalSteps / 2 {
-            incrementStreakProgress(achievementId: "early_bird", maxProgress: 7)
+    // MARK: - Increment Streak Progress with Day Check
+    // Helper for achievements that require consecutive specific days (e.g., Mondays, weekends)
+    // dayInterval: 7 for weekly achievements like Monday, 1 for daily
+    func incrementStreakProgressWithDayCheck(achievementId: String, maxProgress: Int, expectedDayInterval: Int) {
+        guard let index = achievements.firstIndex(where: { $0.id == achievementId && !$0.isUnlocked }) else {
+            return
         }
         
-        // Night owl - complete goal after 8 PM for 5 days
-        if goalAchievedAfter8PM {
-            incrementStreakProgress(achievementId: "night_owl", maxProgress: 5)
-        }
+        let calendar = Calendar.current
+        let today = Date()
         
-        // Morning routine - 3000 steps before 9 AM for 7 days
-        if stepsBeforeWorkday >= 3000 {
-            incrementStreakProgress(achievementId: "morning_routine", maxProgress: 7)
-        }
-        
-        // Lunch walker - 2000 steps during lunch hours for 5 days
-        if stepsAtLunch >= 2000 {
-            incrementStreakProgress(achievementId: "lunch_walker", maxProgress: 5)
-        }
-        
-        // Evening stroll - 3000 steps after 6 PM for 7 days
-        if stepsAfterEvening >= 3000 {
-            incrementStreakProgress(achievementId: "evening_stroll", maxProgress: 7)
+        // Check if there was previous progress
+        if let lastDate = achievements[index].lastProgressDate {
+            // Calculate days between last progress and today
+            let components = calendar.dateComponents([.day], from: calendar.startOfDay(for: lastDate), to: calendar.startOfDay(for: today))
+            let daysDifference = components.day ?? 0
+            
+            // If the days difference matches expected interval, increment progress
+            if daysDifference == expectedDayInterval {
+                let newProgress = min(achievements[index].progress + 1, maxProgress)
+                achievements[index].progress = newProgress
+                achievements[index].lastProgressDate = today
+                
+                if newProgress >= maxProgress {
+                    unlock(achievementId: achievementId)
+                } else {
+                    saveAchievements()
+                }
+            } else if daysDifference > expectedDayInterval {
+                // Streak broken - reset progress but record today
+                achievements[index].progress = 1
+                achievements[index].lastProgressDate = today
+                saveAchievements()
+            }
+            // If daysDifference < expectedDayInterval, this is same day or error, do nothing
+        } else {
+            // First time progressing this achievement
+            achievements[index].progress = 1
+            achievements[index].lastProgressDate = today
+            saveAchievements()
         }
     }
     
-    // MARK: - Check All-Day Active Achievement
-    func checkAllDayActiveAchievement(stepsPerBlock: [Int]) {
-        // All day active - walk steps in every 4-hour block for 3 days
-        // 6 blocks: 0-4, 4-8, 8-12, 12-16, 16-20, 20-24
-        let allBlocksActive = stepsPerBlock.allSatisfy { $0 > 0 }
-        if allBlocksActive {
-            incrementStreakProgress(achievementId: "all_day_active", maxProgress: 3)
-        }
-    }
     
     // MARK: - Check Daily Walker Achievement
     func checkDailyWalkerAchievement(todaySteps: Int) {
@@ -340,14 +388,48 @@ class AchievementManager: ObservableObject {
         let isMonday = weekday == 2
         
         if todaySteps >= goalSteps {
-            // Weekend warrior - hit goal on 8 consecutive weekend days
+            // Weekend warrior - hit goal on 8 consecutive weekend days (Saturday or Sunday)
+            // Since weekends can be consecutive (Sat-Sun), we need special handling
             if isWeekend {
-                incrementStreakProgress(achievementId: "weekend_warrior", maxProgress: 8)
+                guard let index = achievements.firstIndex(where: { $0.id == "weekend_warrior" && !$0.isUnlocked }) else {
+                    return
+                }
+                
+                let today = Date()
+                
+                if let lastDate = achievements[index].lastProgressDate {
+                    let components = calendar.dateComponents([.day], from: calendar.startOfDay(for: lastDate), to: calendar.startOfDay(for: today))
+                    let daysDifference = components.day ?? 0
+                    
+                    // Weekend days can be 1 day apart (Sat-Sun) or 7 days apart (same day next week)
+                    if daysDifference == 1 || daysDifference == 7 {
+                        let newProgress = min(achievements[index].progress + 1, 8)
+                        achievements[index].progress = newProgress
+                        achievements[index].lastProgressDate = today
+                        
+                        if newProgress >= 8 {
+                            unlock(achievementId: "weekend_warrior")
+                        } else {
+                            saveAchievements()
+                        }
+                    } else if daysDifference > 7 || (daysDifference > 1 && daysDifference < 6) {
+                        // Streak broken - reset
+                        achievements[index].progress = 1
+                        achievements[index].lastProgressDate = today
+                        saveAchievements()
+                    }
+                    // If same day (0), do nothing
+                } else {
+                    // First time
+                    achievements[index].progress = 1
+                    achievements[index].lastProgressDate = today
+                    saveAchievements()
+                }
             }
             
-            // Never miss Monday - hit goal on 4 consecutive Mondays
+            // Never miss Monday - hit goal on 4 consecutive Mondays (every 7 days)
             if isMonday {
-                incrementStreakProgress(achievementId: "never_miss", maxProgress: 4)
+                incrementStreakProgressWithDayCheck(achievementId: "never_miss", maxProgress: 4, expectedDayInterval: 7)
             }
         }
     }
@@ -357,13 +439,26 @@ class AchievementManager: ObservableObject {
         updateProgress(achievementId: "premium_supporter", progress: 1)
     }
     
+    // MARK: - Check Combined Activity + Goal Achievements
+    func checkCombinedAchievements(didPetActivityToday: Bool, didMinigameToday: Bool, didAchieveGoalToday: Bool) {
+        // Active companion - do a pet activity and hit goal on same day for 7 days
+        if didPetActivityToday && didAchieveGoalToday {
+            incrementStreakProgress(achievementId: "active_companion", maxProgress: 7)
+        }
+        
+        // Daily engager - play a minigame and hit goal on same day for 5 days
+        if didMinigameToday && didAchieveGoalToday {
+            incrementStreakProgress(achievementId: "daily_engager", maxProgress: 5)
+        }
+    }
+    
     // MARK: - Check Game & Activity Achievements
     func checkGameAchievements(
         totalMinigamesPlayed: Int,
         totalPetActivitiesPlayed: Int,
         moodCatchPlayed: Int,
         memoryMatchPlayed: Int,
-        skyDashPlayed: Int,
+        skyFallPlayed: Int,
         patternMatchPlayed: Int,
         feedActivityCount: Int,
         playBallActivityCount: Int,
@@ -391,7 +486,7 @@ class AchievementManager: ObservableObject {
         // Specific game achievements
         updateProgress(achievementId: "mood_master", progress: moodCatchPlayed)
         updateProgress(achievementId: "memory_champion", progress: memoryMatchPlayed)
-        updateProgress(achievementId: "sky_legend", progress: skyDashPlayed)
+        updateProgress(achievementId: "sky_legend", progress: skyFallPlayed)
         updateProgress(achievementId: "pattern_expert", progress: patternMatchPlayed)
         
         // Specific activity achievements

@@ -1250,6 +1250,14 @@ struct TodayView: View {
         // Check day-specific achievements (weekend warrior, never miss Monday)
         achievementManager.checkDaySpecificAchievements(todaySteps: steps, goalSteps: userSettings.dailyStepGoal)
         
+        // Check combined activity + goal achievements
+        let didAchieveGoal = steps >= userSettings.dailyStepGoal
+        achievementManager.checkCombinedAchievements(
+            didPetActivityToday: userSettings.didAnyPetActivityToday,
+            didMinigameToday: userSettings.didPlayMinigameToday,
+            didAchieveGoalToday: didAchieveGoal
+        )
+        
         // Update previous health for next check
         userSettings.previousHealthForAchievement = currentHealth
         

@@ -694,7 +694,7 @@ class ThemeManager: ObservableObject {
     
     var moodCatchColor: Color { Color(hex: "FF6B4A") }
     var memoryMatchColor: Color { Color(hex: "A855F7") }
-    var skyDashColor: Color { Color(hex: "667EEA") }
+    var skyFallColor: Color { Color(hex: "667EEA") }
     var patternMatchColor: Color { Color(hex: "11998E") }
     
     var moodCatchGradient: LinearGradient {
@@ -705,7 +705,7 @@ class ThemeManager: ObservableObject {
         LinearGradient(colors: [Color(hex: "A855F7"), Color(hex: "EC4899")], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
     
-    var skyDashGradient: LinearGradient {
+    var skyFallGradient: LinearGradient {
         LinearGradient(colors: [Color(hex: "667EEA"), Color(hex: "764BA2")], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
     

@@ -28,7 +28,7 @@ struct ChallengesView: View {
     @State private var showMemoryMatch = false
     @State private var showBubblePop = false
     @State private var showPatternMatch = false
-    @State private var showSkyDash = false
+    @State private var showSkyFall = false
     @State private var currentPlayingGame: String = "" // Track which game is being played
     
     private var filteredChallenges: [Achievement] {
@@ -139,8 +139,8 @@ struct ChallengesView: View {
                 .environmentObject(themeManager)
                 .environmentObject(userSettings)
         }
-        .fullScreenCover(isPresented: $showSkyDash) {
-            SkyDashGameView(onComplete: handleMinigameComplete)
+        .fullScreenCover(isPresented: $showSkyFall) {
+            SkyFallGameView(onComplete: handleMinigameComplete)
                 .environmentObject(themeManager)
                 .environmentObject(userSettings)
         }
@@ -162,7 +162,7 @@ struct ChallengesView: View {
         showMemoryMatch = false
         showBubblePop = false
         showPatternMatch = false
-        showSkyDash = false
+        showSkyFall = false
         currentPlayingGame = ""
         HapticFeedback.success.trigger()
     }
@@ -175,8 +175,8 @@ struct ChallengesView: View {
             gameType = .moodCatch
         case "memory_match":
             gameType = .memoryMatch
-        case "sky_dash":
-            gameType = .skyDash
+        case "sky_fall":
+            gameType = .skyFall
         case "pattern_match":
             gameType = .patternMatch
         default:
@@ -192,7 +192,7 @@ struct ChallengesView: View {
             totalPetActivitiesPlayed: userSettings.totalPetActivitiesPlayed,
             moodCatchPlayed: userSettings.moodCatchPlayed,
             memoryMatchPlayed: userSettings.memoryMatchPlayed,
-            skyDashPlayed: userSettings.skyDashPlayed,
+            skyFallPlayed: userSettings.skyFallPlayed,
             patternMatchPlayed: userSettings.patternMatchPlayed,
             feedActivityCount: userSettings.feedActivityCount,
             playBallActivityCount: userSettings.playBallActivityCount,
@@ -374,18 +374,18 @@ struct ChallengesView: View {
                     startMinigame { showMemoryMatch = true }
                 }
                 
-                // Sky Dash Game
+                // Sky Fall Game
                 CreditGameCard(
-                    title: "Sky Dash",
+                    title: "Sky Fall",
                     description: "Dodge walls and rise to the top!",
                     icon: "arrow.up.forward.circle.fill",
-                    color: themeManager.skyDashColor,
+                    color: themeManager.skyFallColor,
                     gradient: [Color(hex: "667EEA"), Color(hex: "764BA2")],
                     emoji: "🌟",
                     hasCredits: userSettings.totalCredits > 0
                 ) {
-                    currentPlayingGame = "sky_dash"
-                    startMinigame { showSkyDash = true }
+                    currentPlayingGame = "sky_fall"
+                    startMinigame { showSkyFall = true }
                 }
                 
                 // Pattern Match Game
@@ -1678,7 +1678,7 @@ struct ActivityPlaySheet: View {
             totalPetActivitiesPlayed: userSettings.totalPetActivitiesPlayed,
             moodCatchPlayed: userSettings.moodCatchPlayed,
             memoryMatchPlayed: userSettings.memoryMatchPlayed,
-            skyDashPlayed: userSettings.skyDashPlayed,
+            skyFallPlayed: userSettings.skyFallPlayed,
             patternMatchPlayed: userSettings.patternMatchPlayed,
             feedActivityCount: userSettings.feedActivityCount,
             playBallActivityCount: userSettings.playBallActivityCount,

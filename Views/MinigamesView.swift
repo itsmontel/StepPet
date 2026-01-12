@@ -228,7 +228,7 @@ struct MinigamesView: View {
             totalPetActivitiesPlayed: userSettings.totalPetActivitiesPlayed,
             moodCatchPlayed: userSettings.moodCatchPlayed,
             memoryMatchPlayed: userSettings.memoryMatchPlayed,
-            skyDashPlayed: userSettings.skyDashPlayed,
+            skyFallPlayed: userSettings.skyFallPlayed,
             patternMatchPlayed: userSettings.patternMatchPlayed,
             feedActivityCount: userSettings.feedActivityCount,
             playBallActivityCount: userSettings.playBallActivityCount,

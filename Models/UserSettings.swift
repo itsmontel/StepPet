@@ -110,7 +110,7 @@ class UserSettings: ObservableObject {
     @Published var memoryMatchPlayed: Int {
         didSet { save() }
     }
-    @Published var skyDashPlayed: Int {
+    @Published var skyFallPlayed: Int {
         didSet { save() }
     }
     @Published var patternMatchPlayed: Int {
@@ -223,7 +223,7 @@ class UserSettings: ObservableObject {
             self.totalPetActivitiesPlayed = savedSettings.totalPetActivitiesPlayed ?? 0
             self.moodCatchPlayed = savedSettings.moodCatchPlayed ?? 0
             self.memoryMatchPlayed = savedSettings.memoryMatchPlayed ?? 0
-            self.skyDashPlayed = savedSettings.skyDashPlayed ?? 0
+            self.skyFallPlayed = savedSettings.skyFallPlayed ?? 0
             self.patternMatchPlayed = savedSettings.patternMatchPlayed ?? 0
             self.feedActivityCount = savedSettings.feedActivityCount ?? 0
             self.playBallActivityCount = savedSettings.playBallActivityCount ?? 0
@@ -325,7 +325,7 @@ class UserSettings: ObservableObject {
             self.totalPetActivitiesPlayed = 0
             self.moodCatchPlayed = 0
             self.memoryMatchPlayed = 0
-            self.skyDashPlayed = 0
+            self.skyFallPlayed = 0
             self.patternMatchPlayed = 0
             self.feedActivityCount = 0
             self.playBallActivityCount = 0
@@ -470,7 +470,7 @@ class UserSettings: ObservableObject {
             totalPetActivitiesPlayed: totalPetActivitiesPlayed,
             moodCatchPlayed: moodCatchPlayed,
             memoryMatchPlayed: memoryMatchPlayed,
-            skyDashPlayed: skyDashPlayed,
+            skyFallPlayed: skyFallPlayed,
             patternMatchPlayed: patternMatchPlayed,
             feedActivityCount: feedActivityCount,
             playBallActivityCount: playBallActivityCount,
@@ -528,7 +528,7 @@ class UserSettings: ObservableObject {
     enum MinigameType: String {
         case moodCatch = "mood_catch"
         case memoryMatch = "memory_match"
-        case skyDash = "sky_dash"
+        case skyFall = "sky_fall"
         case patternMatch = "pattern_match"
     }
     
@@ -548,8 +548,8 @@ class UserSettings: ObservableObject {
             moodCatchPlayed += 1
         case .memoryMatch:
             memoryMatchPlayed += 1
-        case .skyDash:
-            skyDashPlayed += 1
+        case .skyFall:
+            skyFallPlayed += 1
         case .patternMatch:
             patternMatchPlayed += 1
         }
@@ -600,6 +600,19 @@ class UserSettings: ObservableObject {
     // Check if all 3 activities were done today
     var didAllActivitiesToday: Bool {
         return todayFedPet && todayPlayedBall && todayWatchedTV
+    }
+    
+    // Check if any pet activity was done today
+    var didAnyPetActivityToday: Bool {
+        return todayFedPet || todayPlayedBall || todayWatchedTV
+    }
+    
+    // Check if a minigame was played today
+    var didPlayMinigameToday: Bool {
+        if let lastDate = lastGamePlayDate {
+            return Calendar.current.isDateInToday(lastDate)
+        }
+        return false
     }
     
     // Reset daily activity tracking
@@ -737,7 +750,7 @@ struct SavedUserSettings: Codable {
     var totalPetActivitiesPlayed: Int?
     var moodCatchPlayed: Int?
     var memoryMatchPlayed: Int?
-    var skyDashPlayed: Int?
+    var skyFallPlayed: Int?
     var patternMatchPlayed: Int?
     var feedActivityCount: Int?
     var playBallActivityCount: Int?

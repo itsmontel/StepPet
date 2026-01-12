@@ -75,6 +75,7 @@ struct Achievement: Identifiable, Codable {
     var unlockedDate: Date?
     var progress: Int = 0
     let targetProgress: Int
+    var lastProgressDate: Date? = nil  // Used for tracking consecutive achievements
     
     var progressPercentage: Double {
         guard targetProgress > 0 else { return 0 }
@@ -103,8 +104,8 @@ struct Achievement: Identifiable, Codable {
         Achievement(id: "comeback_kid", title: "Comeback Kid", description: "Recover your pet's health from sick to full health", category: .streak, rarity: .uncommon, icon: "arrow.up.heart.fill", targetProgress: 1),
         Achievement(id: "never_miss", title: "Never Miss Monday", description: "Hit your goal on 4 consecutive Mondays", category: .streak, rarity: .rare, icon: "calendar", targetProgress: 4),
         Achievement(id: "weekend_warrior", title: "Weekend Warrior", description: "Hit your goal on 8 consecutive weekend days", category: .streak, rarity: .rare, icon: "sun.max.fill", targetProgress: 8),
-        Achievement(id: "early_bird", title: "Early Bird", description: "Reach 50% of your goal before noon for 7 days", category: .streak, rarity: .uncommon, icon: "sunrise.fill", targetProgress: 7),
-        Achievement(id: "night_owl", title: "Night Owl", description: "Complete your goal after 8 PM for 5 days", category: .streak, rarity: .uncommon, icon: "moon.stars.fill", targetProgress: 5),
+        Achievement(id: "active_companion", title: "Active Companion", description: "Do a pet activity and hit your goal on the same day for 7 days", category: .streak, rarity: .uncommon, icon: "heart.circle.fill", targetProgress: 7),
+        Achievement(id: "wellness_keeper", title: "Wellness Keeper", description: "Keep your pet above 80% health for 10 consecutive days", category: .streak, rarity: .uncommon, icon: "cross.case.fill", targetProgress: 10),
         Achievement(id: "consistent_walker", title: "Consistent Walker", description: "Hit your goal 5 days in a row", category: .streak, rarity: .uncommon, icon: "repeat", targetProgress: 5),
         Achievement(id: "dedication", title: "Pure Dedication", description: "Maintain a 60-day goal streak", category: .streak, rarity: .epic, icon: "star.circle.fill", targetProgress: 60),
         
@@ -137,10 +138,10 @@ struct Achievement: Identifiable, Codable {
         // MARK: - Consistency Achievements (8 achievements)
         Achievement(id: "daily_walker", title: "Daily Walker", description: "Walk at least 1,000 steps every day for a week", category: .consistency, rarity: .common, icon: "calendar.badge.clock", targetProgress: 7),
         Achievement(id: "monthly_active", title: "Monthly Active", description: "Walk at least 1,000 steps every day for a month", category: .consistency, rarity: .rare, icon: "calendar", targetProgress: 30),
-        Achievement(id: "morning_routine", title: "Morning Routine", description: "Walk 3,000 steps before 9 AM for 7 days", category: .consistency, rarity: .uncommon, icon: "alarm.fill", targetProgress: 7),
-        Achievement(id: "lunch_walker", title: "Lunch Walker", description: "Walk 2,000 steps during lunch hours for 5 days", category: .consistency, rarity: .uncommon, icon: "takeoutbag.and.cup.and.straw.fill", targetProgress: 5),
-        Achievement(id: "evening_stroll", title: "Evening Stroll", description: "Walk 3,000 steps after 6 PM for 7 days", category: .consistency, rarity: .uncommon, icon: "sunset.fill", targetProgress: 7),
-        Achievement(id: "all_day_active", title: "All Day Active", description: "Walk steps in every 4-hour block for 3 days", category: .consistency, rarity: .rare, icon: "clock.fill", targetProgress: 3),
+        Achievement(id: "goal_master", title: "Goal Master", description: "Hit 95-105% of your goal (not too much, not too little) for 7 days", category: .consistency, rarity: .uncommon, icon: "target", targetProgress: 7),
+        Achievement(id: "step_enthusiast", title: "Step Enthusiast", description: "Walk over 12,000 steps for 5 consecutive days", category: .consistency, rarity: .uncommon, icon: "figure.walk.motion", targetProgress: 5),
+        Achievement(id: "health_conscious", title: "Health Conscious", description: "Keep pet above 70% health for 14 consecutive days", category: .consistency, rarity: .rare, icon: "heart.text.square.fill", targetProgress: 14),
+        Achievement(id: "daily_engager", title: "Daily Engager", description: "Play a minigame and hit goal on same day for 5 days", category: .consistency, rarity: .uncommon, icon: "gamecontroller.fill", targetProgress: 5),
         Achievement(id: "goal_crusher", title: "Goal Crusher", description: "Exceed your daily goal by 50% for 5 days", category: .consistency, rarity: .rare, icon: "bolt.heart.fill", targetProgress: 5),
         Achievement(id: "steady_pace", title: "Steady Pace", description: "Hit exactly 10,000 steps (±500) for 3 days", category: .consistency, rarity: .uncommon, icon: "speedometer", targetProgress: 3),
         
@@ -187,7 +188,7 @@ struct Achievement: Identifiable, Codable {
         // Specific game achievements
         Achievement(id: "mood_master", title: "Mood Master", description: "Play Mood Catch 50 times", category: .games, rarity: .rare, icon: "heart.circle.fill", targetProgress: 50),
         Achievement(id: "memory_champion", title: "Memory Champion", description: "Play Memory Match 50 times", category: .games, rarity: .rare, icon: "brain.head.profile", targetProgress: 50),
-        Achievement(id: "sky_legend", title: "Sky Legend", description: "Play Sky Dash 50 times", category: .games, rarity: .rare, icon: "arrow.up.forward.circle.fill", targetProgress: 50),
+        Achievement(id: "sky_legend", title: "Sky Legend", description: "Play Sky Fall 50 times", category: .games, rarity: .rare, icon: "arrow.up.forward.circle.fill", targetProgress: 50),
         Achievement(id: "pattern_expert", title: "Pattern Expert", description: "Play Pattern Match 50 times", category: .games, rarity: .rare, icon: "square.grid.3x3.fill", targetProgress: 50),
         
         // Specific activity achievements
