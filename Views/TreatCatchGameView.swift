@@ -305,6 +305,24 @@ struct TreatCatchGameView: View {
                 }
             }
             
+            // Credits indicator
+            HStack(spacing: 4) {
+                Image(systemName: "creditcard.fill")
+                    .font(.system(size: 11))
+                    .foregroundColor(.orange)
+                
+                Text("\(userSettings.totalCredits)")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.95))
+                    .shadow(color: .black.opacity(0.1), radius: 4)
+            )
+            
             Spacer()
             
             // Score - centered and prominent

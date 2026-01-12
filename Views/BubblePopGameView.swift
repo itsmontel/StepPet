@@ -238,6 +238,23 @@ struct BubblePopGameView: View {
                     .shadow(color: .black.opacity(0.2), radius: 4)
             }
             
+            // Credits indicator
+            HStack(spacing: 4) {
+                Image(systemName: "creditcard.fill")
+                    .font(.system(size: 11))
+                    .foregroundColor(.orange)
+                
+                Text("\(userSettings.totalCredits)")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.black.opacity(0.25))
+            )
+            
             Spacer()
             
             if gameState == .playing {
@@ -528,6 +545,13 @@ struct BubblePopGameView: View {
     
     // MARK: - Game Logic
     private func startGame() {
+        // Deduct credit when starting the game
+        guard userSettings.useGameCredit() else {
+            // If no credits, close the game
+            dismiss()
+            return
+        }
+        
         gameState = .playing
         score = 0
         isNewHighScore = false

@@ -1246,6 +1246,7 @@ struct ActivityView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userSettings: UserSettings
     @EnvironmentObject var tutorialManager: TutorialManager
+    @ObservedObject var purchaseManager = PurchaseManager.shared
     
     @StateObject private var locationManager = ActivityLocationManager()
     @StateObject private var walkHistory = WalkHistoryManager()
@@ -1262,6 +1263,55 @@ struct ActivityView: View {
     @State private var countdownValue = 3
     @State private var selectedRecentWalk: WalkRecord?
     @State private var showPremiumSheet = false
+    
+    // Map dark mode: nil = auto (time-based), true = force dark, false = force light
+    @State private var mapDarkModeOverride: Bool? = nil
+    
+    // Computed property for map dark mode based on time or user override
+    private var isMapDarkMode: Bool {
+        if let override = mapDarkModeOverride {
+            return override
+        }
+        // Auto mode: dark between 7pm (19:00) and 6am
+        let hour = Calendar.current.component(.hour, from: Date())
+        return hour < 6 || hour >= 19
+    }
+    
+    private var mapColorScheme: ColorScheme {
+        isMapDarkMode ? .dark : .light
+    }
+    
+    private var mapModeIcon: String {
+        if mapDarkModeOverride == nil {
+            return "clock.circle.fill" // Auto mode
+        } else if isMapDarkMode {
+            return "moon.fill" // Dark mode
+        } else {
+            return "sun.max.fill" // Light mode
+        }
+    }
+    
+    private var mapModeLabel: String {
+        if mapDarkModeOverride == nil {
+            return "Auto"
+        } else if isMapDarkMode {
+            return "Dark"
+        } else {
+            return "Light"
+        }
+    }
+    
+    private func cycleMapMode() {
+        HapticFeedback.light.trigger()
+        // Cycle through: auto -> light -> dark -> auto
+        if mapDarkModeOverride == nil {
+            mapDarkModeOverride = false // Light
+        } else if mapDarkModeOverride == false {
+            mapDarkModeOverride = true // Dark
+        } else {
+            mapDarkModeOverride = nil // Auto
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -1457,9 +1507,7 @@ struct ActivityView: View {
                 showPremiumSheet = true
             }) {
                 HStack(spacing: 8) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 16, weight: .bold))
-                    Text("Upgrade to Premium")
+                    Text(purchaseManager.upgradeButtonText)
                         .font(.system(size: 17, weight: .bold))
                 }
                 .foregroundColor(.white)
@@ -1470,6 +1518,14 @@ struct ActivityView: View {
                         .fill(LinearGradient(colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
                         .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
                 )
+            }
+            
+            // Free trial info for eligible users
+            if purchaseManager.isEligibleForTrial {
+                Text("3-day free trial • Cancel anytime")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(themeManager.secondaryTextColor)
+                    .padding(.top, 4)
             }
             
             Spacer(minLength: 100)
@@ -1623,7 +1679,7 @@ struct ActivityView: View {
     private var startActivitySection: some View {
         VStack(spacing: 16) {
             // Large Map Preview with Animated Pet
-            ZStack {
+            ZStack(alignment: .topTrailing) {
                 Map(initialPosition: .region(locationManager.region)) {
                     if let location = locationManager.location {
                         Annotation("", coordinate: location) {
@@ -1632,9 +1688,29 @@ struct ActivityView: View {
                     }
                 }
                 .mapStyle(.standard)
+                .environment(\.colorScheme, mapColorScheme)
                 .frame(height: 340)
                 .clipShape(RoundedRectangle(cornerRadius: 24))
                 .shadow(color: Color.black.opacity(0.1), radius: 10, y: 5)
+                
+                // Map Dark Mode Toggle Button
+                Button(action: cycleMapMode) {
+                    HStack(spacing: 6) {
+                        Image(systemName: mapModeIcon)
+                            .font(.system(size: 14, weight: .semibold))
+                        Text(mapModeLabel)
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundColor(isMapDarkMode ? .white : Color.black)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(isMapDarkMode ? Color.black.opacity(0.6) : Color.white.opacity(0.9))
+                            .shadow(color: Color.black.opacity(0.15), radius: 4, y: 2)
+                    )
+                }
+                .padding(12)
                 
                 if locationManager.location == nil {
                     VStack(spacing: 12) {
@@ -1766,6 +1842,7 @@ struct ActivityView: View {
                 }
             }
             .mapStyle(.standard)
+            .environment(\.colorScheme, mapColorScheme)
             .ignoresSafeArea()
             
             // Weather Effects Overlay
@@ -1773,6 +1850,30 @@ struct ActivityView: View {
                 .ignoresSafeArea()
             
             VStack {
+                HStack {
+                    Spacer()
+                    
+                    // Map Dark Mode Toggle Button
+                    Button(action: cycleMapMode) {
+                        HStack(spacing: 6) {
+                            Image(systemName: mapModeIcon)
+                                .font(.system(size: 14, weight: .semibold))
+                            Text(mapModeLabel)
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        }
+                        .foregroundColor(isMapDarkMode ? .white : Color.black)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(isMapDarkMode ? Color.black.opacity(0.6) : Color.white.opacity(0.9))
+                                .shadow(color: Color.black.opacity(0.15), radius: 4, y: 2)
+                        )
+                    }
+                }
+                .padding(.top, 55)
+                .padding(.horizontal, 16)
+                
                 VStack(spacing: 8) {
                     // Weather indicator at top
                     if let weather = weatherManager.currentWeather {
@@ -1799,7 +1900,7 @@ struct ActivityView: View {
                         WorkoutStatPill(title: "Pace", value: calculatePace(), color: .purple)
                     }
                 }
-                .padding(.top, 60)
+                .padding(.top, 8)
                 .padding(.horizontal, 16)
                 
                 Spacer()

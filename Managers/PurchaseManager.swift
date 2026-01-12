@@ -30,6 +30,9 @@ class PurchaseManager: NSObject, ObservableObject {
     @Published var errorMessage: String?
     @Published var customerInfo: CustomerInfo?
     
+    // Trial eligibility - tracks if user has ever had a subscription
+    @Published var hasEverSubscribed: Bool = false
+    
     // Products
     @Published var weeklyProduct: Package?
     @Published var monthlyProduct: Package?
@@ -49,6 +52,17 @@ class PurchaseManager: NSObject, ObservableObject {
     
     private override init() {
         super.init()
+    }
+    
+    // MARK: - Trial Eligibility
+    /// Returns true if user is eligible for free trial (never subscribed before)
+    var isEligibleForTrial: Bool {
+        return !hasEverSubscribed && !isPremium
+    }
+    
+    /// Button text for premium upgrade based on trial eligibility
+    var upgradeButtonText: String {
+        return isEligibleForTrial ? "Try Premium for Free" : "Upgrade to Premium"
     }
     
     // MARK: - Setup
@@ -78,7 +92,22 @@ class PurchaseManager: NSObject, ObservableObject {
                 self.isPremium = false
             }
             
-            print("✅ Premium status: \(isPremium)")
+            // Check if user has ever had a subscription (for trial eligibility)
+            // This checks all purchased product IDs - if they've ever purchased a subscription, they're not eligible for trial
+            let subscriptionProducts = info.allPurchasedProductIdentifiers.filter { 
+                $0.contains("weekly") || $0.contains("monthly") || $0.contains("annual")
+            }
+            self.hasEverSubscribed = !subscriptionProducts.isEmpty
+            
+            // Also check if there's any entitlement history (even if expired)
+            if let entitlement = info.entitlements[EntitlementConstants.pro] {
+                // If there's an original purchase date, they've subscribed before
+                if entitlement.originalPurchaseDate != nil {
+                    self.hasEverSubscribed = true
+                }
+            }
+            
+            print("✅ Premium status: \(isPremium), Has ever subscribed: \(hasEverSubscribed), Trial eligible: \(isEligibleForTrial)")
         } catch {
             print("❌ Error fetching customer info: \(error.localizedDescription)")
         }
@@ -229,18 +258,25 @@ class PurchaseManager: NSObject, ObservableObject {
     }
     
     var monthlySavingsPercentage: Int {
-        guard let weekly = weeklyProduct?.storeProduct.price as Decimal?,
-              let monthly = monthlyProduct?.storeProduct.price as Decimal?,
-              weekly > 0 else {
-            return 40
+        guard let weeklyPrice = weeklyProduct?.storeProduct.price as? NSDecimalNumber,
+              let monthlyPrice = monthlyProduct?.storeProduct.price as? NSDecimalNumber else {
+            // Default: $3.99/week * 4 = $15.96/month vs $9.99/month = ~37% savings
+            return 37
         }
         
-        let weeklyMonthCost = weekly * 4
-        if weeklyMonthCost > 0 {
-            let savings = (1 - (monthly / weeklyMonthCost)) * 100
-            return max(0, Int(truncating: savings as NSNumber))
+        let weekly = weeklyPrice.doubleValue
+        let monthly = monthlyPrice.doubleValue
+        
+        guard weekly > 0 else { return 37 }
+        
+        // Calculate: 4 weeks worth vs monthly price
+        let weeklyMonthCost = weekly * 4.0
+        
+        if weeklyMonthCost > monthly {
+            let savings = ((weeklyMonthCost - monthly) / weeklyMonthCost) * 100.0
+            return max(0, Int(savings.rounded()))
         }
-        return 40
+        return 37
     }
     
     // MARK: - Subscription Info
@@ -271,11 +307,24 @@ extension PurchaseManager: PurchasesDelegate {
             // Update premium status
             if let entitlement = entitlement {
                 self.isPremium = entitlement.isActive
+                
+                // Track if user has ever subscribed
+                if entitlement.originalPurchaseDate != nil {
+                    self.hasEverSubscribed = true
+                }
             } else {
                 self.isPremium = false
             }
             
-            print("📱 Customer info updated. Premium: \(self.isPremium)")
+            // Also check all purchased products for subscription history
+            let subscriptionProducts = customerInfo.allPurchasedProductIdentifiers.filter { 
+                $0.contains("weekly") || $0.contains("monthly") || $0.contains("annual")
+            }
+            if !subscriptionProducts.isEmpty {
+                self.hasEverSubscribed = true
+            }
+            
+            print("📱 Customer info updated. Premium: \(self.isPremium), Has ever subscribed: \(self.hasEverSubscribed)")
         }
     }
 }

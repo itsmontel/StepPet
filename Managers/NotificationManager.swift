@@ -7,11 +7,71 @@
 
 import Foundation
 import UserNotifications
+import UIKit
 
 class NotificationManager {
     static let shared = NotificationManager()
     
-    private init() {}
+    private init() {
+        // Pre-save the app logo for notifications
+        saveAppLogoForNotifications()
+    }
+    
+    // MARK: - Notification Logo
+    
+    /// URL for the saved notification logo
+    private var notificationLogoURL: URL? {
+        let fileManager = FileManager.default
+        guard let cachesDir = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        return cachesDir.appendingPathComponent("notification_logo.png")
+    }
+    
+    /// Save the app logo to a location accessible by notifications
+    private func saveAppLogoForNotifications() {
+        guard let logoURL = notificationLogoURL else { return }
+        
+        // Check if already saved
+        if FileManager.default.fileExists(atPath: logoURL.path) {
+            return
+        }
+        
+        // Try to load the app logo from assets
+        if let logoImage = UIImage(named: "SplashLogo") ?? UIImage(named: "FocusPetlogo") ?? UIImage(named: "Virtupet180") {
+            if let pngData = logoImage.pngData() {
+                try? pngData.write(to: logoURL)
+            }
+        }
+    }
+    
+    /// Create a notification attachment with the app logo
+    private func createLogoAttachment() -> UNNotificationAttachment? {
+        guard let logoURL = notificationLogoURL,
+              FileManager.default.fileExists(atPath: logoURL.path) else {
+            return nil
+        }
+        
+        // Copy to a unique temp file (required by iOS)
+        let tempDir = FileManager.default.temporaryDirectory
+        let tempURL = tempDir.appendingPathComponent("\(UUID().uuidString).png")
+        
+        do {
+            try FileManager.default.copyItem(at: logoURL, to: tempURL)
+            let attachment = try UNNotificationAttachment(identifier: "logo", url: tempURL, options: nil)
+            return attachment
+        } catch {
+            print("Failed to create notification attachment: \(error)")
+            return nil
+        }
+    }
+    
+    /// Add logo attachment to notification content
+    private func addLogoToContent(_ content: UNMutableNotificationContent) {
+        if let attachment = createLogoAttachment() {
+            content.attachments = [attachment]
+        }
+    }
     
     // MARK: - Message Templates
     
@@ -173,6 +233,7 @@ class NotificationManager {
         content.body = formatMessage(message.body, petName: petName)
         content.sound = .default
         content.categoryIdentifier = "MORNING_MOTIVATION"
+        addLogoToContent(content)
         
         var dateComponents = DateComponents()
         dateComponents.hour = hour
@@ -193,6 +254,7 @@ class NotificationManager {
         content.body = formatMessage(message.body, petName: petName)
         content.sound = .default
         content.categoryIdentifier = "MIDDAY_CHECKIN"
+        addLogoToContent(content)
         
         var dateComponents = DateComponents()
         dateComponents.hour = hour
@@ -213,6 +275,7 @@ class NotificationManager {
         content.body = formatMessage(message.body, petName: petName)
         content.sound = .default
         content.categoryIdentifier = "EVENING_REMINDER"
+        addLogoToContent(content)
         
         var dateComponents = DateComponents()
         dateComponents.hour = hour
@@ -233,6 +296,7 @@ class NotificationManager {
         content.body = formatMessage(message.body, petName: petName)
         content.sound = .default
         content.categoryIdentifier = "GOAL_ACHIEVED"
+        addLogoToContent(content)
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: "goal_achieved_\(UUID().uuidString)", content: content, trigger: trigger)
@@ -250,6 +314,7 @@ class NotificationManager {
         content.sound = .default
         content.categoryIdentifier = "STREAK_AT_RISK"
         content.interruptionLevel = .timeSensitive
+        addLogoToContent(content)
         
         var dateComponents = DateComponents()
         dateComponents.hour = hour
@@ -284,6 +349,7 @@ class NotificationManager {
         content.body = formatMessage(message.body, petName: petName)
         content.sound = .default
         content.categoryIdentifier = "PET_STATUS"
+        addLogoToContent(content)
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: "pet_status_\(UUID().uuidString)", content: content, trigger: trigger)
@@ -300,6 +366,7 @@ class NotificationManager {
         content.body = formatMessage(message.body, petName: petName, achievement: achievementTitle)
         content.sound = .default
         content.categoryIdentifier = "ACHIEVEMENT"
+        addLogoToContent(content)
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: "achievement_\(UUID().uuidString)", content: content, trigger: trigger)
@@ -316,6 +383,7 @@ class NotificationManager {
         content.body = formatMessage(message.body, petName: petName, steps: totalSteps)
         content.sound = .default
         content.categoryIdentifier = "MILESTONE"
+        addLogoToContent(content)
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: "milestone_\(UUID().uuidString)", content: content, trigger: trigger)
@@ -332,6 +400,7 @@ class NotificationManager {
         content.body = formatMessage(message.body, petName: petName)
         content.sound = .default
         content.categoryIdentifier = "ENCOURAGEMENT"
+        addLogoToContent(content)
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: "encouragement_\(UUID().uuidString)", content: content, trigger: trigger)
@@ -348,6 +417,7 @@ class NotificationManager {
         content.body = "Check the app for your detailed weekly stats! 📊"
         content.sound = .default
         content.categoryIdentifier = "WEEKLY_SUMMARY"
+        addLogoToContent(content)
         
         // Schedule for Sunday at 7pm
         var dateComponents = DateComponents()
@@ -391,6 +461,7 @@ class NotificationManager {
         
         content.sound = .default
         content.categoryIdentifier = "STREAK_MILESTONE"
+        addLogoToContent(content)
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: "streak_milestone_\(streak)", content: content, trigger: trigger)
@@ -419,6 +490,7 @@ class NotificationManager {
         
         content.sound = .default
         content.categoryIdentifier = "INACTIVITY"
+        addLogoToContent(content)
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: "inactivity_\(UUID().uuidString)", content: content, trigger: trigger)
@@ -435,6 +507,7 @@ class NotificationManager {
         content.body = formatMessage(message.body, petName: petName)
         content.sound = .default
         content.categoryIdentifier = "ENCOURAGEMENT"
+        addLogoToContent(content)
         
         var dateComponents = DateComponents()
         dateComponents.hour = hour

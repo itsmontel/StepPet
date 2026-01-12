@@ -428,50 +428,43 @@ struct CuteSmallWidget: View {
     
     var body: some View {
         ZStack {
-            // Background image - pets visible
+            // Background image - shows pets
             Image("SmallWidget")
                 .resizable()
                 .scaledToFill()
             
-            // Content overlay - minimal to show pets
-            VStack(spacing: 0) {
-                // Top - Pet name instead of VirtuPet
+            // Content overlay - compact at top right
+            VStack {
                 HStack {
                     Spacer()
-                    Text(entry.petName)
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundColor(Color(hex: "FF8E53"))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule()
-                                .fill(Color.white.opacity(0.85))
-                        )
+                    
+                    // Top right - VirtuPet + Steps in compact card
+                    VStack(alignment: .trailing, spacing: 3) {
+                        Text("VirtuPet")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(Color(hex: "FF8E53"))
+                        
+                        Text(formattedSteps)
+                            .font(.system(size: 18, weight: .black, design: .rounded))
+                            .foregroundColor(Color(hex: "FF6B4A"))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        
+                        Text("steps left")
+                            .font(.system(size: 7, weight: .bold, design: .rounded))
+                            .foregroundColor(Color(hex: "8B7355"))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color.white.opacity(0.9))
+                    )
                 }
                 .padding(.top, 10)
                 .padding(.trailing, 10)
                 
                 Spacer()
-                
-                // Bottom - Compact steps remaining
-                VStack(alignment: .center, spacing: 1) {
-                    Text(formattedSteps)
-                        .font(.system(size: 22, weight: .black, design: .rounded))
-                        .foregroundColor(Color(hex: "FF6B4A"))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                    
-                    Text("steps left")
-                        .font(.system(size: 8, weight: .bold, design: .rounded))
-                        .foregroundColor(Color(hex: "8B7355"))
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color.white.opacity(0.85))
-                )
-                .padding(.bottom, 12)
             }
         }
     }

@@ -96,7 +96,7 @@ struct StepOnboardingLifetimeCalcView: View {
                         VStack(spacing: 8) {
                             Text("\(Int(animatedMiles).formatted())")
                                 .font(.system(size: 64, weight: .bold, design: .rounded))
-                                .foregroundColor(themeManager.successColor)
+                                .foregroundColor(themeManager.accentColor)
                                 .scaleEffect(showCalculation ? 1.0 : 0.3)
                                 .opacity(showCalculation ? 1.0 : 0.0)
                             
@@ -136,7 +136,7 @@ struct StepOnboardingLifetimeCalcView: View {
                             .scaleEffect(showPet ? 1.0 : 0.3)
                             .opacity(showPet ? 1.0 : 0.0)
                             
-                            Text("Your pet is excited to start this journey with you!")
+                            Text("\(userSettings.pet.name) is excited to start this journey with you!")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(themeManager.secondaryTextColor)
                                 .multilineTextAlignment(.center)
@@ -150,12 +150,24 @@ struct StepOnboardingLifetimeCalcView: View {
                 
                 // Continue button
                 if showButton {
-                    OnboardingGradientButton(
-                        title: "Let's make it happen",
-                        icon: "arrow.right",
-                        colors: [themeManager.accentColor, Color.green]
-                    ) {
+                    Button(action: {
+                        HapticFeedback.medium.trigger()
                         onContinue()
+                    }) {
+                        HStack(spacing: 10) {
+                            Text("Let's make it happen")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                            
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 60)
+                        .background(themeManager.accentColor)
+                        .cornerRadius(20)
+                        .shadow(color: themeManager.accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
                     }
                     .scaleEffect(showButton ? 1.0 : 0.8)
                     .opacity(showButton ? 1.0 : 0.0)

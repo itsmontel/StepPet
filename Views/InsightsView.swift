@@ -38,6 +38,7 @@ struct InsightsView: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var userSettings: UserSettings
     @EnvironmentObject var stepDataManager: StepDataManager
+    @ObservedObject var purchaseManager = PurchaseManager.shared
     
     @State private var selectedPeriod: TimePeriod = .week
     @State private var historicalData: [Date: Int] = [:]
@@ -308,9 +309,7 @@ struct InsightsView: View {
                     showPremiumSheet = true
                 }) {
                     HStack(spacing: 8) {
-                        Image(systemName: "crown.fill")
-                            .font(.system(size: 16, weight: .bold))
-                        Text("Upgrade to Premium")
+                        Text(purchaseManager.upgradeButtonText)
                             .font(.system(size: 17, weight: .bold))
                     }
                     .foregroundColor(.white)
@@ -321,6 +320,14 @@ struct InsightsView: View {
                             .fill(LinearGradient(colors: [themeManager.accentColor, themeManager.accentColor.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
                             .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
                     )
+                }
+                
+                // Free trial info for eligible users
+                if purchaseManager.isEligibleForTrial {
+                    Text("3-day free trial • Cancel anytime")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                        .padding(.top, 4)
                 }
                 
                 Spacer()

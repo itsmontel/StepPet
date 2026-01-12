@@ -101,6 +101,24 @@ struct PatternMatchGameView: View {
             }
             .frame(width: 36)
             
+            // Credits indicator
+            HStack(spacing: 4) {
+                Image(systemName: "creditcard.fill")
+                    .font(.system(size: 11))
+                    .foregroundColor(.orange)
+                
+                Text("\(userSettings.totalCredits)")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(themeManager.primaryTextColor)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.95))
+                    .shadow(color: .black.opacity(0.1), radius: 4)
+            )
+            
             Spacer()
             
             // Level - Centered and prominent
@@ -765,6 +783,13 @@ struct PatternMatchGameView: View {
     }
     
     private func restartGame() {
+        // Deduct credit when restarting
+        guard userSettings.useGameCredit() else {
+            // If no credits, close the game
+            dismiss()
+            return
+        }
+        
         currentLevel = 1
         attemptsLeft = 3
         isNewBestLevel = false

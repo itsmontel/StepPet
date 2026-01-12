@@ -307,6 +307,23 @@ struct SkyDashGameView: View {
             }
             .buttonStyle(PlainButtonStyle())
             
+            // Credits indicator
+            HStack(spacing: 4) {
+                Image(systemName: "creditcard.fill")
+                    .font(.system(size: 11))
+                    .foregroundColor(.orange)
+                
+                Text("\(userSettings.totalCredits)")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.2))
+            )
+            
             Spacer()
             
             if gameState == .playing {

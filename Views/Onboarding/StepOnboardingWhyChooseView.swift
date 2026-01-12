@@ -129,13 +129,24 @@ struct StepOnboardingWhyChooseView: View {
                             .multilineTextAlignment(.center)
                             .opacity(animateButton ? 1.0 : 0.0)
                         
-                        OnboardingGradientButton(
-                            title: "Let's do this",
-                            icon: "arrow.right",
-                            colors: [themeManager.accentColor, Color.purple]
-                        ) {
+                        Button(action: {
                             HapticFeedback.medium.trigger()
                             onContinue()
+                        }) {
+                            HStack(spacing: 10) {
+                                Text("Let's do this")
+                                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                                
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 60)
+                            .background(themeManager.accentColor)
+                            .cornerRadius(20)
+                            .shadow(color: themeManager.accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                         .scaleEffect(animateButton ? 1.0 : 0.95)
                         .opacity(animateButton ? 1.0 : 0.0)

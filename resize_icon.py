@@ -25,3 +25,5 @@ print("\nAll images resized successfully!")
 print(f"Created {len(sizes)} new images.")
 
 
+
+

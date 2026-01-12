@@ -10,12 +10,10 @@ struct StepOnboardingWelcomeView: View {
     @EnvironmentObject var userSettings: UserSettings
     let onContinue: () -> Void
     
-    @State private var petAnimation = false
-    @State private var textAnimation = false
-    @State private var nameFieldAnimation = false
-    @State private var buttonAnimation = false
     @State private var userName: String = ""
     @State private var showNameError = false
+    @State private var showPetVideo = false
+    @FocusState private var isNameFieldFocused: Bool
     
     var isNameValid: Bool {
         !userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -42,22 +40,29 @@ struct StepOnboardingWelcomeView: View {
                             .frame(width: 200, height: 200)
                             .blur(radius: 20)
                         
-                        AnimatedPetVideoView(
-                            petType: .dog,
-                            moodState: .fullHealth
-                        )
-                        .frame(width: 160, height: 160)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        // Show static image first, then swap to video after UI is ready
+                        if showPetVideo {
+                            AnimatedPetVideoView(
+                                petType: .dog,
+                                moodState: .fullHealth
+                            )
+                            .frame(width: 160, height: 160)
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .transition(.opacity)
+                        } else {
+                            Image("dog_happy")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 160, height: 160)
+                                .clipShape(RoundedRectangle(cornerRadius: 20))
+                        }
                     }
-                    .scaleEffect(petAnimation ? 1.0 : 0.8)
-                    .opacity(petAnimation ? 1.0 : 0.0)
                     
                     VStack(spacing: 12) {
                         Text("Welcome to VirtuPet")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                             .multilineTextAlignment(.center)
-                            .opacity(textAnimation ? 1.0 : 0.0)
                         
                         // Step Tracker badge
                         Text("Step Tracker")
@@ -69,7 +74,6 @@ struct StepOnboardingWelcomeView: View {
                                 Capsule()
                                     .fill(themeManager.accentColor.opacity(0.15))
                             )
-                            .opacity(textAnimation ? 1.0 : 0.0)
                         
                         Text("Care for your VirtuPet by caring for yourself")
                             .font(.system(size: 16, weight: .medium))
@@ -77,7 +81,6 @@ struct StepOnboardingWelcomeView: View {
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 32)
                             .lineSpacing(4)
-                            .opacity(textAnimation ? 1.0 : 0.0)
                     }
                 }
                 .padding(.top, 20)
@@ -103,6 +106,7 @@ struct StepOnboardingWelcomeView: View {
                                 .textContentType(.name)
                                 .textInputAutocapitalization(.words)
                                 .submitLabel(.done)
+                                .focused($isNameFieldFocused)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
@@ -117,7 +121,6 @@ struct StepOnboardingWelcomeView: View {
                         )
                     }
                     .padding(.horizontal, 24)
-                    .opacity(nameFieldAnimation ? 1.0 : 0.0)
                     
                     if showNameError {
                         HStack(spacing: 8) {
@@ -132,7 +135,6 @@ struct StepOnboardingWelcomeView: View {
                             Spacer()
                         }
                         .padding(.horizontal, 24)
-                        .opacity(nameFieldAnimation ? 1.0 : 0.0)
                     }
                 }
                 
@@ -145,9 +147,7 @@ struct StepOnboardingWelcomeView: View {
                             userSettings.userName = userName.trimmingCharacters(in: .whitespacesAndNewlines)
                             showNameError = false
                             HapticFeedback.light.trigger()
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                onContinue()
-                            }
+                            onContinue()
                         } else {
                             showNameError = true
                             HapticFeedback.warning.trigger()
@@ -161,30 +161,19 @@ struct StepOnboardingWelcomeView: View {
                             .background(isNameValid ? themeManager.accentColor : themeManager.secondaryTextColor.opacity(0.4))
                             .cornerRadius(16)
                     }
-                    .scaleEffect(buttonAnimation ? 1.0 : 0.95)
-                    .opacity(buttonAnimation ? 1.0 : 0.0)
                     .padding(.horizontal, 24)
                     
                     Text("Takes less than 2 minutes")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(themeManager.secondaryTextColor)
-                        .opacity(buttonAnimation ? 1.0 : 0.0)
                 }
                 .padding(.bottom, 48)
             }
         }
-        .onAppear {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.1)) {
-                petAnimation = true
-            }
-            withAnimation(.easeOut(duration: 0.8).delay(0.4)) {
-                textAnimation = true
-            }
-            withAnimation(.easeOut(duration: 0.8).delay(0.6)) {
-                nameFieldAnimation = true
-            }
-            withAnimation(.easeOut(duration: 0.8).delay(0.9)) {
-                buttonAnimation = true
+        .task {
+            // Load video asynchronously to not block UI
+            await MainActor.run {
+                showPetVideo = true
             }
         }
     }

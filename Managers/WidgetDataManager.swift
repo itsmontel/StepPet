@@ -107,11 +107,26 @@ class WidgetDataManager {
     /// Convenience method using UserSettings
     func syncFromUserSettings(_ userSettings: UserSettings, todaySteps: Int) {
         let petType = userSettings.pet.type.rawValue.lowercased()
-        let petMood = userSettings.pet.moodState.rawValue.lowercased()
+        let goalSteps = userSettings.dailyStepGoal
+        
+        // Calculate health the same way as TodayView does
+        // stepBasedHealth = (todaySteps / goalSteps) * 100
+        // currentHealth = min(100, stepBasedHealth + todayPlayHealthBoost)
+        let stepBasedHealth: Int = goalSteps > 0 ? Int((Double(todaySteps) / Double(goalSteps)) * 100) : 0
+        let health = min(100, stepBasedHealth + userSettings.todayPlayHealthBoost)
+        
+        // Determine mood based on calculated health (same as PetMoodState.from(health:))
+        let petMood: String
+        switch health {
+        case 80...100: petMood = "fullHealth"
+        case 60..<80: petMood = "happy"
+        case 40..<60: petMood = "neutral"
+        case 20..<40: petMood = "sad"
+        default: petMood = "sick"
+        }
+        
         let petName = userSettings.pet.name
         let userName = userSettings.userName
-        let goalSteps = userSettings.dailyStepGoal
-        let health = userSettings.pet.health
         let streak = userSettings.streakData.currentStreak
         
         updateWidgetData(

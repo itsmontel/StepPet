@@ -85,7 +85,7 @@ struct StepOnboardingPetSelectionView: View {
                         .multilineTextAlignment(.center)
                         .opacity(animateTitle ? 1.0 : 0.0)
                     
-                    Text("Select one of five adorable pets to\naccompany you on your walking\njourney! Your pet's health will reflect\nyour daily step progress.")
+                    Text("Start with your free dog companion!\nMore pets available with Premium.")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(themeManager.secondaryTextColor)
                         .multilineTextAlignment(.center)
@@ -104,11 +104,18 @@ struct StepOnboardingPetSelectionView: View {
                         OnboardingPetCard(
                             petType: petType,
                             isSelected: selectedPetType == petType,
+                            isLocked: petType.isPremium,
                             delay: Double(index) * 0.1
                         ) {
-                            withAnimation(.spring(response: 0.4)) {
-                                selectedPetType = petType
-                                HapticFeedback.light.trigger()
+                            // Only allow selecting free pets (dog)
+                            if !petType.isPremium {
+                                withAnimation(.spring(response: 0.4)) {
+                                    selectedPetType = petType
+                                    HapticFeedback.light.trigger()
+                                }
+                            } else {
+                                // Locked pet tapped - show subtle feedback
+                                HapticFeedback.warning.trigger()
                             }
                         }
                         .opacity(animatePets ? 1.0 : 0.0)
@@ -265,6 +272,7 @@ struct StepOnboardingPetSelectionView: View {
 struct OnboardingPetCard: View {
     let petType: PetType
     let isSelected: Bool
+    let isLocked: Bool
     let delay: Double
     let action: () -> Void
     
@@ -273,35 +281,45 @@ struct OnboardingPetCard: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 16) {
-                // Pet image
-                let imageName = petType.imageName(for: .fullHealth)
-                if let _ = UIImage(named: imageName) {
-                    Image(imageName)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 100, height: 100)
-                } else {
-                    Text(petType.emoji)
-                        .font(.system(size: 60))
-                }
-                
-                // Pet name and description
-                VStack(spacing: 8) {
-                    Text(petType.displayName)
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
-                        .foregroundColor(isSelected ? themeManager.accentColor : themeManager.primaryTextColor)
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 16) {
+                    // Pet image
+                    let imageName = petType.imageName(for: .fullHealth)
+                    if let _ = UIImage(named: imageName) {
+                        Image(imageName)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 100, height: 100)
+                            .opacity(isLocked ? 0.5 : 1.0)
+                    } else {
+                        Text(petType.emoji)
+                            .font(.system(size: 60))
+                            .opacity(isLocked ? 0.5 : 1.0)
+                    }
                     
-                    Text(petType.personality)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(themeManager.secondaryTextColor)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                    
-                    // Premium/Free badge
-                    Text(petType.isPremium ? "Premium" : "Free")
-                        .font(.system(size: 11, weight: .bold))
+                    // Pet name and description
+                    VStack(spacing: 8) {
+                        Text(petType.displayName)
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .foregroundColor(isLocked ? themeManager.secondaryTextColor : (isSelected ? themeManager.accentColor : themeManager.primaryTextColor))
+                        
+                        Text(petType.personality)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(themeManager.secondaryTextColor)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .opacity(isLocked ? 0.6 : 1.0)
+                        
+                        // Premium/Free badge
+                        HStack(spacing: 4) {
+                            if isLocked {
+                                Image(systemName: "crown.fill")
+                                    .font(.system(size: 9, weight: .bold))
+                            }
+                            Text(petType.isPremium ? "Premium" : "Free")
+                                .font(.system(size: 11, weight: .bold))
+                        }
                         .foregroundColor(petType.isPremium ? .orange : .green)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -309,18 +327,34 @@ struct OnboardingPetCard: View {
                             Capsule()
                                 .fill(petType.isPremium ? Color.orange.opacity(0.15) : Color.green.opacity(0.15))
                         )
+                    }
+                }
+                .padding(20)
+                .frame(width: 170, height: 230)
+                .background(
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(isSelected && !isLocked ? themeManager.accentColor.opacity(0.1) : themeManager.cardBackgroundColor)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24)
+                                .stroke(isSelected && !isLocked ? themeManager.accentColor : Color.clear, lineWidth: 3)
+                        )
+                )
+                
+                // Lock badge in top-right corner for premium pets
+                if isLocked {
+                    ZStack {
+                        Circle()
+                            .fill(themeManager.cardBackgroundColor)
+                            .frame(width: 32, height: 32)
+                            .shadow(color: Color.black.opacity(0.15), radius: 4, y: 2)
+                        
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(themeManager.secondaryTextColor)
+                    }
+                    .offset(x: -8, y: 8)
                 }
             }
-            .padding(20)
-            .frame(width: 170, height: 230)
-            .background(
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(isSelected ? themeManager.accentColor.opacity(0.1) : themeManager.cardBackgroundColor)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24)
-                            .stroke(isSelected ? themeManager.accentColor : Color.clear, lineWidth: 3)
-                    )
-            )
         }
         .scaleEffect(animate ? 1.0 : 0.9)
         .opacity(animate ? 1.0 : 0.0)

@@ -579,7 +579,7 @@ struct SettingsView: View {
                 
                 // TikTok
                 Button(action: {
-                    if let url = URL(string: "https://tiktok.com/@virtupetapp") {
+                    if let url = URL(string: "https://www.tiktok.com/@virtupetapp") {
                         UIApplication.shared.open(url)
                     }
                 }) {
@@ -1142,11 +1142,23 @@ struct PremiumView: View {
                     }
                     .padding(.horizontal, 20)
                     
-                    // Trial info
-                    Text("Cancel anytime in Settings")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(themeManager.secondaryTextColor)
+                    // Trial info - different message for first-time vs returning users
+                    if purchaseManager.isEligibleForTrial {
+                        VStack(spacing: 4) {
+                            Text("3-Day Free Trial")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(themeManager.accentColor)
+                            Text("No charge until trial ends • Cancel anytime")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(themeManager.secondaryTextColor)
+                        }
                         .multilineTextAlignment(.center)
+                    } else {
+                        Text("Cancel anytime in Settings")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(themeManager.secondaryTextColor)
+                            .multilineTextAlignment(.center)
+                    }
                     
                     // Error message
                     if let error = purchaseManager.errorMessage {
@@ -1157,7 +1169,7 @@ struct PremiumView: View {
                             .padding(.horizontal, 20)
                     }
                     
-                    // Subscribe Button
+                    // Subscribe Button - different text for trial eligible users
                     Button(action: {
                         Task {
                             await handlePurchase()
@@ -1169,7 +1181,7 @@ struct PremiumView: View {
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                     .scaleEffect(0.8)
                             }
-                            Text(purchaseManager.isLoading ? "Processing..." : "Continue")
+                            Text(purchaseManager.isLoading ? "Processing..." : (purchaseManager.isEligibleForTrial ? "Start Free Trial" : "Continue"))
                                 .font(.system(size: 17, weight: .semibold))
                                 .foregroundColor(.white)
                         }
@@ -1921,19 +1933,33 @@ struct OnboardingPaywallView: View {
         VStack(spacing: 0) {
             Spacer()
             
-            // Main headline
+            // Main headline - different for trial eligible vs returning users
             VStack(spacing: 8) {
-                Text("We want you to try")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
-                
-                Text("VirtuPet")
-                    .font(.system(size: 36, weight: .black, design: .rounded))
-                    .foregroundColor(themeManager.accentColor)
-                
-                Text("for free")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
+                if purchaseManager.isEligibleForTrial {
+                    Text("We want you to try")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    Text("VirtuPet")
+                        .font(.system(size: 36, weight: .black, design: .rounded))
+                        .foregroundColor(themeManager.accentColor)
+                    
+                    Text("for free")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                } else {
+                    Text("Upgrade to")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                    
+                    Text("VirtuPet Pro")
+                        .font(.system(size: 36, weight: .black, design: .rounded))
+                        .foregroundColor(themeManager.accentColor)
+                    
+                    Text("Unlock all features")
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .foregroundColor(themeManager.secondaryTextColor)
+                }
             }
             .opacity(showContent ? 1 : 0)
             .offset(y: showContent ? 0 : 20)
@@ -2068,63 +2094,77 @@ struct OnboardingPaywallView: View {
     // MARK: - Page 2: Pricing with Timeline
     private var paywallPricingPage: some View {
         VStack(spacing: 0) {
-            // Headline
-            VStack(spacing: 6) {
-                Text("We'll remind you before")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
+            // Headline - different for trial eligible vs returning users
+            if purchaseManager.isEligibleForTrial {
+                VStack(spacing: 6) {
+                    Text("How your free trial works")
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                }
+                .padding(.top, 10)
+                .padding(.bottom, 24)
                 
-                Text("your trial ends")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(themeManager.primaryTextColor)
+                // Timeline (only for trial eligible users)
+                VStack(alignment: .leading, spacing: 0) {
+                    // Today
+                    TimelineItem(
+                        icon: "lock.open.fill",
+                        iconColor: Color(hex: "#F59E0B"),
+                        title: "Today",
+                        subtitle: "Unlock full access to VirtuPet\nand keep your pet happy!",
+                        isFirst: true,
+                        isLast: false
+                    )
+                    
+                    // In 2 Days
+                    TimelineItem(
+                        icon: "bell.fill",
+                        iconColor: Color(hex: "#0EA5E9"),
+                        title: "In 2 Days",
+                        subtitle: "We'll send a reminder before\nyour trial ends.",
+                        isFirst: false,
+                        isLast: false
+                    )
+                    
+                    // In 3 Days
+                    TimelineItem(
+                        icon: "creditcard.fill",
+                        iconColor: Color(hex: "#10B981"),
+                        title: "In 3 Days",
+                        subtitle: "Your subscription will begin\nunless you cancel before.",
+                        isFirst: false,
+                        isLast: true
+                    )
+                }
+                .padding(.horizontal, 30)
+                .padding(.bottom, 20)
+            } else {
+                // Returning users - no trial timeline
+                VStack(spacing: 6) {
+                    Text("Choose your plan")
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundColor(themeManager.primaryTextColor)
+                }
+                .padding(.top, 10)
+                .padding(.bottom, 24)
             }
-            .padding(.top, 10)
-            .padding(.bottom, 24)
-            
-            // Timeline
-            VStack(alignment: .leading, spacing: 0) {
-                // Today
-                TimelineItem(
-                    icon: "lock.open.fill",
-                    iconColor: Color(hex: "#F59E0B"),
-                    title: "Today",
-                    subtitle: "Unlock full access to VirtuPet\nand keep your pet happy!",
-                    isFirst: true,
-                    isLast: false
-                )
-                
-                // In 2 Days
-                TimelineItem(
-                    icon: "bell.fill",
-                    iconColor: Color(hex: "#0EA5E9"),
-                    title: "In 2 Days",
-                    subtitle: "We'll send a reminder before\nyour trial ends.",
-                    isFirst: false,
-                    isLast: false
-                )
-                
-                // In 3 Days
-                TimelineItem(
-                    icon: "creditcard.fill",
-                    iconColor: Color(hex: "#10B981"),
-                    title: "In 3 Days",
-                    subtitle: "Your subscription will begin\nunless you cancel before.",
-                    isFirst: false,
-                    isLast: true
-                )
-            }
-            .padding(.horizontal, 30)
-            .padding(.bottom, 20)
             
             Spacer()
             
             // Pricing Card
             VStack(spacing: 12) {
-                // FREE TRIAL header
-                Text("FREE TRIAL")
-                    .font(.system(size: 12, weight: .heavy, design: .rounded))
-                    .foregroundColor(themeManager.accentColor)
-                    .tracking(1)
+                // Header - different for trial vs non-trial
+                if purchaseManager.isEligibleForTrial {
+                    Text("FREE TRIAL")
+                        .font(.system(size: 12, weight: .heavy, design: .rounded))
+                        .foregroundColor(themeManager.accentColor)
+                        .tracking(1)
+                } else {
+                    Text("PREMIUM")
+                        .font(.system(size: 12, weight: .heavy, design: .rounded))
+                        .foregroundColor(themeManager.accentColor)
+                        .tracking(1)
+                }
                 
                 // Plan selector
                 HStack {
@@ -2140,7 +2180,7 @@ struct OnboardingPaywallView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Try it Free")
+                        Text(purchaseManager.isEligibleForTrial ? "Try it Free" : "Subscribe Now")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                         
@@ -2178,15 +2218,21 @@ struct OnboardingPaywallView: View {
                     }
                     
                     Button(action: { selectedPlan = "monthly" }) {
-                        Text("Monthly")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(selectedPlan == "monthly" ? .white : themeManager.secondaryTextColor)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(
-                                Capsule()
-                                    .fill(selectedPlan == "monthly" ? themeManager.accentColor : Color.clear)
-                            )
+                        HStack(spacing: 4) {
+                            Text("Monthly")
+                            if purchaseManager.monthlySavingsPercentage > 0 {
+                                Text("(\(purchaseManager.monthlySavingsPercentage)% off)")
+                                    .font(.system(size: 11, weight: .bold))
+                            }
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(selectedPlan == "monthly" ? .white : themeManager.secondaryTextColor)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(selectedPlan == "monthly" ? themeManager.accentColor : Color.clear)
+                        )
                     }
                 }
                 .padding(4)
@@ -2201,13 +2247,21 @@ struct OnboardingPaywallView: View {
             )
             .padding(.horizontal, 20)
             
-            // No commitment text
-            Text("No commitment. Cancel anytime.")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(themeManager.secondaryTextColor)
-                .padding(.top, 12)
+            // No commitment text with price after trial
+            VStack(spacing: 4) {
+                Text("No commitment. Cancel anytime.")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(themeManager.secondaryTextColor)
+                
+                if purchaseManager.isEligibleForTrial {
+                    Text(selectedPlan == "monthly" ? "Then \(purchaseManager.monthlyPriceString)/month after trial" : "Then \(purchaseManager.weeklyPriceString)/week after trial")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(themeManager.tertiaryTextColor)
+                }
+            }
+            .padding(.top, 12)
             
-            // CTA Button
+            // CTA Button - different text for trial eligible vs returning users
             Button(action: {
                 Task {
                     await handlePurchase()
@@ -2219,7 +2273,7 @@ struct OnboardingPaywallView: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
                     }
-                    Text(purchaseManager.isLoading ? "Processing..." : "Try for FREE")
+                    Text(purchaseManager.isLoading ? "Processing..." : (purchaseManager.isEligibleForTrial ? "Start Free Trial" : "Subscribe Now"))
                         .font(.system(size: 20, weight: .heavy, design: .rounded))
                         .foregroundColor(.white)
                 }
@@ -2233,17 +2287,6 @@ struct OnboardingPaywallView: View {
             }
             .disabled(purchaseManager.isLoading)
             .padding(.horizontal, 20)
-            .padding(.top, 12)
-            
-            // Skip option
-            Button(action: {
-                userSettings.hasSeenPaywall = true
-                isPresented = false
-            }) {
-                Text("Maybe later")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(themeManager.tertiaryTextColor)
-            }
             .padding(.top, 12)
             .padding(.bottom, 30)
         }

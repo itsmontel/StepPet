@@ -2,7 +2,7 @@
 //  WidgetIntroPopup.swift
 //  VirtuPet
 //
-//  Popup to introduce users to home screen widgets after 15 minutes of app usage
+//  Popup to introduce users to home screen widgets after 3 app opens
 //
 
 import SwiftUI
@@ -41,10 +41,17 @@ struct WidgetIntroPopup: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
-                        // Celebration emoji
-                        Text("🎉")
-                            .font(.system(size: 50))
-                            .scaleEffect(animateContent ? 1.0 : 0.5)
+                        // Widget icon
+                        ZStack {
+                            Circle()
+                                .fill(themeManager.accentColor.opacity(0.15))
+                                .frame(width: 70, height: 70)
+                            
+                            Image(systemName: "apps.iphone")
+                                .font(.system(size: 32, weight: .medium))
+                                .foregroundColor(themeManager.accentColor)
+                        }
+                        .scaleEffect(animateContent ? 1.0 : 0.5)
                         
                         // Title
                         Text("We have widgets!")
@@ -209,4 +216,5 @@ private struct PopupStepRow: View {
     WidgetIntroPopup(isPresented: .constant(true))
         .environmentObject(ThemeManager())
 }
+
 
