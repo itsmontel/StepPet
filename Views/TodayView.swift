@@ -326,6 +326,28 @@ struct TodayView: View {
                         )
                 }
                 .buttonStyle(PlainButtonStyle())
+                
+                // Test Commitment Prompt Button
+                Button(action: {
+                    HapticFeedback.light.trigger()
+                    NotificationCenter.default.post(name: NSNotification.Name("TestCommitmentPrompt"), object: nil)
+                }) {
+                    Image(systemName: "hand.tap.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.pink, .purple],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        )
+                }
+                .buttonStyle(PlainButtonStyle())
             }
             #endif
             

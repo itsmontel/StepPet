@@ -1281,6 +1281,11 @@ struct ActivityView: View {
         isMapDarkMode ? .dark : .light
     }
     
+    // Show premium features if user is premium OR during first-time tutorial
+    private var shouldShowPremiumFeatures: Bool {
+        userSettings.isPremium || (tutorialManager.isActive && tutorialManager.isFirstTimeTutorial)
+    }
+    
     private var mapModeIcon: String {
         if mapDarkModeOverride == nil {
             return "clock.circle.fill" // Auto mode
@@ -1317,7 +1322,7 @@ struct ActivityView: View {
         ZStack {
             themeManager.backgroundColor.ignoresSafeArea()
             
-            if !userSettings.isPremium {
+            if !shouldShowPremiumFeatures {
                 // Premium Gate for Activity
                 premiumGateView
             } else if isWorkoutActive {
@@ -1344,7 +1349,16 @@ struct ActivityView: View {
             }
         }
         .onAppear {
-            if userSettings.isPremium {
+            if shouldShowPremiumFeatures {
+                locationManager.requestPermission()
+                if let location = locationManager.location {
+                    weatherManager.fetchWeather(for: location)
+                }
+            }
+        }
+        .onChange(of: tutorialManager.isActive) { _, isActive in
+            // Request permissions when tutorial starts
+            if isActive && tutorialManager.isFirstTimeTutorial {
                 locationManager.requestPermission()
                 if let location = locationManager.location {
                     weatherManager.fetchWeather(for: location)

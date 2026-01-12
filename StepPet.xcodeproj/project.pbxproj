@@ -65,6 +65,7 @@
 		E81A00012D5E00000062 /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010062 /* WorkoutActivityAttributes.swift */; };
 		E81A00012D5E00000063 /* WidgetDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010063 /* WidgetDataManager.swift */; };
 		E81A00012D5E00000064 /* PurchaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010064 /* PurchaseManager.swift */; };
+		E81A00012D5E00000070 /* CommitmentPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A00012D5E00010070 /* CommitmentPromptView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -151,6 +152,7 @@
 		E81A00012D5E00010062 /* WorkoutActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivityAttributes.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010063 /* WidgetDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataManager.swift; sourceTree = "<group>"; };
 		E81A00012D5E00010064 /* PurchaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseManager.swift; sourceTree = "<group>"; };
+		E81A00012D5E00010070 /* CommitmentPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommitmentPromptView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -246,6 +248,7 @@
 				E81A00012D5E00010006 /* AchievementsView.swift */,
 				E81A00012D5E0001005F /* ChallengesView.swift */,
 				E81A00012D5E00010060 /* ActivityView.swift */,
+				E81A00012D5E00010070 /* CommitmentPromptView.swift */,
 				E81A00012D5E00010007 /* SettingsView.swift */,
 				E81A00012D5E00010008 /* OnboardingView.swift */,
 				E81A00012D5E00010014 /* WidgetIntroPopup.swift */,
@@ -479,6 +482,7 @@
 				E81A00012D5E0000005E /* InsightsView.swift in Sources */,
 				E81A00012D5E0000005F /* ChallengesView.swift in Sources */,
 				E81A00012D5E00000060 /* ActivityView.swift in Sources */,
+				E81A00012D5E00000070 /* CommitmentPromptView.swift in Sources */,
 				E81A00012D5E00000061 /* PetActivity.swift in Sources */,
 				E81A00012D5E00000062 /* WorkoutActivityAttributes.swift in Sources */,
 				E81A00012D5E00000064 /* PurchaseManager.swift in Sources */,

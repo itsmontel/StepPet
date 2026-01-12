@@ -240,11 +240,13 @@ struct SettingsView: View {
                     iconColor: .green,
                     iconBackground: Color.green.opacity(0.15),
                     title: "Daily Step Goal",
-                    subtitle: "\(userSettings.dailyStepGoal.formatted()) steps",
+                    subtitle: userSettings.hasPendingGoal 
+                        ? "\(userSettings.dailyStepGoal.formatted()) steps (→ \(userSettings.pendingStepGoal?.formatted() ?? "") tomorrow)"
+                        : "\(userSettings.dailyStepGoal.formatted()) steps",
                     showChevron: true,
                     action: {
-                        // Ensure goal is at least 500
-                        selectedGoal = max(500, userSettings.dailyStepGoal)
+                        // If there's a pending goal, show that; otherwise show current
+                        selectedGoal = max(500, userSettings.pendingStepGoal ?? userSettings.dailyStepGoal)
                         showGoalSheet = true
                     }
                 )
@@ -887,13 +889,31 @@ struct SettingsView: View {
                 
                 Spacer()
                 
+                // Info message about delayed goal change
+                if selectedGoal != userSettings.dailyStepGoal {
+                    HStack(spacing: 8) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(themeManager.accentColor)
+                        
+                        Text("Your goal will be updated tomorrow")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(themeManager.secondaryTextColor)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 8)
+                }
+                
                 // Save Button
                 Button(action: {
-                    userSettings.dailyStepGoal = selectedGoal
+                    if selectedGoal != userSettings.dailyStepGoal {
+                        // Set as pending goal - will apply tomorrow
+                        userSettings.setPendingStepGoal(selectedGoal)
+                    }
                     achievementManager.updateProgress(achievementId: "goal_setter", progress: 1)
                     showGoalSheet = false
                 }) {
-                    Text("Save Goal")
+                    Text(selectedGoal != userSettings.dailyStepGoal ? "Schedule Goal Change" : "Keep Current Goal")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)

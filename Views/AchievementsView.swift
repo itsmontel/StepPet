@@ -9,6 +9,12 @@ struct AchievementsView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var achievementManager: AchievementManager
     @EnvironmentObject var userSettings: UserSettings
+    @EnvironmentObject var tutorialManager: TutorialManager
+    
+    // Show premium features if user is premium OR during first-time tutorial
+    private var shouldShowPremiumFeatures: Bool {
+        userSettings.isPremium || (tutorialManager.isActive && tutorialManager.isFirstTimeTutorial)
+    }
     
     @State private var selectedCategory: AchievementCategory? = nil
     @State private var showUnlockedOnly = false
@@ -74,7 +80,7 @@ struct AchievementsView: View {
                     .font(.system(size: 34, weight: .bold))
                     .foregroundColor(themeManager.primaryTextColor)
                 
-                if userSettings.isPremium {
+                if shouldShowPremiumFeatures {
                     Text("\(achievementManager.unlockedCount) of \(achievementManager.totalCount) unlocked")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(themeManager.secondaryTextColor)
@@ -123,7 +129,7 @@ struct AchievementsView: View {
             Spacer()
             
             // Percentage Circle (only show for premium)
-            if userSettings.isPremium {
+            if shouldShowPremiumFeatures {
                 ZStack {
                     Circle()
                         .stroke(themeManager.isDarkMode ? Color.white.opacity(0.1) : Color.gray.opacity(0.15), lineWidth: 4)
@@ -205,7 +211,7 @@ struct AchievementsView: View {
             GridItem(.flexible(), spacing: 12)
         ], spacing: 12) {
             ForEach(filteredAchievements) { achievement in
-                AchievementCard(achievement: achievement, showProgress: userSettings.isPremium)
+                AchievementCard(achievement: achievement, showProgress: shouldShowPremiumFeatures)
                     .onTapGesture {
                         selectedAchievement = achievement
                     }

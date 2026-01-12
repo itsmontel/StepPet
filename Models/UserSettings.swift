@@ -175,6 +175,14 @@ class UserSettings: ObservableObject {
         didSet { save() }
     }
     
+    // Pending step goal - applies at start of next day to prevent gaming
+    @Published var pendingStepGoal: Int? {
+        didSet { save() }
+    }
+    @Published var pendingStepGoalDate: Date? {
+        didSet { save() }
+    }
+    
     private let userDefaultsKey = "StepPetUserSettings"
     
     init() {
@@ -239,6 +247,19 @@ class UserSettings: ObservableObject {
             self.totalAppUsageSeconds = savedSettings.totalAppUsageSeconds ?? 0
             self.appOpenCount = savedSettings.appOpenCount ?? 0
             self.hasShownWidgetPopup = savedSettings.hasShownWidgetPopup ?? false
+            
+            // Pending step goal
+            self.pendingStepGoal = savedSettings.pendingStepGoal
+            self.pendingStepGoalDate = savedSettings.pendingStepGoalDate
+            
+            // Apply pending goal if it's a new day since it was set
+            if let pendingGoal = self.pendingStepGoal,
+               let pendingDate = self.pendingStepGoalDate,
+               !Calendar.current.isDateInToday(pendingDate) {
+                self.dailyStepGoal = pendingGoal
+                self.pendingStepGoal = nil
+                self.pendingStepGoalDate = nil
+            }
             
             // Reset daily activity tracking if it's a new day
             if let lastActDate = lastActivityDate, !Calendar.current.isDateInToday(lastActDate) {
@@ -328,6 +349,10 @@ class UserSettings: ObservableObject {
             self.totalAppUsageSeconds = 0
             self.appOpenCount = 0
             self.hasShownWidgetPopup = false
+            
+            // Pending step goal - defaults
+            self.pendingStepGoal = nil
+            self.pendingStepGoalDate = nil
         }
         
         // Sync haptics setting with global HapticFeedback
@@ -462,7 +487,9 @@ class UserSettings: ObservableObject {
             streakDidIncreaseToday: streakDidIncreaseToday,
             totalAppUsageSeconds: totalAppUsageSeconds,
             appOpenCount: appOpenCount,
-            hasShownWidgetPopup: hasShownWidgetPopup
+            hasShownWidgetPopup: hasShownWidgetPopup,
+            pendingStepGoal: pendingStepGoal,
+            pendingStepGoalDate: pendingStepGoalDate
         )
         
         if let data = try? JSONEncoder().encode(settings) {
@@ -477,6 +504,23 @@ class UserSettings: ObservableObject {
         }
         petsUsed.insert(type.rawValue)
         save()
+    }
+    
+    // Set a pending step goal that will apply at the start of the next day
+    func setPendingStepGoal(_ goal: Int) {
+        pendingStepGoal = goal
+        pendingStepGoalDate = Date()
+        save()
+    }
+    
+    // Check if there's a pending goal change
+    var hasPendingGoal: Bool {
+        return pendingStepGoal != nil && pendingStepGoalDate != nil
+    }
+    
+    // Get the effective goal (current or pending for display purposes)
+    var effectiveStepGoal: Int {
+        return dailyStepGoal
     }
     
     // MARK: - Game & Activity Tracking Methods
@@ -717,6 +761,10 @@ struct SavedUserSettings: Codable {
     var totalAppUsageSeconds: Int?
     var appOpenCount: Int?
     var hasShownWidgetPopup: Bool?
+    
+    // Pending step goal - applies at start of next day
+    var pendingStepGoal: Int?
+    var pendingStepGoalDate: Date?
 }
 
 // MARK: - Activity Level

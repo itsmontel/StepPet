@@ -38,7 +38,13 @@ struct InsightsView: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var userSettings: UserSettings
     @EnvironmentObject var stepDataManager: StepDataManager
+    @EnvironmentObject var tutorialManager: TutorialManager
     @ObservedObject var purchaseManager = PurchaseManager.shared
+    
+    // Show premium features if user is premium OR during first-time tutorial
+    private var shouldShowPremiumFeatures: Bool {
+        userSettings.isPremium || (tutorialManager.isActive && tutorialManager.isFirstTimeTutorial)
+    }
     
     @State private var selectedPeriod: TimePeriod = .week
     @State private var historicalData: [Date: Int] = [:]
@@ -137,7 +143,7 @@ struct InsightsView: View {
         ZStack {
             themeManager.backgroundColor.ignoresSafeArea()
             
-            if !userSettings.isPremium {
+            if !shouldShowPremiumFeatures {
                 premiumGateView
             } else {
                 ScrollView(showsIndicators: false) {
@@ -182,7 +188,7 @@ struct InsightsView: View {
             }
         }
         .onAppear {
-            if userSettings.isPremium {
+            if shouldShowPremiumFeatures {
                 healthKitManager.fetchWeeklySteps()
                 loadDataForPeriod()
                 loadLastWeekData()
@@ -195,11 +201,25 @@ struct InsightsView: View {
             }
         }
         .onChange(of: selectedPeriod) { _, _ in
-            if userSettings.isPremium {
+            if shouldShowPremiumFeatures {
                 animateCharts = false
                 loadDataForPeriod()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     withAnimation(.easeOut(duration: 0.6)) {
+                        animateCharts = true
+                    }
+                }
+            }
+        }
+        .onChange(of: tutorialManager.isActive) { _, isActive in
+            // Load data when tutorial starts
+            if isActive && tutorialManager.isFirstTimeTutorial {
+                healthKitManager.fetchWeeklySteps()
+                loadDataForPeriod()
+                loadLastWeekData()
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    withAnimation(.easeOut(duration: 0.8)) {
                         animateCharts = true
                     }
                 }

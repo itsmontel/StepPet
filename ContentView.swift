@@ -12,13 +12,17 @@ struct ContentView: View {
     @StateObject private var tutorialManager = TutorialManager()
     @State private var selectedTab = 2 // Start on Today (center)
     @State private var visitedTabs: Set<Int> = [2] // Start with Today visited
-    @State private var showPaywall = false // Show paywall after tutorial
+    @State private var showCommitmentPrompt = false // Show commitment prompt after tutorial
+    @State private var showPaywall = false // Show paywall after commitment prompt
     
     // Listen for navigation to Challenges
     private let navigateToChallengesNotification = NotificationCenter.default.publisher(for: NSNotification.Name("NavigateToChallenges"))
     
     // Listen for premium upgrade to trigger achievement
     private let userBecamePremiumNotification = NotificationCenter.default.publisher(for: .userBecamePremium)
+    
+    // Listen for test commitment prompt (for development)
+    private let testCommitmentPromptNotification = NotificationCenter.default.publisher(for: NSNotification.Name("TestCommitmentPrompt"))
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -66,6 +70,10 @@ struct ContentView: View {
             // Unlock premium supporter achievement
             achievementManager.unlockPremiumSupporter()
         }
+        .onReceive(testCommitmentPromptNotification) { _ in
+            // Test the commitment prompt
+            showCommitmentPrompt = true
+        }
         .overlay {
             if achievementManager.showUnlockAnimation, let achievement = achievementManager.recentlyUnlocked {
                 AchievementUnlockOverlay(achievement: achievement)
@@ -106,12 +114,24 @@ struct ContentView: View {
         }
         .onChange(of: tutorialManager.isActive) { oldValue, newValue in
             // When tutorial ends (becomes inactive) and it was a first-time tutorial
-            // and user hasn't seen paywall yet, show it
-            if oldValue && !newValue && tutorialManager.isFirstTimeTutorial && !userSettings.hasSeenPaywall {
+            // show commitment prompt first
+            if oldValue && !newValue && tutorialManager.isFirstTimeTutorial {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    showPaywall = true
+                    showCommitmentPrompt = true
                 }
             }
+        }
+        .fullScreenCover(isPresented: $showCommitmentPrompt) {
+            CommitmentPromptView(isPresented: $showCommitmentPrompt) {
+                // After commitment prompt, show paywall if not seen
+                if !userSettings.hasSeenPaywall {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showPaywall = true
+                    }
+                }
+            }
+            .environmentObject(themeManager)
+            .environmentObject(userSettings)
         }
         .fullScreenCover(isPresented: $showPaywall) {
             OnboardingPaywallView(isPresented: $showPaywall)
