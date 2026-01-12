@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct CommitmentPromptView: View {
     @EnvironmentObject var themeManager: ThemeManager
@@ -20,6 +21,15 @@ struct CommitmentPromptView: View {
     @State private var ringScale: CGFloat = 1.0
     @State private var hasCompleted = false
     @State private var showCelebration = false
+    
+    // Intermediate celebration states (before Yay Committed screen)
+    @State private var showCommittedText = false
+    @State private var celebrationRingScale: CGFloat = 1.0
+    @State private var celebrationRingOpacity: Double = 0
+    @State private var sparkleRotation: Double = 0
+    @State private var showSparkles = false
+    @State private var checkmarkScale: CGFloat = 1.0
+    @State private var intermediateConfetti: [CommitmentConfetti] = []
     
     // Celebration animation states
     @State private var celebrationScale: CGFloat = 0.5
@@ -106,19 +116,52 @@ struct CommitmentPromptView: View {
             
             // Tap and hold circle with pet icon
             ZStack {
-                // Outer pulsing rings
-                ForEach(0..<3, id: \.self) { i in
-                    Circle()
-                        .stroke(themeManager.accentColor.opacity(0.15), lineWidth: 2)
-                        .frame(width: 180 + CGFloat(i * 30), height: 180 + CGFloat(i * 30))
-                        .scaleEffect(pulseAnimation ? 1.1 : 1.0)
-                        .opacity(pulseAnimation ? 0 : 0.5)
-                        .animation(
-                            .easeInOut(duration: 2)
-                            .repeatForever(autoreverses: false)
-                            .delay(Double(i) * 0.4),
-                            value: pulseAnimation
-                        )
+                // Celebration expanding rings (shown after completion)
+                if showSparkles {
+                    ForEach(0..<3, id: \.self) { i in
+                        Circle()
+                            .stroke(themeManager.accentColor.opacity(0.6 - Double(i) * 0.15), lineWidth: 3)
+                            .frame(width: 140, height: 140)
+                            .scaleEffect(celebrationRingScale + CGFloat(i) * 0.3)
+                            .opacity(celebrationRingOpacity)
+                    }
+                }
+                
+                // Sparkle stars rotating around
+                if showSparkles {
+                    ForEach(0..<8, id: \.self) { i in
+                        Image(systemName: "sparkle")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(themeManager.accentColor)
+                            .offset(x: 100)
+                            .rotationEffect(.degrees(Double(i) * 45 + sparkleRotation))
+                            .opacity(celebrationRingOpacity)
+                    }
+                }
+                
+                // Intermediate confetti burst
+                ForEach(intermediateConfetti) { particle in
+                    Text(particle.emoji)
+                        .font(.system(size: particle.size))
+                        .position(particle.position)
+                        .opacity(particle.opacity)
+                }
+                
+                // Outer pulsing rings (hidden after completion)
+                if !hasCompleted {
+                    ForEach(0..<3, id: \.self) { i in
+                        Circle()
+                            .stroke(themeManager.accentColor.opacity(0.15), lineWidth: 2)
+                            .frame(width: 180 + CGFloat(i * 30), height: 180 + CGFloat(i * 30))
+                            .scaleEffect(pulseAnimation ? 1.1 : 1.0)
+                            .opacity(pulseAnimation ? 0 : 0.5)
+                            .animation(
+                                .easeInOut(duration: 2)
+                                .repeatForever(autoreverses: false)
+                                .delay(Double(i) * 0.4),
+                                value: pulseAnimation
+                            )
+                    }
                 }
                 
                 // Progress ring background
@@ -128,6 +171,7 @@ struct CommitmentPromptView: View {
                         lineWidth: 8
                     )
                     .frame(width: 160, height: 160)
+                    .opacity(hasCompleted ? 0 : 1)
                 
                 // Progress ring
                 Circle()
@@ -146,9 +190,11 @@ struct CommitmentPromptView: View {
                 
                 // Main circle button
                 ZStack {
-                    // Gradient fill
+                    // Gradient fill (changes to solid green on completion)
                     Circle()
                         .fill(
+                            showCheckmark ?
+                            LinearGradient(colors: [Color.green, Color.green], startPoint: .topLeading, endPoint: .bottomTrailing) :
                             LinearGradient(
                                 colors: themeManager.accentColorTheme.gradientColors,
                                 startPoint: .topLeading,
@@ -156,7 +202,7 @@ struct CommitmentPromptView: View {
                             )
                         )
                         .frame(width: 140, height: 140)
-                        .shadow(color: themeManager.accentColor.opacity(0.4), radius: 20, x: 0, y: 10)
+                        .shadow(color: showCheckmark ? Color.green.opacity(0.5) : themeManager.accentColor.opacity(0.4), radius: showCheckmark ? 30 : 20, x: 0, y: 10)
                     
                     // Inner shine
                     Circle()
@@ -185,6 +231,7 @@ struct CommitmentPromptView: View {
                         Image(systemName: "checkmark")
                             .font(.system(size: 50, weight: .bold))
                             .foregroundColor(.white)
+                            .scaleEffect(checkmarkScale)
                             .transition(.scale.combined(with: .opacity))
                     } else {
                         Image(systemName: "pawprint.fill")
@@ -193,7 +240,7 @@ struct CommitmentPromptView: View {
                             .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 2)
                     }
                 }
-                .scaleEffect(isHolding ? 0.95 : (ringScale))
+                .scaleEffect(isHolding ? 0.95 : (hasCompleted ? 1.0 : ringScale))
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isHolding)
                 .gesture(
                     DragGesture(minimumDistance: 0)
@@ -210,6 +257,15 @@ struct CommitmentPromptView: View {
                 )
             }
             .padding(.vertical, 40)
+            
+            // "Committed!" text that appears after completion
+            if showCommittedText {
+                Text("Committed!")
+                    .font(.system(size: 32, weight: .black, design: .rounded))
+                    .foregroundColor(Color.green)
+                    .transition(.scale.combined(with: .opacity))
+                    .padding(.bottom, 20)
+            }
             
             // Instruction text
             VStack(spacing: 4) {
@@ -370,14 +426,8 @@ struct CommitmentPromptView: View {
                         .padding(.vertical, 18)
                         .background(
                             Capsule()
-                                .fill(
-                                    LinearGradient(
-                                        colors: themeManager.accentColorTheme.gradientColors,
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
+                                .fill(Color.orange)
+                                .shadow(color: Color.orange.opacity(0.4), radius: 10, y: 5)
                         )
                 }
                 .padding(.horizontal, 40)
@@ -437,15 +487,66 @@ struct CommitmentPromptView: View {
         isHolding = false
         HapticFeedback.success.trigger()
         
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+        // Show checkmark with bounce
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
             showCheckmark = true
         }
         
-        // Transition to celebration after brief moment
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        // Checkmark bounce animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.4)) {
+                checkmarkScale = 1.3
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                    checkmarkScale = 1.0
+                }
+            }
+        }
+        
+        // Start sparkles and celebration rings
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            showSparkles = true
+            HapticFeedback.medium.trigger()
+            
+            // Expanding rings
+            withAnimation(.easeOut(duration: 0.8)) {
+                celebrationRingScale = 2.5
+                celebrationRingOpacity = 0.8
+            }
+            
+            // Fade out rings
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                withAnimation(.easeOut(duration: 0.5)) {
+                    celebrationRingOpacity = 0
+                }
+            }
+            
+            // Rotating sparkles
+            withAnimation(.linear(duration: 1.5)) {
+                sparkleRotation = 180
+            }
+        }
+        
+        // Show "Committed!" text
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                showCommittedText = true
+            }
+            HapticFeedback.light.trigger()
+        }
+        
+        // Second haptic burst
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            HapticFeedback.success.trigger()
+        }
+        
+        // Transition to celebration after extended celebration
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
             showCelebrationView()
         }
     }
+    
     
     private func showCelebrationView() {
         // Generate confetti

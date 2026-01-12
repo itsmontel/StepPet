@@ -1130,26 +1130,7 @@ struct PremiumView: View {
                     
                     // Plan Selection
                     VStack(spacing: 12) {
-                        // Weekly (shown first)
-                        if let weeklyPackage = purchaseManager.weeklyProduct {
-                            PlanButton(
-                                title: "Weekly",
-                                price: weeklyPackage.localizedPriceString + "/week",
-                                isSelected: selectedPlan == "weekly",
-                                isBestValue: false,
-                                action: { selectedPlan = "weekly" }
-                            )
-                        } else {
-                            PlanButton(
-                                title: "Weekly",
-                                price: "$3.99/week",
-                                isSelected: selectedPlan == "weekly",
-                                isBestValue: false,
-                                action: { selectedPlan = "weekly" }
-                            )
-                        }
-                        
-                        // Monthly (Best Value - shown below weekly)
+                        // Monthly (Best Value - shown first)
                         if let monthlyPackage = purchaseManager.monthlyProduct {
                             PlanButton(
                                 title: "Monthly",
@@ -1167,6 +1148,25 @@ struct PremiumView: View {
                                 isSelected: selectedPlan == "monthly",
                                 isBestValue: true,
                                 action: { selectedPlan = "monthly" }
+                            )
+                        }
+                        
+                        // Weekly (shown below monthly)
+                        if let weeklyPackage = purchaseManager.weeklyProduct {
+                            PlanButton(
+                                title: "Weekly",
+                                price: weeklyPackage.localizedPriceString + "/week",
+                                isSelected: selectedPlan == "weekly",
+                                isBestValue: false,
+                                action: { selectedPlan = "weekly" }
+                            )
+                        } else {
+                            PlanButton(
+                                title: "Weekly",
+                                price: "$3.99/week",
+                                isSelected: selectedPlan == "weekly",
+                                isBestValue: false,
+                                action: { selectedPlan = "weekly" }
                             )
                         }
                     }
