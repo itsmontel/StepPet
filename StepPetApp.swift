@@ -108,13 +108,18 @@ struct VirtuPetApp: App {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         
+        // Only reset streak if there was a previous goal achieved date
+        // AND the user has completely missed at least one full day
         if let lastGoalDate = userSettings.streakData.lastGoalAchievedDate {
             let lastGoalDay = calendar.startOfDay(for: lastGoalDate)
             let daysDifference = calendar.dateComponents([.day], from: lastGoalDay, to: today).day ?? 0
             
             // If more than 1 day has passed without achieving goal, reset streak
-            if daysDifference > 1 {
-                userSettings.streakData.currentStreak = 0
+            // daysDifference > 1 means: Day 1 (hit goal) -> Day 2 (missed) -> Day 3+ (today)
+            // We only reset if they've completely missed a day in between
+            if daysDifference > 1 && userSettings.streakData.currentStreak > 0 {
+                // Use the proper updateStreak method to ensure consistency
+                userSettings.streakData.updateStreak(goalAchieved: false, date: Date())
             }
         }
     }

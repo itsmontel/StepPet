@@ -269,9 +269,16 @@ class UserSettings: ObservableObject {
             }
             
             // Reset goal celebration flag if it's a new day
-            if let lastCelebDate = lastGoalCelebrationDate, !Calendar.current.isDateInToday(lastCelebDate) {
+            // Also handle case where lastGoalCelebrationDate is nil but flag is somehow true
+            if let lastCelebDate = lastGoalCelebrationDate {
+                if !Calendar.current.isDateInToday(lastCelebDate) {
+                    self.hasShownGoalCelebrationToday = false
+                    // Also reset streak animation flag for new day
+                    self.streakDidIncreaseToday = false
+                }
+            } else if self.hasShownGoalCelebrationToday {
+                // Safety reset: if flag is true but no date recorded, reset it
                 self.hasShownGoalCelebrationToday = false
-                // Also reset streak animation flag for new day
                 self.streakDidIncreaseToday = false
             }
             
