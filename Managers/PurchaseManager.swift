@@ -42,7 +42,9 @@ class PurchaseManager: NSObject, ObservableObject {
     @Published var currentOffering: Offering?
     
     // MARK: - Configuration
-    private let apiKey = "test_oOrhfSvxbBmuIHPCXAesAOCkpqN"
+    // RevenueCat Public API Key - Safe to include in app code
+    // This key is tied to your app's bundle ID and can only be used with your app
+    private let apiKey = "appl_YAuRPbpLoAMsmXMYXoQdRcXbZNi"
     
     // Billing grace period setting
     // When true, users in grace period (payment failed but still have access) are treated as premium

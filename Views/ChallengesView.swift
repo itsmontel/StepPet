@@ -948,12 +948,10 @@ struct ChallengesView: View {
                     showCreditsSheet = false
                 }
             } else {
-                // Fallback if RevenueCat not loaded yet - add credits directly for testing
-                #if DEBUG
-                userSettings.playCredits += package.credits
-                HapticFeedback.medium.trigger()
-                showCreditsSheet = false
-                #endif
+                // Products not loaded from RevenueCat - show error
+                HapticFeedback.error.trigger()
+                purchaseManager.errorMessage = "Unable to load credit packages. Please try again later."
+                print("❌ Credit package not found: \(package.productId). Available: \(purchaseManager.creditProducts.map { $0.storeProduct.productIdentifier })")
             }
         }
     }

@@ -1051,8 +1051,9 @@ struct TodayView: View {
         // Increment app open count
         userSettings.appOpenCount += 1
         
-        // Check if user has opened the app 3+ times and popup not shown yet
-        if userSettings.appOpenCount >= 3 && !userSettings.hasShownWidgetPopup {
+        // Check if user has opened the app 3+ times, popup not shown yet, AND onboarding is complete
+        // Widget popup should only appear after user has completed onboarding
+        if userSettings.appOpenCount >= 3 && !userSettings.hasShownWidgetPopup && userSettings.hasCompletedOnboarding {
             userSettings.hasShownWidgetPopup = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -2091,7 +2092,7 @@ struct StreakCalendarView: View {
                     }
                     .padding(.horizontal, 4)
                     
-                    // Calendar grid with step counts
+                    // Calendar grid with health percentages
                     if isLoadingData {
                         ProgressView()
                             .frame(height: 300)
@@ -2101,8 +2102,7 @@ struct StreakCalendarView: View {
                                 if let date = date {
                                     EnhancedDayCell(
                                         date: date,
-                                        steps: stepsForDate(date),
-                                        goalSteps: userSettings.dailyStepGoal,
+                                        health: healthForDate(date),
                                         isToday: calendar.isDateInToday(date),
                                         isFuture: date > Date()
                                     )
@@ -2121,7 +2121,7 @@ struct StreakCalendarView: View {
                             Circle()
                                 .fill(Color(hex: "34C759"))
                                 .frame(width: 10, height: 10)
-                            Text("Goal achieved")
+                            Text("100% health")
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundColor(themeManager.secondaryTextColor)
                         }
@@ -2130,7 +2130,7 @@ struct StreakCalendarView: View {
                             Circle()
                                 .fill(Color(hex: "FF3B30"))
                                 .frame(width: 10, height: 10)
-                            Text("Goal missed")
+                            Text("Below 100%")
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundColor(themeManager.secondaryTextColor)
                         }
@@ -2231,6 +2231,16 @@ struct StreakCalendarView: View {
         return 0
     }
     
+    private func healthForDate(_ date: Date) -> Int {
+        let steps = stepsForDate(date)
+        guard userSettings.dailyStepGoal > 0 else { return 0 }
+        
+        // Calculate health as percentage (capped at 100)
+        // Note: This doesn't include play boosts from historical data, just step-based health
+        let health = min(100, Int((Double(steps) / Double(userSettings.dailyStepGoal)) * 100))
+        return health
+    }
+    
     private func previousMonth() {
         withAnimation(.easeInOut(duration: 0.3)) {
             currentMonth = calendar.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
@@ -2245,13 +2255,12 @@ struct StreakCalendarView: View {
     }
 }
 
-// MARK: - Enhanced Day Cell (with step counts)
+// MARK: - Enhanced Day Cell (with health percentages)
 struct EnhancedDayCell: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     let date: Date
-    let steps: Int
-    let goalSteps: Int
+    let health: Int  // Health percentage 0-100
     let isToday: Bool
     let isFuture: Bool
     
@@ -2261,33 +2270,31 @@ struct EnhancedDayCell: View {
         return formatter.string(from: date)
     }
     
-    private var goalAchieved: Bool {
-        steps >= goalSteps && steps > 0
+    private var fullHealth: Bool {
+        health >= 100
     }
     
     private var hasData: Bool {
-        steps > 0
+        health > 0
     }
     
-    private var stepsText: String {
+    private var healthText: String {
         if isFuture {
             return ""
         }
-        if steps >= 1000 {
-            return String(format: "%.1fK", Double(steps) / 1000.0)
-        } else if steps > 0 {
-            return "\(steps)"
+        if health > 0 {
+            return "\(health)%"
         }
-        return "0"
+        return "0%"
     }
     
     var body: some View {
         VStack(spacing: 2) {
-            // Step count above the day
+            // Health percentage above the day
             if !isFuture {
-                Text(stepsText)
+                Text(healthText)
                     .font(.system(size: 8, weight: .bold, design: .rounded))
-                    .foregroundColor(stepTextColor)
+                    .foregroundColor(healthTextColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             } else {
@@ -2332,7 +2339,8 @@ struct EnhancedDayCell: View {
             return themeManager.secondaryCardColor.opacity(0.3)
         }
         
-        return goalAchieved ? Color(hex: "34C759") : Color(hex: "FF3B30")
+        // Green only for 100% health, red for anything less
+        return fullHealth ? Color(hex: "34C759") : Color(hex: "FF3B30")
     }
     
     private var textColor: Color {
@@ -2347,11 +2355,12 @@ struct EnhancedDayCell: View {
         return .white
     }
     
-    private var stepTextColor: Color {
+    private var healthTextColor: Color {
         if !hasData {
             return themeManager.tertiaryTextColor
         }
-        return goalAchieved ? Color(hex: "34C759") : Color(hex: "FF3B30")
+        // Green only for 100% health, red for anything less
+        return fullHealth ? Color(hex: "34C759") : Color(hex: "FF3B30")
     }
 }
 

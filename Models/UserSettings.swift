@@ -183,6 +183,14 @@ class UserSettings: ObservableObject {
         didSet { save() }
     }
     
+    // Paywall analytics tracking
+    @Published var paywallSkipCount: Int {
+        didSet { save() }
+    }
+    @Published var paywallViewCount: Int {
+        didSet { save() }
+    }
+    
     private let userDefaultsKey = "StepPetUserSettings"
     
     init() {
@@ -251,6 +259,10 @@ class UserSettings: ObservableObject {
             // Pending step goal
             self.pendingStepGoal = savedSettings.pendingStepGoal
             self.pendingStepGoalDate = savedSettings.pendingStepGoalDate
+            
+            // Paywall analytics
+            self.paywallSkipCount = savedSettings.paywallSkipCount ?? 0
+            self.paywallViewCount = savedSettings.paywallViewCount ?? 0
             
             // Apply pending goal if it's a new day since it was set
             if let pendingGoal = self.pendingStepGoal,
@@ -360,6 +372,10 @@ class UserSettings: ObservableObject {
             // Pending step goal - defaults
             self.pendingStepGoal = nil
             self.pendingStepGoalDate = nil
+            
+            // Paywall analytics - defaults
+            self.paywallSkipCount = 0
+            self.paywallViewCount = 0
         }
         
         // Sync haptics setting with global HapticFeedback
@@ -496,7 +512,9 @@ class UserSettings: ObservableObject {
             appOpenCount: appOpenCount,
             hasShownWidgetPopup: hasShownWidgetPopup,
             pendingStepGoal: pendingStepGoal,
-            pendingStepGoalDate: pendingStepGoalDate
+            pendingStepGoalDate: pendingStepGoalDate,
+            paywallSkipCount: paywallSkipCount,
+            paywallViewCount: paywallViewCount
         )
         
         if let data = try? JSONEncoder().encode(settings) {
@@ -785,6 +803,10 @@ struct SavedUserSettings: Codable {
     // Pending step goal - applies at start of next day
     var pendingStepGoal: Int?
     var pendingStepGoalDate: Date?
+    
+    // Paywall analytics
+    var paywallSkipCount: Int?
+    var paywallViewCount: Int?
 }
 
 // MARK: - Activity Level

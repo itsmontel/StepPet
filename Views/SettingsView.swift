@@ -1899,6 +1899,7 @@ struct OnboardingPaywallView: View {
     @EnvironmentObject var userSettings: UserSettings
     @ObservedObject var purchaseManager = PurchaseManager.shared
     @Binding var isPresented: Bool
+    var onComplete: (() -> Void)? = nil  // Optional callback for onboarding flow
     
     @State private var currentPage: Int = 0
     @State private var selectedPlan: String = "monthly"
@@ -1914,22 +1915,19 @@ struct OnboardingPaywallView: View {
             softYellow.ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Close button
+                // Skip button (top right)
                 HStack {
                     Spacer()
                     Button(action: {
-                        userSettings.hasSeenPaywall = true
-                        isPresented = false
+                        skipPaywall()
                     }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(themeManager.secondaryTextColor)
-                            .frame(width: 32, height: 32)
-                            .background(Circle().fill(themeManager.cardBackgroundColor))
+                        Text("Skip")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(themeManager.secondaryTextColor.opacity(0.7))
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
                 
                 if currentPage == 0 {
                     // PAGE 1: Intro - "We want you to try VirtuPet for free"
@@ -1949,6 +1947,9 @@ struct OnboardingPaywallView: View {
             }
         }
         .onAppear {
+            // Track paywall view
+            userSettings.paywallViewCount += 1
+            
             withAnimation(.easeOut(duration: 0.5)) {
                 showContent = true
             }
@@ -1958,164 +1959,111 @@ struct OnboardingPaywallView: View {
         }
     }
     
+    // Helper to dismiss paywall and call completion handler
+    private func dismissPaywall() {
+        userSettings.hasSeenPaywall = true
+        isPresented = false
+        onComplete?()
+    }
+    
+    // Helper to skip paywall (tracks skip analytics)
+    private func skipPaywall() {
+        userSettings.paywallSkipCount += 1
+        dismissPaywall()
+    }
+    
     // MARK: - Page 1: Intro
     private var paywallIntroPage: some View {
         VStack(spacing: 0) {
             Spacer()
+                .frame(height: 80)
             
-            // Main headline - different for trial eligible vs returning users
-            VStack(spacing: 8) {
+            // Paywall dog GIF - larger and more prominent
+            GIFImage("paywalldog")
+                .frame(width: 200, height: 200)
+                .scaleEffect(pulseAnimation ? 1.03 : 1.0)
+                .opacity(showContent ? 1 : 0)
+                .padding(.bottom, 40)
+            
+            // Warm, personal headline
+            Text("A special offer,\njust for you")
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundColor(themeManager.primaryTextColor)
+                .multilineTextAlignment(.center)
+                .opacity(showContent ? 1 : 0)
+                .offset(y: showContent ? 0 : 20)
+                .padding(.horizontal, 40)
+                .padding(.bottom, 28)
+            
+            // Personalized description
+            VStack(spacing: 20) {
                 if purchaseManager.isEligibleForTrial {
-                    Text("We want you to try")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(themeManager.primaryTextColor)
+                    // Trial eligible message
+                    Group {
+                        Text("Because you're here, enjoy ")
+                            .foregroundColor(themeManager.secondaryTextColor) +
+                        Text("3 days of Premium")
+                            .fontWeight(.bold)
+                            .foregroundColor(themeManager.secondaryTextColor) +
+                        Text(" so you can bond with ")
+                            .foregroundColor(themeManager.secondaryTextColor) +
+                        Text(userSettings.pet.name.isEmpty ? "your pet" : userSettings.pet.name)
+                            .fontWeight(.bold)
+                            .foregroundColor(themeManager.secondaryTextColor) +
+                        Text(".")
+                            .foregroundColor(themeManager.secondaryTextColor)
+                    }
+                    .font(.system(size: 18, weight: .medium, design: .rounded))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(5)
+                    .padding(.horizontal, 32)
                     
-                    Text("VirtuPet")
-                        .font(.system(size: 36, weight: .black, design: .rounded))
-                        .foregroundColor(themeManager.accentColor)
-                    
-                    Text("for free")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(themeManager.primaryTextColor)
+                    Text("We'll remind you the day before your trial ends.")
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .foregroundColor(themeManager.secondaryTextColor.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                        .padding(.horizontal, 36)
                 } else {
-                    Text("Upgrade to")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(themeManager.primaryTextColor)
-                    
-                    Text("VirtuPet Pro")
-                        .font(.system(size: 36, weight: .black, design: .rounded))
-                        .foregroundColor(themeManager.accentColor)
-                    
-                    Text("Unlock all features")
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .foregroundColor(themeManager.secondaryTextColor)
+                    // Non-trial message
+                    Group {
+                        Text("Unlock Premium to get full access and bond with ")
+                            .foregroundColor(themeManager.secondaryTextColor) +
+                        Text(userSettings.pet.name.isEmpty ? "your pet" : userSettings.pet.name)
+                            .fontWeight(.bold)
+                            .foregroundColor(themeManager.secondaryTextColor) +
+                        Text(" like never before.")
+                            .foregroundColor(themeManager.secondaryTextColor)
+                    }
+                    .font(.system(size: 18, weight: .medium, design: .rounded))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(5)
+                    .padding(.horizontal, 32)
                 }
             }
             .opacity(showContent ? 1 : 0)
             .offset(y: showContent ? 0 : 20)
-            .padding(.bottom, 30)
-            
-            // Device mockup with accurate home screen
-            ZStack {
-                // Phone frame
-                RoundedRectangle(cornerRadius: 40)
-                    .fill(Color.white)
-                    .frame(width: 220, height: 400)
-                    .shadow(color: Color.black.opacity(0.3), radius: 30, y: 15)
-                
-                // Screen content - accurate Today view mockup
-                RoundedRectangle(cornerRadius: 36)
-                    .fill(themeManager.backgroundColor)
-                    .frame(width: 200, height: 380)
-                    .overlay(
-                        VStack(spacing: 8) {
-                            Spacer().frame(height: 16)
-                            
-                            // Pet name
-                            Text(userSettings.pet.name)
-                                .font(.system(size: 20, weight: .black, design: .rounded))
-                                .foregroundColor(themeManager.primaryTextColor)
-                            
-                            // Pet with progress ring
-                            ZStack {
-                                // Progress ring background
-                                Circle()
-                                    .stroke(Color.gray.opacity(0.15), lineWidth: 6)
-                                    .frame(width: 100, height: 100)
-                                
-                                // Progress ring (85% filled)
-                                Circle()
-                                    .trim(from: 0, to: 0.85)
-                                    .stroke(Color.green, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                                    .frame(width: 100, height: 100)
-                                    .rotationEffect(.degrees(-90))
-                                
-                                // Pet
-                                AnimatedPetVideoView(
-                                    petType: userSettings.pet.type,
-                                    moodState: .fullHealth
-                                )
-                                .frame(width: 70, height: 70)
-                                .clipShape(Circle())
-                            }
-                            
-                            // Steps count (blue)
-                            VStack(spacing: 2) {
-                                Text("8,543")
-                                    .font(.system(size: 24, weight: .black, design: .rounded))
-                                    .foregroundColor(themeManager.accentColor)
-                                
-                                Text("steps today")
-                                    .font(.system(size: 11, weight: .medium))
-                                    .foregroundColor(themeManager.secondaryTextColor)
-                            }
-                            
-                            // Health bar
-                            VStack(spacing: 4) {
-                                GeometryReader { geo in
-                                    ZStack(alignment: .leading) {
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(Color.gray.opacity(0.2))
-                                            .frame(height: 8)
-                                        
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(Color.green)
-                                            .frame(width: geo.size.width * 0.85, height: 8)
-                                    }
-                                }
-                                .frame(height: 8)
-                                
-                                // Pet health centered below bar
-                                Text("Pet Health: 85%")
-                                    .font(.system(size: 10, weight: .semibold))
-                                    .foregroundColor(.green)
-                            }
-                            .padding(.horizontal, 16)
-                            
-                            // Steps to goal (blue flag)
-                            HStack(spacing: 4) {
-                                Image(systemName: "flag.fill")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(themeManager.accentColor)
-                                Text("1,457 steps to goal")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundColor(themeManager.secondaryTextColor)
-                            }
-                            .padding(.vertical, 6)
-                            .padding(.horizontal, 12)
-                            .background(
-                                Capsule()
-                                    .fill(themeManager.accentColor.opacity(0.15))
-                            )
-                            
-                            Spacer()
-                        }
-                    )
-            }
-            .scaleEffect(pulseAnimation ? 1.02 : 1.0)
-            .opacity(showContent ? 1 : 0)
-            .offset(y: showContent ? 0 : 30)
             
             Spacer()
             
-            // Next button
+            // Continue button
             Button(action: {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                     currentPage = 1
                 }
             }) {
-                Text("Next")
+                Text(purchaseManager.isEligibleForTrial ? "Start for FREE" : "See plans")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
                     .background(
-                        RoundedRectangle(cornerRadius: 30)
+                        RoundedRectangle(cornerRadius: 16)
                             .fill(themeManager.accentColor)
-                            .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
+                            .shadow(color: themeManager.accentColor.opacity(0.4), radius: 12, y: 6)
                     )
             }
-            .padding(.horizontal, 30)
+            .padding(.horizontal, 40)
             .padding(.bottom, 50)
             .opacity(showContent ? 1 : 0)
         }
@@ -2336,15 +2284,13 @@ struct OnboardingPaywallView: View {
         
         guard let package = packageToPurchase else {
             // Fallback if no package available - close anyway
-            userSettings.hasSeenPaywall = true
-            isPresented = false
+            dismissPaywall()
             return
         }
         
         let success = await purchaseManager.purchase(package: package)
         if success {
-            userSettings.hasSeenPaywall = true
-            isPresented = false
+            dismissPaywall()
         }
     }
 }

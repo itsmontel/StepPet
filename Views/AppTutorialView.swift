@@ -71,7 +71,7 @@ enum TutorialStep: Int, CaseIterable {
         case .stepProgress:
             return "Your live step count updates in real-time. Watch the progress ring fill up as you walk towards your daily goal!"
         case .streakBadge:
-            return "Tap here to see your awards! Build streaks by hitting your daily step goal. 🔥"
+            return "Tap here to see your streak history! Track your consecutive days of hitting 100% health. 🔥"
         case .creditsBadge:
             return "Tap to use play credits! Feed, play ball, or watch TV with your pet for a +5 health boost. Play minigames for +3 health."
         case .weeklyGraph:
@@ -87,9 +87,9 @@ enum TutorialStep: Int, CaseIterable {
         case .challengesAchievements:
             return "See your journey through VirtuPet! Unlock achievements, earn badges, and track your milestones. 🏆"
         case .challengesPetCare:
-            return "Having a low step day? No worries! Use credits to Feed, Play Ball, or Watch TV with your pet. Each gives +20 health instantly! ⚡"
+            return "Having a low step day? No worries! Use credits to Feed, Play Ball, or Watch TV with your pet. Each gives +5 health instantly! ⚡"
         case .challengesGames:
-            return "Play fun minigames with your pet! Bubble Pop, Memory Match, Pattern Match and more. Great for bonding! 🎮"
+            return "Play fun minigames with your pet! Skyfall, Mood Catch, Memory Match, and Pattern Match. Great for bonding! 🎮"
         case .tabSettings:
             return "Customize everything! Switch themes, rename your pet, adjust goals, and manage notifications."
         case .complete:

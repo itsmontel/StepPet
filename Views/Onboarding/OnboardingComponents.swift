@@ -45,6 +45,8 @@ enum StepPetOnboardingStep: CaseIterable {
     case whyChooseStepPet
     case notificationPermission
     case healthKitPermission
+    case commitment       // Emotional commitment after HealthKit
+    case paywall          // Paywall after commitment
     
     var stepNumber: Int {
         switch self {
@@ -58,9 +60,13 @@ enum StepPetOnboardingStep: CaseIterable {
         case .whyChooseStepPet: return 8
         case .notificationPermission: return 9
         case .healthKitPermission: return 10
+        case .commitment: return 11
+        case .paywall: return 12
         }
     }
     
+    // Note: Progress bar only shows for steps 1-10 (the main onboarding flow)
+    // Commitment and Paywall are handled as full-screen views without progress bar
     static var totalSteps: Int { 10 }
 }
 
