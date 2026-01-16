@@ -580,8 +580,8 @@ class NotificationManager {
     /// Schedules a notification to remind users 1 day before their 3-day trial ends (on day 2)
     func scheduleTrialReminder(petName: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Your Free Trial Ends Tomorrow! ⏰"
-        content.body = "\(petName) wants to remind you: your 3-day free trial ends in 24 hours. Keep enjoying premium features by staying subscribed!"
+        content.title = "\(petName) is loving Premium! 💖"
+        content.body = "You've unlocked so much together! Your premium features continue tomorrow—keep making \(petName) happy with your daily steps!"
         content.sound = .default
         content.categoryIdentifier = "TRIAL_REMINDER"
         
