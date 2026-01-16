@@ -384,7 +384,7 @@ struct ChallengesView: View {
                 // Sky Fall Game
                 CreditGameCard(
                     title: "Sky Fall",
-                    description: "Dodge walls and rise to the top!",
+                    description: "Dodge walls to save your pet!",
                     icon: "arrow.up.forward.circle.fill",
                     color: themeManager.skyFallColor,
                     gradient: [Color(hex: "667EEA"), Color(hex: "764BA2")],

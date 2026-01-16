@@ -2,7 +2,7 @@
 //  SkyFallGameView.swift
 //  VirtuPet
 //
-//  Sky Fall - Dodge walls and rise to the top!
+//  Sky Fall - Dodge walls to save your pet!
 //
 
 import SwiftUI
