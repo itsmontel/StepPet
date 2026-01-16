@@ -1268,7 +1268,7 @@ struct PremiumView: View {
         
         guard let package = packageToPurchase else { return }
         
-        let success = await purchaseManager.purchase(package: package)
+        let success = await purchaseManager.purchase(package: package, petName: userSettings.pet.name)
         if success {
             dismiss()
         }
@@ -2285,7 +2285,7 @@ struct OnboardingPaywallView: View {
             return
         }
         
-        let success = await purchaseManager.purchase(package: package)
+        let success = await purchaseManager.purchase(package: package, petName: userSettings.pet.name)
         if success {
             dismissPaywall()
         }

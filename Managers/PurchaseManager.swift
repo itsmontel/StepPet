@@ -155,11 +155,12 @@ class PurchaseManager: NSObject, ObservableObject {
     
     // MARK: - Purchase Package
     @MainActor
-    func purchase(package: Package) async -> Bool {
+    func purchase(package: Package, petName: String = "") async -> Bool {
         isLoading = true
         errorMessage = nil
         
         let wasPremiumBefore = isPremium
+        let wasEligibleForTrial = isEligibleForTrial
         
         do {
             let result = try await Purchases.shared.purchase(package: package)
@@ -173,6 +174,11 @@ class PurchaseManager: NSObject, ObservableObject {
             if isNowPremium && !wasPremiumBefore && !result.userCancelled {
                 NotificationCenter.default.post(name: .userBecamePremium, object: nil)
                 print("🎉 User upgraded to premium! Achievement notification posted.")
+                
+                // Schedule trial reminder if user started a free trial
+                if wasEligibleForTrial {
+                    NotificationManager.shared.scheduleTrialReminder(petName: petName.isEmpty ? "Your pet" : petName)
+                }
             }
             
             return !result.userCancelled

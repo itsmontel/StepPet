@@ -563,6 +563,7 @@ class NotificationManager {
             UNNotificationCategory(identifier: "WEEKLY_SUMMARY", actions: [openAction], intentIdentifiers: []),
             UNNotificationCategory(identifier: "STREAK_MILESTONE", actions: [openAction], intentIdentifiers: []),
             UNNotificationCategory(identifier: "INACTIVITY", actions: [openAction, dismissAction], intentIdentifiers: []),
+            UNNotificationCategory(identifier: "TRIAL_REMINDER", actions: [openAction], intentIdentifiers: []),
         ]
         
         UNUserNotificationCenter.current().setNotificationCategories(Set(categories))
@@ -573,5 +574,34 @@ class NotificationManager {
         UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
             completion(requests.count)
         }
+    }
+    
+    // MARK: - Schedule Trial Reminder
+    /// Schedules a notification to remind users 1 day before their 3-day trial ends (on day 2)
+    func scheduleTrialReminder(petName: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "Your Free Trial Ends Tomorrow! ⏰"
+        content.body = "\(petName) wants to remind you: your 3-day free trial ends in 24 hours. Keep enjoying premium features by staying subscribed!"
+        content.sound = .default
+        content.categoryIdentifier = "TRIAL_REMINDER"
+        
+        // Schedule for 2 days from now (1 day before trial ends)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 60 * 60 * 24 * 2, repeats: false)
+        let request = UNNotificationRequest(identifier: "trial_reminder", content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Failed to schedule trial reminder: \(error)")
+            } else {
+                print("✅ Trial reminder scheduled for 2 days from now")
+            }
+        }
+    }
+    
+    // MARK: - Cancel Trial Reminder
+    /// Cancels the trial reminder notification (e.g., if user cancels trial or subscribes)
+    func cancelTrialReminder() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["trial_reminder"])
+        print("✅ Trial reminder cancelled")
     }
 }
