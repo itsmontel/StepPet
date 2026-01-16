@@ -581,7 +581,7 @@ class NotificationManager {
     func scheduleTrialReminder(petName: String) {
         let content = UNMutableNotificationContent()
         content.title = "\(petName) is loving Premium with you! 💖"
-        content.body = "You've unlocked so much together already! Your premium features are set to continue tomorrow—keep making \(petName) happy with your daily steps!"
+        content.body = "You've unlocked so much together already! Your premium features are set to continue tomorrow. keep making \(petName) happy with your daily steps!"
         content.sound = .default
         content.categoryIdentifier = "TRIAL_REMINDER"
         
