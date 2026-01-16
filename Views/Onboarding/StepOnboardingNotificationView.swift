@@ -135,6 +135,7 @@ struct StepOnboardingNotificationView: View {
                         .cornerRadius(16)
                         .shadow(color: themeManager.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
                     }
+                    .buttonStyle(ResponsiveButtonStyle())
                     .disabled(isRequesting)
                     .padding(.horizontal, 32)
                     .padding(.bottom, 20)
@@ -149,6 +150,7 @@ struct StepOnboardingNotificationView: View {
                             .font(.system(size: 16, weight: .medium, design: .rounded))
                             .foregroundColor(themeManager.secondaryTextColor)
                     }
+                    .buttonStyle(ResponsiveButtonStyle())
                     .padding(.bottom, 48)
                     .opacity(animateContent ? 1.0 : 0.0)
                 }

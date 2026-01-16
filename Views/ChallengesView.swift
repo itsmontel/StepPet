@@ -20,6 +20,8 @@ struct ChallengesView: View {
     
     // Activities & Minigames States
     @State private var showCreditsSheet = false
+    @State private var showCreditsPurchaseError = false
+    @State private var creditsPurchaseErrorMessage = ""
     @State private var selectedActivity: PetActivity?
     @State private var showHealthBoostAnimation = false
     @State private var healthBoostAmount = 0
@@ -112,6 +114,11 @@ struct ChallengesView: View {
             ChallengeDetailSheet(challenge: challenge)
         }
         .sheet(isPresented: $showCreditsSheet) { creditsSheet }
+        .alert("Unable to Purchase", isPresented: $showCreditsPurchaseError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(creditsPurchaseErrorMessage)
+        }
         .sheet(item: $selectedActivity) { activity in
                 ActivityPlaySheet(
                     activity: activity,
@@ -938,20 +945,29 @@ struct ChallengesView: View {
     
     private func purchaseCredits(package: CreditPackage) {
         // Find matching RevenueCat package by product ID
+        print("🛒 Attempting to purchase: \(package.productId)")
+        print("📦 Available credit products: \(purchaseManager.creditProducts.count)")
+        print("📦 Product IDs: \(purchaseManager.creditProducts.map { $0.storeProduct.productIdentifier })")
+        
         Task {
             if let rcPackage = purchaseManager.creditProducts.first(where: { 
                 $0.storeProduct.productIdentifier == package.productId
             }) {
+                print("✅ Found matching package, starting purchase...")
                 let success = await purchaseManager.purchaseCredits(package: rcPackage, userSettings: userSettings)
                 if success {
                     HapticFeedback.success.trigger()
                     showCreditsSheet = false
                 }
             } else {
-                // Products not loaded from RevenueCat - show error
-                HapticFeedback.error.trigger()
-                purchaseManager.errorMessage = "Unable to load credit packages. Please try again later."
-                print("❌ Credit package not found: \(package.productId). Available: \(purchaseManager.creditProducts.map { $0.storeProduct.productIdentifier })")
+                // Products not loaded from RevenueCat - show error alert
+                await MainActor.run {
+                    HapticFeedback.error.trigger()
+                    creditsPurchaseErrorMessage = "Credit packages are still loading. Please wait a moment and try again.\n\nIf this persists, products may still be syncing with App Store Connect (can take 1-2 hours after first upload)."
+                    showCreditsPurchaseError = true
+                    print("❌ Credit package not found: \(package.productId)")
+                    print("❌ Available packages: \(purchaseManager.creditProducts.map { $0.storeProduct.productIdentifier })")
+                }
             }
         }
     }

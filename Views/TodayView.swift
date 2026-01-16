@@ -37,9 +37,6 @@ struct TodayView: View {
     // Streak calendar popup
     @State private var showStreakCalendar = false
     
-    // Test paywall popup
-    @State private var showTestPaywall = false
-    
     // Widget intro popup
     @State private var showWidgetPopup = false
     
@@ -246,11 +243,6 @@ struct TodayView: View {
                 .environmentObject(stepDataManager)
                 .environmentObject(healthKitManager)
         }
-        .sheet(isPresented: $showTestPaywall) {
-            OnboardingPaywallView(isPresented: $showTestPaywall)
-                .environmentObject(themeManager)
-                .environmentObject(userSettings)
-        }
         .overlay {
             if showWidgetPopup {
                 WidgetIntroPopup(isPresented: $showWidgetPopup)
@@ -280,76 +272,6 @@ struct TodayView: View {
             )
             
             Spacer()
-            
-            // Test Buttons (for testing)
-            #if DEBUG
-            HStack(spacing: 8) {
-                // Test Widget Popup Button
-                Button(action: {
-                    showWidgetPopupForTesting()
-                }) {
-                    Image(systemName: "apps.iphone")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(8)
-                        .background(
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.green, .mint],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        )
-                }
-                .buttonStyle(PlainButtonStyle())
-                
-                // Test Paywall Button
-                Button(action: {
-                    HapticFeedback.light.trigger()
-                    showTestPaywall = true
-                }) {
-                    Image(systemName: "creditcard.fill")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(8)
-                        .background(
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [themeManager.primaryColor, themeManager.primaryLightColor],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        )
-                }
-                .buttonStyle(PlainButtonStyle())
-                
-                // Test Commitment Prompt Button
-                Button(action: {
-                    HapticFeedback.light.trigger()
-                    NotificationCenter.default.post(name: NSNotification.Name("TestCommitmentPrompt"), object: nil)
-                }) {
-                    Image(systemName: "hand.tap.fill")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(8)
-                        .background(
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.pink, .purple],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        )
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-            #endif
             
             // Credits (clickable - navigates to Pet section) with gradient
             Button(action: {
@@ -1066,14 +988,6 @@ struct TodayView: View {
     private func stopUsageTracking() {
         usageTimer?.invalidate()
         usageTimer = nil
-    }
-    
-    // Test function to show widget popup
-    private func showWidgetPopupForTesting() {
-        HapticFeedback.medium.trigger()
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-            showWidgetPopup = true
-        }
     }
     
     // MARK: - Streak Animation Overlay
@@ -2103,12 +2017,13 @@ struct StreakCalendarView: View {
                                     EnhancedDayCell(
                                         date: date,
                                         health: healthForDate(date),
+                                        steps: stepsForDate(date),
                                         isToday: calendar.isDateInToday(date),
                                         isFuture: date > Date()
                                     )
                                 } else {
                                     Color.clear
-                                        .frame(height: 54)
+                                        .frame(height: 58)
                                 }
                             }
                         }
@@ -2255,12 +2170,13 @@ struct StreakCalendarView: View {
     }
 }
 
-// MARK: - Enhanced Day Cell (with health percentages)
+// MARK: - Enhanced Day Cell (with health percentages and steps)
 struct EnhancedDayCell: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     let date: Date
     let health: Int  // Health percentage 0-100
+    let steps: Int   // Step count for the day
     let isToday: Bool
     let isFuture: Bool
     
@@ -2288,8 +2204,24 @@ struct EnhancedDayCell: View {
         return "0%"
     }
     
+    private var stepsText: String {
+        if isFuture {
+            return ""
+        }
+        // Format steps with K for thousands
+        if steps >= 1000 {
+            let thousands = Double(steps) / 1000.0
+            if thousands >= 10 {
+                return "\(Int(thousands))K"
+            } else {
+                return String(format: "%.1fK", thousands)
+            }
+        }
+        return "\(steps)"
+    }
+    
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 1) {
             // Health percentage above the day
             if !isFuture {
                 Text(healthText)
@@ -2306,7 +2238,7 @@ struct EnhancedDayCell: View {
                 // Background circle based on status
                 Circle()
                     .fill(backgroundColor)
-                    .frame(width: 32, height: 32)
+                    .frame(width: 30, height: 30)
                 
                 // Today indicator ring
                 if isToday {
@@ -2319,15 +2251,27 @@ struct EnhancedDayCell: View {
                             ),
                             lineWidth: 2.5
                         )
-                        .frame(width: 36, height: 36)
+                        .frame(width: 34, height: 34)
                 }
                 
                 Text(dayNumber)
-                    .font(.system(size: 13, weight: isToday ? .bold : .medium, design: .rounded))
+                    .font(.system(size: 12, weight: isToday ? .bold : .medium, design: .rounded))
                     .foregroundColor(textColor)
             }
+            
+            // Steps below the day
+            if !isFuture {
+                Text(stepsText)
+                    .font(.system(size: 7, weight: .medium, design: .rounded))
+                    .foregroundColor(themeManager.tertiaryTextColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            } else {
+                Text("")
+                    .font(.system(size: 7))
+            }
         }
-        .frame(height: 54)
+        .frame(height: 58)
     }
     
     private var backgroundColor: Color {

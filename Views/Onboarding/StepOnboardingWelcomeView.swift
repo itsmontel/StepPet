@@ -40,20 +40,20 @@ struct StepOnboardingWelcomeView: View {
                             .padding(.horizontal, 24)
                         
                         Spacer()
-                            .frame(height: 40)
+                            .frame(height: 20)
                         
                         // Hero section with pet
                         heroSection
                         
                         Spacer()
-                            .frame(height: 32)
+                            .frame(height: 20)
                         
                         // Name input section
                         nameInputSection
                             .id("nameInput")
                         
                         Spacer()
-                            .frame(height: 24)
+                            .frame(height: 16)
                         
                         // Button section
                         buttonSection
@@ -90,39 +90,12 @@ struct StepOnboardingWelcomeView: View {
     
     // MARK: - Hero Section
     private var heroSection: some View {
-        VStack(spacing: 20) {
-            // Pet (static, no bouncing)
-            ZStack {
-                // Subtle background circle
-                Circle()
-                    .fill(themeManager.accentColor.opacity(0.08))
-                    .frame(width: 200, height: 200)
-                
-                // Pet container
-                ZStack {
-                    RoundedRectangle(cornerRadius: 24)
-                        .fill(themeManager.cardBackgroundColor)
-                        .frame(width: 168, height: 168)
-                    
-                    if showPetVideo {
-                        AnimatedPetVideoView(
-                            petType: .dog,
-                            moodState: .fullHealth
-                        )
-                        .frame(width: 156, height: 156)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                        .transition(.opacity)
-                    } else {
-                        Image("dog_happy")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 156, height: 156)
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                    }
-                }
-            }
-            .scaleEffect(animatePet ? 1.0 : 0.9)
-            .opacity(animatePet ? 1.0 : 0)
+        VStack(spacing: 12) {
+            // Welcome GIF - large and prominent
+            GIFImage("VirtupetFirstScreen")
+                .frame(width: 300, height: 300)
+                .scaleEffect(animatePet ? 1.0 : 0.9)
+                .opacity(animatePet ? 1.0 : 0)
             
             // Title section
             VStack(spacing: 14) {
@@ -249,6 +222,7 @@ struct StepOnboardingWelcomeView: View {
                 )
                 .cornerRadius(16)
             }
+            .buttonStyle(ResponsiveButtonStyle())
             .padding(.horizontal, 24)
             .scaleEffect(animateButton ? 1.0 : 0.95)
             .opacity(animateButton ? 1.0 : 0)

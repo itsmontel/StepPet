@@ -67,10 +67,10 @@ class NotificationManager {
     }
     
     /// Add logo attachment to notification content
+    /// NOTE: Disabled - iOS shows app icon on left automatically, attachment creates duplicate icon on right
     private func addLogoToContent(_ content: UNMutableNotificationContent) {
-        if let attachment = createLogoAttachment() {
-            content.attachments = [attachment]
-        }
+        // Removed attachment - the app icon shows automatically on the left side of notifications
+        // Adding an attachment was causing a duplicate pet image to appear on the right side
     }
     
     // MARK: - Message Templates

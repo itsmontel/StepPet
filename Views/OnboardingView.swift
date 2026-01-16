@@ -16,7 +16,8 @@ struct OnboardingView: View {
     @State private var showSuccessTransition = false
     
     private func goBack() {
-        withAnimation(.easeOut(duration: 0.15)) {
+        HapticFeedback.light.trigger()
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
             switch currentStep {
             case .welcome:
                 break // No back from welcome
@@ -44,7 +45,6 @@ struct OnboardingView: View {
                 break // No back from paywall
             }
         }
-        HapticFeedback.light.trigger()
     }
     
     var body: some View {
@@ -63,20 +63,20 @@ struct OnboardingView: View {
                 case .welcome:
                     StepOnboardingWelcomeView(
                         onContinue: {
-                            withAnimation(.easeOut(duration: 0.15)) {
+                            HapticFeedback.light.trigger()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                                 currentStep = .petSelection
                             }
-                            HapticFeedback.light.trigger()
                         }
                     )
                     
                 case .petSelection:
                     StepOnboardingPetSelectionView(
                         onContinue: {
-                            withAnimation(.easeOut(duration: 0.15)) {
+                            HapticFeedback.light.trigger()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                                 currentStep = .petPreview
                             }
-                            HapticFeedback.light.trigger()
                         },
                         onBack: goBack
                     )
@@ -84,10 +84,10 @@ struct OnboardingView: View {
                 case .petPreview:
                     StepOnboardingPetPreviewView(
                         onContinue: {
-                            withAnimation(.easeOut(duration: 0.15)) {
+                            HapticFeedback.light.trigger()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                                 currentStep = .motivation
                             }
-                            HapticFeedback.light.trigger()
                         },
                         onBack: goBack
                     )
@@ -95,10 +95,10 @@ struct OnboardingView: View {
                 case .motivation:
                     StepOnboardingMotivationView(
                         onContinue: {
-                            withAnimation(.easeOut(duration: 0.15)) {
+                            HapticFeedback.light.trigger()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                                 currentStep = .didYouKnow
                             }
-                            HapticFeedback.light.trigger()
                         },
                         onBack: goBack
                     )
@@ -106,10 +106,10 @@ struct OnboardingView: View {
                 case .didYouKnow:
                     StepOnboardingDidYouKnowView(
                         onContinue: {
-                            withAnimation(.easeOut(duration: 0.15)) {
+                            HapticFeedback.light.trigger()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                                 currentStep = .goalInput
                             }
-                            HapticFeedback.light.trigger()
                         },
                         onBack: goBack
                     )
@@ -117,10 +117,10 @@ struct OnboardingView: View {
                 case .goalInput:
                     StepOnboardingGoalInputView(
                         onContinue: {
-                            withAnimation(.easeOut(duration: 0.15)) {
+                            HapticFeedback.light.trigger()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                                 currentStep = .lifetimeCalculation
                             }
-                            HapticFeedback.light.trigger()
                         },
                         onBack: goBack
                     )
@@ -128,10 +128,10 @@ struct OnboardingView: View {
                 case .lifetimeCalculation:
                     StepOnboardingLifetimeCalcView(
                         onContinue: {
-                            withAnimation(.easeOut(duration: 0.15)) {
+                            HapticFeedback.light.trigger()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                                 currentStep = .whyChooseStepPet
                             }
-                            HapticFeedback.light.trigger()
                         },
                         onBack: goBack
                     )
@@ -139,10 +139,10 @@ struct OnboardingView: View {
                 case .whyChooseStepPet:
                     StepOnboardingWhyChooseView(
                         onContinue: {
-                            withAnimation(.easeOut(duration: 0.15)) {
+                            HapticFeedback.light.trigger()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                                 currentStep = .notificationPermission
                             }
-                            HapticFeedback.light.trigger()
                         },
                         onBack: goBack
                     )
@@ -150,10 +150,10 @@ struct OnboardingView: View {
                 case .notificationPermission:
                     StepOnboardingNotificationView(
                         onContinue: {
-                            withAnimation(.easeOut(duration: 0.15)) {
+                            HapticFeedback.light.trigger()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                                 currentStep = .healthKitPermission
                             }
-                            HapticFeedback.light.trigger()
                         },
                         onBack: goBack
                     )
@@ -162,10 +162,10 @@ struct OnboardingView: View {
                     StepOnboardingHealthKitView(
                         onContinue: {
                             // After HealthKit, show Commitment screen
-                            withAnimation(.easeOut(duration: 0.15)) {
+                            HapticFeedback.light.trigger()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                                 currentStep = .commitment
                             }
-                            HapticFeedback.light.trigger()
                         },
                         onBack: goBack
                     )
@@ -175,7 +175,8 @@ struct OnboardingView: View {
                     OnboardingCommitmentView(
                         onComplete: {
                             // After commitment, show paywall
-                            withAnimation(.easeOut(duration: 0.15)) {
+                            HapticFeedback.light.trigger()
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                                 currentStep = .paywall
                             }
                         }

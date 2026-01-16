@@ -523,6 +523,7 @@ struct CommitmentPromptView: View {
                                 .shadow(color: themeManager.accentColor.opacity(0.4), radius: 12, y: 6)
                         )
                     }
+                    .buttonStyle(ResponsiveButtonStyle())
                     .padding(.horizontal, 40)
                     .transition(.asymmetric(
                         insertion: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.8)),
@@ -826,9 +827,7 @@ struct CommitmentPromptView: View {
     }
     
     private func dismissView() {
-        withAnimation(.easeOut(duration: 0.3)) {
-            isPresented = false
-        }
+        // Trigger completion immediately - no delay
         onComplete()
     }
 }

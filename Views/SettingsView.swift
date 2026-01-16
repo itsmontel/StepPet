@@ -1094,23 +1094,11 @@ struct PremiumView: View {
     var body: some View {
         NavigationView {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    // All Pets Animation
-                    HStack(spacing: -20) {
-                        ForEach(PetType.allCases, id: \.self) { petType in
-                            let imageName = petType.imageName(for: .fullHealth)
-                            if let _ = UIImage(named: imageName) {
-                                Image(imageName)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 60, height: 60)
-                            } else {
-                                Text(petType.emoji)
-                                    .font(.system(size: 40))
-                            }
-                        }
-                    }
-                    .padding(.top, 20)
+                VStack(spacing: 16) {
+                    // Animated GIF - large and prominent
+                    GIFImage("Virtupetpaywall")
+                        .frame(width: 340, height: 120)
+                        .padding(.top, 16)
                     
                     // Title
                     Text("Unlock the Full Experience")
@@ -1915,16 +1903,17 @@ struct OnboardingPaywallView: View {
             softYellow.ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Skip button (top right)
+                // Skip button (top right) - smaller and subtle
                 HStack {
                     Spacer()
                     Button(action: {
                         skipPaywall()
                     }) {
                         Text("Skip")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(themeManager.secondaryTextColor.opacity(0.7))
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(themeManager.secondaryTextColor.opacity(0.5))
                     }
+                    .buttonStyle(ResponsiveButtonStyle())
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
@@ -2048,7 +2037,8 @@ struct OnboardingPaywallView: View {
             
             // Continue button
             Button(action: {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                HapticFeedback.light.trigger()
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
                     currentPage = 1
                 }
             }) {
@@ -2063,6 +2053,7 @@ struct OnboardingPaywallView: View {
                             .shadow(color: themeManager.accentColor.opacity(0.4), radius: 12, y: 6)
                     )
             }
+            .buttonStyle(ResponsiveButtonStyle())
             .padding(.horizontal, 40)
             .padding(.bottom, 50)
             .opacity(showContent ? 1 : 0)
@@ -2074,13 +2065,13 @@ struct OnboardingPaywallView: View {
         VStack(spacing: 0) {
             // Headline - different for trial eligible vs returning users
             if purchaseManager.isEligibleForTrial {
-                VStack(spacing: 6) {
+                VStack(spacing: 5) {
                     Text("How your free trial works")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .font(.system(size: 23, weight: .bold, design: .rounded))
                         .foregroundColor(themeManager.primaryTextColor)
                 }
-                .padding(.top, 10)
-                .padding(.bottom, 24)
+                .padding(.top, 8)
+                .padding(.bottom, 20)
                 
                 // Timeline (only for trial eligible users)
                 VStack(alignment: .leading, spacing: 0) {
@@ -2089,7 +2080,7 @@ struct OnboardingPaywallView: View {
                         icon: "lock.open.fill",
                         iconColor: Color(hex: "#F59E0B"),
                         title: "Today",
-                        subtitle: "Unlock full access to VirtuPet\nand keep your pet happy!",
+                        subtitle: "Unlock full access to VirtuPet and keep your pet happy!",
                         isFirst: true,
                         isLast: false
                     )
@@ -2099,7 +2090,7 @@ struct OnboardingPaywallView: View {
                         icon: "bell.fill",
                         iconColor: Color(hex: "#0EA5E9"),
                         title: "In 2 Days",
-                        subtitle: "We'll send a reminder before\nyour trial ends.",
+                        subtitle: "We'll send a reminder before your trial ends.",
                         isFirst: false,
                         isLast: false
                     )
@@ -2109,37 +2100,41 @@ struct OnboardingPaywallView: View {
                         icon: "creditcard.fill",
                         iconColor: Color(hex: "#10B981"),
                         title: "In 3 Days",
-                        subtitle: "Your subscription will begin\nunless you cancel before.",
+                        subtitle: "Your subscription will begin unless you cancel before.",
                         isFirst: false,
                         isLast: true
                     )
                 }
-                .padding(.horizontal, 30)
-                .padding(.bottom, 20)
+                .padding(.horizontal, 28)
+                .padding(.bottom, 18)
             } else {
                 // Returning users - no trial timeline
-                VStack(spacing: 6) {
+                VStack(spacing: 5) {
                     Text("Choose your plan")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .font(.system(size: 23, weight: .bold, design: .rounded))
                         .foregroundColor(themeManager.primaryTextColor)
                 }
-                .padding(.top, 10)
-                .padding(.bottom, 24)
+                .padding(.top, 8)
+                .padding(.bottom, 20)
             }
             
-            Spacer()
+            // Animated GIF - large and prominent
+            GIFImage("Virtupetpaywall1")
+                .frame(width: 330, height: 116)
+                .scaleEffect(pulseAnimation ? 1.03 : 1.0)
+                .padding(.bottom, 10)
             
             // Pricing Card
-            VStack(spacing: 12) {
+            VStack(spacing: 11) {
                 // Header - different for trial vs non-trial
                 if purchaseManager.isEligibleForTrial {
                     Text("FREE TRIAL")
-                        .font(.system(size: 12, weight: .heavy, design: .rounded))
+                        .font(.system(size: 11, weight: .heavy, design: .rounded))
                         .foregroundColor(themeManager.accentColor)
                         .tracking(1)
                 } else {
                     Text("PREMIUM")
-                        .font(.system(size: 12, weight: .heavy, design: .rounded))
+                        .font(.system(size: 11, weight: .heavy, design: .rounded))
                         .foregroundColor(themeManager.accentColor)
                         .tracking(1)
                 }
@@ -2150,20 +2145,20 @@ struct OnboardingPaywallView: View {
                     ZStack {
                         Circle()
                             .stroke(themeManager.accentColor, lineWidth: 2)
-                            .frame(width: 24, height: 24)
+                            .frame(width: 23, height: 23)
                         
                         Circle()
                             .fill(themeManager.accentColor)
-                            .frame(width: 14, height: 14)
+                            .frame(width: 13, height: 13)
                     }
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text(purchaseManager.isEligibleForTrial ? "Try it Free" : "Subscribe Now")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .font(.system(size: 17, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                         
                         Text(selectedPlan == "monthly" ? "Best value - save \(purchaseManager.monthlySavingsPercentage)%" : "Cancel anytime")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                     }
                     
@@ -2171,24 +2166,24 @@ struct OnboardingPaywallView: View {
                     
                     // Price from RevenueCat
                     Text(selectedPlan == "monthly" ? purchaseManager.monthlyPriceString + "/mo" : purchaseManager.weeklyPriceString + "/wk")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundColor(themeManager.primaryTextColor)
                 }
-                .padding(16)
+                .padding(15)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: 15)
                         .stroke(themeManager.accentColor, lineWidth: 2)
-                        .background(RoundedRectangle(cornerRadius: 16).fill(themeManager.cardBackgroundColor))
+                        .background(RoundedRectangle(cornerRadius: 15).fill(themeManager.cardBackgroundColor))
                 )
                 
                 // Plan toggle
-                HStack(spacing: 12) {
+                HStack(spacing: 11) {
                     Button(action: { selectedPlan = "weekly" }) {
                         Text("Weekly")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(selectedPlan == "weekly" ? .white : themeManager.secondaryTextColor)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 15)
+                            .padding(.vertical, 7)
                             .background(
                                 Capsule()
                                     .fill(selectedPlan == "weekly" ? themeManager.accentColor : Color.clear)
@@ -2200,13 +2195,13 @@ struct OnboardingPaywallView: View {
                             Text("Monthly")
                             if purchaseManager.monthlySavingsPercentage > 0 {
                                 Text("(\(purchaseManager.monthlySavingsPercentage)% off)")
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(.system(size: 10, weight: .bold))
                             }
                         }
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(selectedPlan == "monthly" ? .white : themeManager.secondaryTextColor)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, 15)
+                        .padding(.vertical, 7)
                         .background(
                             Capsule()
                                 .fill(selectedPlan == "monthly" ? themeManager.accentColor : Color.clear)
@@ -2217,30 +2212,31 @@ struct OnboardingPaywallView: View {
                 .background(Capsule().fill(themeManager.secondaryTextColor.opacity(0.1)))
                 
             }
-            .padding(20)
+            .padding(18)
             .background(
-                RoundedRectangle(cornerRadius: 24)
+                RoundedRectangle(cornerRadius: 22)
                     .fill(themeManager.cardBackgroundColor)
-                    .shadow(color: Color.black.opacity(0.2), radius: 20, y: 10)
+                    .shadow(color: Color.black.opacity(0.2), radius: 18, y: 9)
             )
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 18)
             
             // No commitment text with price after trial
-            VStack(spacing: 4) {
+            VStack(spacing: 3) {
                 Text("No commitment. Cancel anytime.")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(themeManager.secondaryTextColor)
                 
                 if purchaseManager.isEligibleForTrial {
                     Text(selectedPlan == "monthly" ? "Then \(purchaseManager.monthlyPriceString)/month after trial" : "Then \(purchaseManager.weeklyPriceString)/week after trial")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(themeManager.tertiaryTextColor)
                 }
             }
-            .padding(.top, 12)
+            .padding(.top, 10)
             
             // CTA Button - different text for trial eligible vs returning users
             Button(action: {
+                HapticFeedback.medium.trigger()
                 Task {
                     await handlePurchase()
                 }
@@ -2252,21 +2248,22 @@ struct OnboardingPaywallView: View {
                             .scaleEffect(0.8)
                     }
                     Text(purchaseManager.isLoading ? "Processing..." : (purchaseManager.isEligibleForTrial ? "Start Free Trial" : "Subscribe Now"))
-                        .font(.system(size: 20, weight: .heavy, design: .rounded))
+                        .font(.system(size: 19, weight: .heavy, design: .rounded))
                         .foregroundColor(.white)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
+                .padding(.vertical, 17)
                 .background(
-                    RoundedRectangle(cornerRadius: 30)
+                    RoundedRectangle(cornerRadius: 28)
                         .fill(purchaseManager.isLoading ? Color.gray : themeManager.accentColor)
-                        .shadow(color: themeManager.accentColor.opacity(0.4), radius: 10, y: 5)
+                        .shadow(color: themeManager.accentColor.opacity(0.4), radius: 9, y: 4)
                 )
             }
+            .buttonStyle(ResponsiveButtonStyle())
             .disabled(purchaseManager.isLoading)
-            .padding(.horizontal, 20)
-            .padding(.top, 12)
-            .padding(.bottom, 30)
+            .padding(.horizontal, 18)
+            .padding(.top, 10)
+            .padding(.bottom, 26)
         }
     }
     
@@ -2307,22 +2304,22 @@ struct TimelineItem: View {
     @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: 15) {
             // Timeline line and dot
             VStack(spacing: 0) {
                 // Line above (hidden for first item)
                 Rectangle()
                     .fill(isFirst ? Color.clear : Color.gray.opacity(0.3))
-                    .frame(width: 2, height: 10)
+                    .frame(width: 2, height: 9)
                 
                 // Icon circle
                 ZStack {
                     Circle()
                         .fill(iconColor.opacity(0.15))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 42, height: 42)
                     
                     Image(systemName: icon)
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(iconColor)
                 }
                 
@@ -2332,21 +2329,22 @@ struct TimelineItem: View {
                     .frame(width: 2)
                     .frame(maxHeight: .infinity)
             }
-            .frame(width: 44)
+            .frame(width: 42)
             
             // Content
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
                     .foregroundColor(themeManager.primaryTextColor)
                 
                 Text(subtitle)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(themeManager.secondaryTextColor)
-                    .lineSpacing(2)
+                    .lineSpacing(1.8)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.top, 10)
-            .padding(.bottom, isLast ? 0 : 16)
+            .padding(.top, 9)
+            .padding(.bottom, isLast ? 0 : 15)
             
             Spacer()
         }

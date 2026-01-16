@@ -1534,14 +1534,6 @@ struct ActivityView: View {
                 )
             }
             
-            // Free trial info for eligible users
-            if purchaseManager.isEligibleForTrial {
-                Text("3-day free trial • Cancel anytime")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(themeManager.secondaryTextColor)
-                    .padding(.top, 4)
-            }
-            
             Spacer(minLength: 100)
         }
         .sheet(isPresented: $showPremiumSheet) {

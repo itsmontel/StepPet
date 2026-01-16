@@ -304,7 +304,7 @@ struct InsightsView: View {
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(themeManager.accentColor)
                     
-                    Text("Unlock powerful analytics to understand your fitness journey")
+                    Text("Unlock analytics to understand your fitness journey")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(themeManager.secondaryTextColor)
                         .multilineTextAlignment(.center)
@@ -342,15 +342,7 @@ struct InsightsView: View {
                     )
                 }
                 
-                // Free trial info for eligible users
-                if purchaseManager.isEligibleForTrial {
-                    Text("3-day free trial • Cancel anytime")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(themeManager.secondaryTextColor)
-                        .padding(.top, 4)
-                }
-                
-                Spacer()
+                Spacer(minLength: 100)
             }
         .sheet(isPresented: $showPremiumSheet) {
             PremiumView()

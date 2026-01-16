@@ -64,9 +64,9 @@ struct CreditPackage: Identifiable {
     let isPopular: Bool
     
     static let packages: [CreditPackage] = [
-        CreditPackage(credits: 5, price: "$1.99", productId: "virtupet_credits_5", savings: nil, isPopular: false),
-        CreditPackage(credits: 10, price: "$2.99", productId: "virtupet_credits_10", savings: "Most Popular", isPopular: true),
-        CreditPackage(credits: 25, price: "$4.99", productId: "virtupet_credits_25", savings: "Best Value", isPopular: false)
+        CreditPackage(credits: 5, price: "$1.99", productId: "virtupet_5_credits", savings: nil, isPopular: false),
+        CreditPackage(credits: 10, price: "$2.99", productId: "virtupet_10_credits", savings: "Most Popular", isPopular: true),
+        CreditPackage(credits: 25, price: "$4.99", productId: "virtupet_25_credits", savings: "Best Value", isPopular: false)
     ]
 }
 

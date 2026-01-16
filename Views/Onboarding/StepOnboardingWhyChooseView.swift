@@ -148,6 +148,7 @@ struct StepOnboardingWhyChooseView: View {
                             .cornerRadius(20)
                             .shadow(color: themeManager.accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
+                        .buttonStyle(ResponsiveButtonStyle())
                         .scaleEffect(animateButton ? 1.0 : 0.95)
                         .opacity(animateButton ? 1.0 : 0.0)
                     }

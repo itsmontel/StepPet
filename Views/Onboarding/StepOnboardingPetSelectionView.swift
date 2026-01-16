@@ -129,10 +129,10 @@ struct StepOnboardingPetSelectionView: View {
             
             // Continue button
             Button(action: {
+                HapticFeedback.light.trigger()
                 withAnimation(.easeInOut(duration: 0.3)) {
                     showNameInput = true
                 }
-                HapticFeedback.light.trigger()
             }) {
                 Text("Continue")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -142,6 +142,7 @@ struct StepOnboardingPetSelectionView: View {
                     .background(themeManager.accentColor)
                     .cornerRadius(20)
             }
+            .buttonStyle(ResponsiveButtonStyle())
             .scaleEffect(animateButton ? 1.0 : 0.95)
             .opacity(animateButton ? 1.0 : 0.0)
             .padding(.horizontal, 24)
@@ -234,8 +235,8 @@ struct StepOnboardingPetSelectionView: View {
                     // Continue button
                     Button(action: {
                         if !petName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            savePet()
                             HapticFeedback.light.trigger()
+                            savePet()
                             onContinue()
                         }
                     }) {
@@ -251,6 +252,7 @@ struct StepOnboardingPetSelectionView: View {
                             )
                             .cornerRadius(20)
                     }
+                    .buttonStyle(ResponsiveButtonStyle())
                     .disabled(petName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .padding(.horizontal, 24)
                     .padding(.top, 32)

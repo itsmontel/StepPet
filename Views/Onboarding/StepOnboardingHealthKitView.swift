@@ -156,6 +156,7 @@ struct StepOnboardingHealthKitView: View {
                     .cornerRadius(16)
                     .shadow(color: Color.red.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
+                .buttonStyle(ResponsiveButtonStyle())
                 .disabled(isRequesting)
                 .padding(.horizontal, 32)
                 .padding(.bottom, 8)

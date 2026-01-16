@@ -167,6 +167,16 @@ struct OnboardingBackButton: View {
     }
 }
 
+// MARK: - Responsive Button Style (instant visual feedback)
+struct ResponsiveButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .opacity(configuration.isPressed ? 0.9 : 1.0)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
 // MARK: - Primary Button Style
 struct OnboardingPrimaryButton: View {
     let title: String
@@ -189,6 +199,7 @@ struct OnboardingPrimaryButton: View {
                 .background(isEnabled ? themeManager.accentColor : themeManager.secondaryTextColor.opacity(0.3))
                 .cornerRadius(16)
         }
+        .buttonStyle(ResponsiveButtonStyle())
         .disabled(!isEnabled)
     }
 }
@@ -228,6 +239,7 @@ struct OnboardingGradientButton: View {
             .cornerRadius(20)
             .shadow(color: colors.first?.opacity(0.3) ?? Color.clear, radius: 10, x: 0, y: 5)
         }
+        .buttonStyle(ResponsiveButtonStyle())
     }
 }
 

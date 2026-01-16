@@ -196,18 +196,30 @@ class PurchaseManager: NSObject, ObservableObject {
             if !result.userCancelled {
                 let productId = package.storeProduct.productIdentifier
                 
-                // Extract credit amount from product ID (e.g., "virtupet_credits_25" -> 25)
+                // Extract credit amount from product ID
+                // Supports both formats: "virtupet_credits_25" and "virtupet_25_credits"
                 var creditsToAdd = 0
-                if let range = productId.range(of: "credits_") {
+                
+                // Try new format first: virtupet_X_credits
+                if let range = productId.range(of: "_") {
+                    let afterFirstUnderscore = String(productId[range.upperBound...])
+                    if let secondRange = afterFirstUnderscore.range(of: "_") {
+                        let numberString = String(afterFirstUnderscore[..<secondRange.lowerBound])
+                        creditsToAdd = Int(numberString) ?? 0
+                    }
+                }
+                
+                // Try old format: virtupet_credits_X
+                if creditsToAdd == 0, let range = productId.range(of: "credits_") {
                     let numberString = String(productId[range.upperBound...])
                     creditsToAdd = Int(numberString) ?? 0
                 }
                 
-                // Fallback for legacy product IDs
+                // Fallback for specific product IDs
                 if creditsToAdd == 0 {
-                    if productId.contains("credits_5") { creditsToAdd = 5 }
-                    else if productId.contains("credits_10") { creditsToAdd = 10 }
-                    else if productId.contains("credits_25") { creditsToAdd = 25 }
+                    if productId.contains("_5_") || productId.contains("credits_5") { creditsToAdd = 5 }
+                    else if productId.contains("_10_") || productId.contains("credits_10") { creditsToAdd = 10 }
+                    else if productId.contains("_25_") || productId.contains("credits_25") { creditsToAdd = 25 }
                 }
                 
                 if creditsToAdd > 0 {
