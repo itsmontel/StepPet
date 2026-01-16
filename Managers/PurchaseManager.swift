@@ -277,6 +277,17 @@ class PurchaseManager: NSObject, ObservableObject {
         monthlyProduct?.localizedPriceString ?? "$9.99"
     }
     
+    // Get localized price for credit products
+    func creditPriceString(for productId: String) -> String? {
+        creditProducts.first { $0.storeProduct.productIdentifier == productId }?.localizedPriceString
+    }
+    
+    // Get localized price by credit amount
+    func creditPriceString(forCredits credits: Int) -> String? {
+        let productId = "virtupet_\(credits)_credits"
+        return creditPriceString(for: productId)
+    }
+    
     var monthlySavingsPercentage: Int {
         guard let weeklyPrice = weeklyProduct?.storeProduct.price as? NSDecimalNumber,
               let monthlyPrice = monthlyProduct?.storeProduct.price as? NSDecimalNumber else {

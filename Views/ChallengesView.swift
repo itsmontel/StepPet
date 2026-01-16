@@ -570,7 +570,7 @@ struct ChallengesView: View {
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundColor(themeManager.primaryTextColor)
                         
-                        Text("Starting at \(CreditPackage.packages.first?.price ?? "$1.99") for \(CreditPackage.packages.first?.credits ?? 5) credits")
+                        Text("Starting at \(purchaseManager.creditPriceString(forCredits: 5) ?? CreditPackage.packages.first?.price ?? "$1.99") for \(CreditPackage.packages.first?.credits ?? 5) credits")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                     }
@@ -870,8 +870,8 @@ struct ChallengesView: View {
                 
                 Spacer()
                 
-                // Price button with theme gradient
-                Text(package.price)
+                // Price button with theme gradient - use localized price from RevenueCat
+                Text(purchaseManager.creditPriceString(forCredits: package.credits) ?? package.price)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                 .padding(.horizontal, 16)

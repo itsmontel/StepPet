@@ -670,8 +670,8 @@ struct PetCustomizationView: View {
                 
                 Spacer()
                 
-                // Price button with theme gradient
-                Text(package.price)
+                // Price button with theme gradient - use localized price from RevenueCat
+                Text(purchaseManager.creditPriceString(forCredits: package.credits) ?? package.price)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .padding(.horizontal, 16)

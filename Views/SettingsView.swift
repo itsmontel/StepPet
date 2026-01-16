@@ -1129,9 +1129,10 @@ struct PremiumView: View {
                                 action: { selectedPlan = "monthly" }
                             )
                         } else {
+                            // Fallback: use helper method which returns localized price if available
                             PlanButton(
                                 title: "Monthly",
-                                price: "$9.99/month",
+                                price: purchaseManager.monthlyPriceString + "/month",
                                 subtitle: "BEST VALUE",
                                 isSelected: selectedPlan == "monthly",
                                 isBestValue: true,
@@ -1149,9 +1150,10 @@ struct PremiumView: View {
                                 action: { selectedPlan = "weekly" }
                             )
                         } else {
+                            // Fallback: use helper method which returns localized price if available
                             PlanButton(
                                 title: "Weekly",
-                                price: "$3.99/week",
+                                price: purchaseManager.weeklyPriceString + "/week",
                                 isSelected: selectedPlan == "weekly",
                                 isBestValue: false,
                                 action: { selectedPlan = "weekly" }
