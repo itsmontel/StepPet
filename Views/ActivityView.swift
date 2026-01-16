@@ -1566,11 +1566,6 @@ struct ActivityView: View {
                     Image(systemName: "clock.arrow.circlepath")
                         .font(.system(size: 14, weight: .bold))
                     
-                    if !walkHistory.walkHistory.isEmpty {
-                        Text("\(walkHistory.walkHistory.count)")
-                            .font(.system(size: 13, weight: .black, design: .rounded))
-                    }
-                    
                     Text("History")
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                 }
