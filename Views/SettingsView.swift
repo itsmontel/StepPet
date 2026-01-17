@@ -1494,7 +1494,7 @@ struct PrivacyPolicyView: View {
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(themeManager.primaryTextColor)
                         
-                        Text("Last updated: December 2024")
+                        Text("Last updated: January 2026")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                     }
@@ -1505,17 +1505,18 @@ struct PrivacyPolicyView: View {
                     PrivacySection(
                         icon: "doc.text",
                         title: "Introduction",
-                        content: "Welcome to VirtuPet: Step Tracker! Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information when you use our app. By using VirtuPet: Step Tracker, you agree to the collection and use of information in accordance with this policy."
+                        content: "Welcome to VirtuPet: Step Tracker! Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information when you use our app. By using VirtuPet: Step Tracker, you agree to the collection and use of information in accordance with this policy. This policy applies to all users regardless of location."
                     )
                     
                     PrivacySection(
                         icon: "info.circle",
                         title: "Information We Collect",
                         content: """
-                        • Health Data: With your permission, we access step count data from Apple Health to calculate your pet's health and track your daily progress.
-                        • Location Data: When using activity tracking, we access your location to record walking routes and display weather conditions.
-                        • Photos: If you choose to add photos to your activities, we store them locally on your device.
+                        • Health Data: With your permission, we access step count data from Apple HealthKit to calculate your pet's health and track your daily progress.
+                        • Location Data: When using activity tracking, we may access your location to display weather conditions. Location data is processed locally and not stored on external servers.
+                        • Device Information: We may collect anonymous device identifiers for analytics purposes.
                         • Usage Data: We collect anonymous usage statistics to improve the app experience.
+                        • Purchase Data: Transaction information is processed by Apple and RevenueCat; we do not store payment card details.
                         """
                     )
                     
@@ -1526,39 +1527,88 @@ struct PrivacyPolicyView: View {
                         • To provide and maintain our app's functionality
                         • To calculate your pet's health based on your step count
                         • To track and display your walking activities
-                        • To save your preferences and progress
+                        • To save your preferences and progress locally
+                        • To process in-app purchases and subscriptions
                         • To improve our app and develop new features
+                        • To send optional push notifications you have consented to
                         """
                     )
                     
                     PrivacySection(
                         icon: "lock.shield",
                         title: "Data Storage & Security",
-                        content: "Your data is stored locally on your device. Health data accessed from Apple Health remains on your device and is not transmitted to external servers. We implement appropriate security measures to protect your personal information."
+                        content: "Your personal data is stored locally on your device using Apple's secure storage mechanisms. Health data accessed from Apple HealthKit remains on your device and is never transmitted to external servers. We implement industry-standard security measures including encryption to protect your information. We do not maintain servers that store your personal health or location data."
+                    )
+                    
+                    PrivacySection(
+                        icon: "clock",
+                        title: "Data Retention",
+                        content: "Your data is retained locally on your device for as long as you use the app. When you delete the app, all locally stored data is removed. Anonymous analytics data may be retained for up to 24 months for app improvement purposes. You can request deletion of any data we hold by contacting us."
+                    )
+                    
+                    PrivacySection(
+                        icon: "person.2",
+                        title: "Third-Party Services",
+                        content: """
+                        We use the following third-party services:
+                        • Apple HealthKit: To access step count data (subject to Apple's Privacy Policy)
+                        • RevenueCat: To manage subscriptions and in-app purchases (subject to RevenueCat's Privacy Policy at revenuecat.com/privacy)
+                        • Apple App Store: For payment processing (subject to Apple's Terms)
+                        • Open-Meteo: For weather data based on general location coordinates
+                        
+                        These services may collect information as described in their respective privacy policies. We do not sell your personal data to third parties.
+                        """
                     )
                     
                     PrivacySection(
                         icon: "hand.raised",
                         title: "Your Rights",
                         content: """
-                        You have the right to:
+                        Regardless of your location, you have the right to:
                         • Access the data we collect about you
+                        • Request correction of inaccurate data
                         • Request deletion of your data
                         • Opt out of data collection at any time
-                        • Revoke health data access through iOS Settings
+                        • Revoke health data access through iOS Settings > Privacy > Health
+                        • Withdraw consent for notifications through iOS Settings
+                        • Data portability where applicable
                         """
                     )
                     
                     PrivacySection(
-                        icon: "person.2",
-                        title: "Third-Party Services",
-                        content: "We use Apple Health to access step data. This integration is subject to Apple's privacy policies. We may use anonymous analytics services to improve app performance, but no personally identifiable information is shared."
+                        icon: "globe",
+                        title: "GDPR & CCPA Rights",
+                        content: """
+                        For EU/EEA residents (GDPR): You have rights to access, rectify, erase, restrict processing, data portability, and object to processing. Our legal basis for processing is your consent and legitimate interests in providing the service.
+                        
+                        For California residents (CCPA): You have the right to know what personal information is collected, request deletion, and opt-out of sale of personal information. We do not sell personal information.
+                        
+                        To exercise these rights, contact us at support@virtupet.app.
+                        """
+                    )
+                    
+                    PrivacySection(
+                        icon: "person.crop.circle.badge.minus",
+                        title: "Children's Privacy",
+                        content: "VirtuPet is not directed at children under 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us immediately at support@virtupet.app and we will delete such information."
+                    )
+                    
+                    PrivacySection(
+                        icon: "airplane",
+                        title: "International Data Transfers",
+                        content: "Your data is primarily stored locally on your device. Any anonymous analytics data that may be processed uses services that comply with applicable data protection laws. For EU users, any data transfers outside the EU are protected by appropriate safeguards."
+                    )
+                    
+                    PrivacySection(
+                        icon: "arrow.triangle.2.circlepath",
+                        title: "Changes to This Policy",
+                        content: "We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new Privacy Policy in the app and updating the \"Last updated\" date. For significant changes, we will provide notice through the app or via push notification if you have enabled them. Your continued use after changes constitutes acceptance."
                     )
                     
                     PrivacySection(
                         icon: "envelope",
                         title: "Contact Us",
-                        content: "If you have any questions about this Privacy Policy, please contact us at support@virtupet.app"
+                        content: "If you have any questions about this Privacy Policy, wish to exercise your data rights, or have concerns about our data practices, please contact us at support@virtupet.app. We will respond to your inquiry within 30 days."
                     )
                     
                     Spacer(minLength: 40)
@@ -1610,7 +1660,7 @@ struct TermsOfServiceView: View {
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(themeManager.primaryTextColor)
                         
-                        Text("Last updated: December 2024")
+                        Text("Last updated: January 2026")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(themeManager.secondaryTextColor)
                     }
@@ -1621,7 +1671,7 @@ struct TermsOfServiceView: View {
                     PrivacySection(
                         icon: "checkmark.circle",
                         title: "Acceptance of Terms",
-                        content: "By downloading, installing, or using VirtuPet, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the app."
+                        content: "By downloading, installing, or using VirtuPet (\"the App\"), you agree to be bound by these Terms of Service (\"Terms\"). If you do not agree to these Terms, please do not use the App. These Terms constitute a legally binding agreement between you and VirtuPet."
                     )
                     
                     PrivacySection(
@@ -1629,59 +1679,116 @@ struct TermsOfServiceView: View {
                         title: "Use of the App",
                         content: """
                         VirtuPet is a fitness companion app designed to motivate you to walk more by caring for a virtual pet. You agree to:
-                        • Use the app only for its intended purpose
-                        • Not attempt to reverse engineer or modify the app
-                        • Not use the app for any illegal or unauthorized purpose
+                        • Use the App only for its intended purpose
+                        • Not attempt to reverse engineer, decompile, or modify the App
+                        • Not use the App for any illegal or unauthorized purpose
+                        • Not attempt to circumvent any security features
+                        • Not use automated systems or bots to interact with the App
                         • Provide accurate information when required
+                        • Be at least 13 years of age to use this App
                         """
                     )
                     
                     PrivacySection(
                         icon: "heart.fill",
                         title: "Health Information Disclaimer",
-                        content: "VirtuPet is not a medical device and should not be used as a substitute for professional medical advice. The step tracking and health features are for motivational purposes only. Always consult a healthcare professional before starting any new fitness routine."
+                        content: "VirtuPet is NOT a medical device and should NOT be used as a substitute for professional medical advice, diagnosis, or treatment. The step tracking and health features are for motivational and entertainment purposes only. Always consult a qualified healthcare professional before starting any new fitness routine or if you have concerns about your health. We make no claims regarding health benefits."
                     )
                     
                     PrivacySection(
                         icon: "creditcard",
-                        title: "In-App Purchases",
+                        title: "In-App Purchases & Subscriptions",
                         content: """
                         VirtuPet offers optional in-app purchases including:
-                        • Premium subscription for access to all pets
-                        • Play credits for pet activities
+                        • Premium subscription for access to all pets, insights, and activity tracking
+                        • Play credits for pet activities and minigames
                         
-                        All purchases are processed through Apple's App Store and are subject to Apple's terms and conditions. Prices may vary by region and are subject to change.
+                        All purchases are processed through Apple's App Store and are subject to Apple's terms and conditions. Prices are displayed in your local currency and may vary by region. Subscriptions automatically renew unless cancelled at least 24 hours before the end of the current period. You can manage or cancel subscriptions in your Apple ID settings.
                         """
                     )
                     
                     PrivacySection(
+                        icon: "arrow.uturn.backward.circle",
+                        title: "Refund Policy",
+                        content: "All purchases are made through Apple's App Store. Refund requests must be submitted directly to Apple in accordance with Apple's refund policy. We do not have the ability to process refunds directly. To request a refund, visit reportaproblem.apple.com or contact Apple Support. Play credits are non-refundable once used."
+                    )
+                    
+                    PrivacySection(
+                        icon: "star.fill",
+                        title: "Intellectual Property",
+                        content: "All content in VirtuPet, including but not limited to graphics, animations, text, user interface, code, and virtual pets, is owned by VirtuPet or its licensors and is protected by copyright, trademark, and other intellectual property laws. You may not copy, modify, distribute, sell, or lease any part of the App without explicit written permission."
+                    )
+                    
+                    PrivacySection(
                         icon: "person.fill",
-                        title: "User Accounts",
-                        content: "Your VirtuPet data is stored locally on your device. You are responsible for maintaining the security of your device. We are not liable for any loss of data due to device issues or unauthorized access."
+                        title: "User Data & Accounts",
+                        content: "Your VirtuPet data is stored locally on your device. You are solely responsible for maintaining the security of your device and backing up your data. We are not liable for any loss of data due to device issues, app deletion, software updates, or unauthorized access to your device."
+                    )
+                    
+                    PrivacySection(
+                        icon: "xmark.octagon",
+                        title: "Termination",
+                        content: "We reserve the right to terminate or suspend your access to the App immediately, without prior notice, for any reason including breach of these Terms. Upon termination, your right to use the App will cease immediately. Provisions that by their nature should survive termination shall survive, including ownership, warranty disclaimers, and limitations of liability."
                     )
                     
                     PrivacySection(
                         icon: "exclamationmark.triangle",
+                        title: "Disclaimer of Warranties",
+                        content: "THE APP IS PROVIDED \"AS IS\" AND \"AS AVAILABLE\" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR COURSE OF PERFORMANCE. WE DO NOT WARRANT THAT THE APP WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF HARMFUL COMPONENTS."
+                    )
+                    
+                    PrivacySection(
+                        icon: "shield.slash",
                         title: "Limitation of Liability",
-                        content: "VirtuPet is provided \"as is\" without warranties of any kind. We are not liable for any damages arising from your use of the app, including but not limited to direct, indirect, incidental, or consequential damages."
+                        content: "TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL VIRTUPET, ITS DIRECTORS, EMPLOYEES, PARTNERS, OR AFFILIATES BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING WITHOUT LIMITATION, LOSS OF PROFITS, DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES, RESULTING FROM YOUR USE OR INABILITY TO USE THE APP. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE PAST 12 MONTHS."
+                    )
+                    
+                    PrivacySection(
+                        icon: "person.badge.shield.checkmark",
+                        title: "Indemnification",
+                        content: "You agree to defend, indemnify, and hold harmless VirtuPet and its officers, directors, employees, and agents from any claims, damages, obligations, losses, liabilities, costs, or debt arising from: (a) your use of the App; (b) your violation of these Terms; (c) your violation of any third-party right, including intellectual property rights; or (d) any claim that your use caused damage to a third party."
+                    )
+                    
+                    PrivacySection(
+                        icon: "scale.3d",
+                        title: "Dispute Resolution & Arbitration",
+                        content: "Any dispute arising from these Terms or your use of the App shall first be attempted to be resolved through informal negotiation by contacting support@virtupet.app. If unresolved within 30 days, disputes shall be resolved through binding arbitration in accordance with applicable arbitration rules. YOU AGREE TO WAIVE YOUR RIGHT TO PARTICIPATE IN CLASS ACTION LAWSUITS OR CLASS-WIDE ARBITRATION."
+                    )
+                    
+                    PrivacySection(
+                        icon: "doc.text.below.ecg",
+                        title: "Severability",
+                        content: "If any provision of these Terms is found to be unenforceable or invalid by a court of competent jurisdiction, that provision shall be limited or eliminated to the minimum extent necessary so that these Terms shall otherwise remain in full force and effect and enforceable."
+                    )
+                    
+                    PrivacySection(
+                        icon: "cloud.bolt",
+                        title: "Force Majeure",
+                        content: "We shall not be liable for any failure to perform our obligations where such failure results from circumstances beyond our reasonable control, including but not limited to natural disasters, war, terrorism, riots, government actions, technical failures, or third-party service outages."
                     )
                     
                     PrivacySection(
                         icon: "arrow.triangle.2.circlepath",
                         title: "Changes to Terms",
-                        content: "We reserve the right to modify these Terms of Service at any time. Continued use of the app after changes constitutes acceptance of the new terms. We will notify users of significant changes through the app."
+                        content: "We reserve the right to modify these Terms at any time. We will notify users of material changes through the App or via push notification. Your continued use of the App after changes constitutes acceptance of the new Terms. If you disagree with changes, you must stop using the App."
                     )
                     
                     PrivacySection(
                         icon: "building.columns",
                         title: "Governing Law",
-                        content: "These Terms shall be governed by and construed in accordance with applicable laws. Any disputes arising from these terms shall be resolved through appropriate legal channels."
+                        content: "These Terms shall be governed by and construed in accordance with the laws of the United Kingdom, without regard to conflict of law provisions. You agree to submit to the personal and exclusive jurisdiction of courts located in the United Kingdom for resolution of any disputes not subject to arbitration."
+                    )
+                    
+                    PrivacySection(
+                        icon: "doc.plaintext",
+                        title: "Entire Agreement",
+                        content: "These Terms, together with our Privacy Policy, constitute the entire agreement between you and VirtuPet regarding the App and supersede all prior agreements, representations, and understandings."
                     )
                     
                     PrivacySection(
                         icon: "envelope",
                         title: "Contact Us",
-                        content: "If you have any questions about these Terms of Service, please contact us at support@virtupet.app"
+                        content: "If you have any questions about these Terms of Service, please contact us at support@virtupet.app. We will respond to your inquiry within 30 days."
                     )
                     
                     Spacer(minLength: 40)
