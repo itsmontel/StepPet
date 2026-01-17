@@ -6,6 +6,7 @@
 import SwiftUI
 import RevenueCat
 import RevenueCatUI
+import StoreKit
 
 struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
@@ -29,6 +30,8 @@ struct SettingsView: View {
     @State private var newPetName = ""
     @State private var selectedGoal = 10000
     @State private var selectedPetType: PetType = .cat
+    
+    @Environment(\.requestReview) var requestReview
     
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -465,7 +468,7 @@ struct SettingsView: View {
                     subtitle: "Share your feedback",
                     showChevron: true,
                     action: {
-                        // Open App Store review
+                        requestReview()
                     }
                 )
             }

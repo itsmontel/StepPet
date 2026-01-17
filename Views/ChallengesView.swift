@@ -674,11 +674,12 @@ struct ChallengesView: View {
                         
                         VStack(spacing: 10) {
                             ForEach(Array(CreditPackage.packages.enumerated()), id: \.element.id) { index, package in
-                                creditPackageCard(package: package, index: index)
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        purchaseCredits(package: package)
-                                    }
+                                Button {
+                                    purchaseCredits(package: package)
+                                } label: {
+                                    creditPackageCard(package: package, index: index)
+                                }
+                                .buttonStyle(CreditPackageButtonStyle())
                             }
                         }
                     }
@@ -944,6 +945,8 @@ struct ChallengesView: View {
     }
     
     private func purchaseCredits(package: CreditPackage) {
+        HapticFeedback.medium.trigger()
+        
         // Find matching RevenueCat package by product ID
         print("🛒 Attempting to purchase: \(package.productId)")
         print("📦 Available credit products: \(purchaseManager.creditProducts.count)")

@@ -177,6 +177,17 @@ struct ResponsiveButtonStyle: ButtonStyle {
     }
 }
 
+// MARK: - Credit Package Button Style (press feedback for cards)
+struct CreditPackageButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
+            .brightness(configuration.isPressed ? -0.1 : 0)
+            .shadow(color: .black.opacity(configuration.isPressed ? 0.3 : 0), radius: 8, y: 4)
+            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
+    }
+}
+
 // MARK: - Primary Button Style
 struct OnboardingPrimaryButton: View {
     let title: String
