@@ -94,8 +94,8 @@ struct StepOnboardingWelcomeView: View {
             // Welcome GIF - large and prominent
             GIFImage("VirtupetFirstScreen")
                 .frame(width: 300, height: 300)
-                .scaleEffect(animatePet ? 1.0 : 0.9)
-                .opacity(animatePet ? 1.0 : 0)
+            .scaleEffect(animatePet ? 1.0 : 0.9)
+            .opacity(animatePet ? 1.0 : 0)
             
             // Title section
             VStack(spacing: 14) {

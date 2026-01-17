@@ -1963,6 +1963,21 @@ struct OnboardingPaywallView: View {
         dismissPaywall()
     }
     
+    // Helper: Format date for trial timeline
+    private var trialReminderDateString: String {
+        let reminderDate = Calendar.current.date(byAdding: .day, value: 2, to: Date()) ?? Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return "On \(formatter.string(from: reminderDate))"
+    }
+    
+    private var trialChargeDateString: String {
+        let chargeDate = Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return "On \(formatter.string(from: chargeDate))"
+    }
+    
     // MARK: - Page 1: Intro
     private var paywallIntroPage: some View {
         VStack(spacing: 0) {
@@ -2087,21 +2102,21 @@ struct OnboardingPaywallView: View {
                         isLast: false
                     )
                     
-                    // In 2 Days
+                    // In 2 Days - show actual date
                     TimelineItem(
                         icon: "bell.fill",
                         iconColor: Color(hex: "#0EA5E9"),
-                        title: "In 2 Days",
+                        title: trialReminderDateString,
                         subtitle: "We'll send a reminder before your trial ends.",
                         isFirst: false,
                         isLast: false
                     )
                     
-                    // In 3 Days
+                    // In 3 Days - show actual date
                     TimelineItem(
                         icon: "creditcard.fill",
                         iconColor: Color(hex: "#10B981"),
-                        title: "In 3 Days",
+                        title: trialChargeDateString,
                         subtitle: "Your subscription will begin unless you cancel before.",
                         isFirst: false,
                         isLast: true
