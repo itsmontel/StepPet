@@ -545,8 +545,8 @@ struct BubblePopGameView: View {
     
     // MARK: - Game Logic
     private func startGame() {
-        // Deduct credit when starting the game
-        guard userSettings.useGameCredit() else {
+        // Deduct credit when starting the game (and record for achievements)
+        guard userSettings.useGameCredit(for: .bubblePop) else {
             // If no credits, close the game
             dismiss()
             return

@@ -585,6 +585,9 @@ struct CommitmentPromptView: View {
         isHolding = false
         HapticFeedback.success.trigger()
         
+        // Start preloading paywall GIF early for smooth transition
+        GIFCacheManager.shared.preload("paywalldog")
+        
         // Show checkmark with bounce
         withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
             showCheckmark = true

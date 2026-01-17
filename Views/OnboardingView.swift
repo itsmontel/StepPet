@@ -176,8 +176,11 @@ struct OnboardingView: View {
                         onComplete: {
                             // After commitment, show paywall
                             HapticFeedback.light.trigger()
-                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
-                                currentStep = .paywall
+                            // Small delay to ensure GIF preload completes for smooth transition
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
+                                    currentStep = .paywall
+                                }
                             }
                         }
                     )

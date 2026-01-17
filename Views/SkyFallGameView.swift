@@ -557,8 +557,8 @@ struct SkyFallGameView: View {
     
     // MARK: - Game Logic
     private func startGame() {
-        // Deduct credit when actually starting the game
-        guard userSettings.useGameCredit() else {
+        // Deduct credit when actually starting the game (and record for achievements)
+        guard userSettings.useGameCredit(for: .skyFall) else {
             // If no credits, close the game
             dismiss()
             return

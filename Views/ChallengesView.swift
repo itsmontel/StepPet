@@ -175,23 +175,9 @@ struct ChallengesView: View {
     }
     
     private func trackMinigamePlayed() {
-        // Map game name to UserSettings.MinigameType
-        let gameType: UserSettings.MinigameType
-        switch currentPlayingGame {
-        case "treat_catch":
-            gameType = .moodCatch
-        case "memory_match":
-            gameType = .memoryMatch
-        case "sky_fall":
-            gameType = .skyFall
-        case "pattern_match":
-            gameType = .patternMatch
-        default:
-            gameType = .moodCatch
-        }
-        
-        // Record the game played
-        userSettings.recordMinigamePlayed(type: gameType)
+        // Note: Game plays are now recorded inside each game's startGame() function
+        // when useGameCredit() is called. This ensures every START press counts.
+        // We only check achievements here when the game is dismissed.
         
         // Check game achievements
         achievementManager.checkGameAchievements(
@@ -1646,14 +1632,25 @@ struct ActivityPlaySheet: View {
     }
     
     private func startActivity() {
-        // Deduct credit and add health immediately
-        guard userSettings.useActivityCredit() else {
+        // Map PetActivity to UserSettings.PetActivityType
+        let activityType: UserSettings.PetActivityType
+        switch activity {
+        case .feed:
+            activityType = .feed
+        case .playBall:
+            activityType = .playBall
+        case .watchTV:
+            activityType = .watchTV
+        }
+        
+        // Deduct credit, add health, and record activity for achievements
+        guard userSettings.useActivityCredit(for: activityType) else {
             dismiss()
             return
         }
         
-        // Track pet activity for achievements
-        trackPetActivity()
+        // Check achievements after activity is recorded
+        checkPetActivityAchievements()
         
         HapticFeedback.medium.trigger()
         
@@ -1674,20 +1671,9 @@ struct ActivityPlaySheet: View {
         }
     }
     
-    private func trackPetActivity() {
-        // Map PetActivity to UserSettings.PetActivityType
-        let activityType: UserSettings.PetActivityType
-        switch activity {
-        case .feed:
-            activityType = .feed
-        case .playBall:
-            activityType = .playBall
-        case .watchTV:
-            activityType = .watchTV
-        }
-        
-        // Record the pet activity
-        userSettings.recordPetActivity(type: activityType)
+    private func checkPetActivityAchievements() {
+        // Note: Pet activity is now recorded inside useActivityCredit() 
+        // when the activity type is passed. We only check achievements here.
         
         // Check game achievements
         achievementManager.checkGameAchievements(

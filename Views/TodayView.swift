@@ -1143,7 +1143,7 @@ struct TodayView: View {
         
         achievementManager.checkAchievements(
             todaySteps: steps,
-            totalSteps: stepDataManager.totalStepsAllTime,
+            totalSteps: stepDataManager.totalStepsAllTime + steps, // Include today's steps in cumulative total
             streak: userSettings.streakData.currentStreak,
             health: currentHealth,
             goalSteps: userSettings.dailyStepGoal,

@@ -638,8 +638,8 @@ struct PatternMatchGameView: View {
     
     // MARK: - Game Logic
     private func startGame() {
-        // Deduct credit when actually starting the game
-        guard userSettings.useGameCredit() else {
+        // Deduct credit when actually starting the game (and record for achievements)
+        guard userSettings.useGameCredit(for: .patternMatch) else {
             // If no credits, close the game
             dismiss()
             return
@@ -783,8 +783,8 @@ struct PatternMatchGameView: View {
     }
     
     private func restartGame() {
-        // Deduct credit when restarting
-        guard userSettings.useGameCredit() else {
+        // Deduct credit when restarting (and record for achievements)
+        guard userSettings.useGameCredit(for: .patternMatch) else {
             // If no credits, close the game
             dismiss()
             return

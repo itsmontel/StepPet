@@ -22,7 +22,14 @@ class UserSettings: ObservableObject {
         didSet { save() }
     }
     @Published var isPremium: Bool {
-        didSet { save() }
+        didSet {
+            // When user upgrades to premium, immediately grant premium daily credits (10)
+            // Only upgrade if they had less than 10 credits (don't reduce if they had more somehow)
+            if isPremium && dailyFreeCredits < 10 {
+                dailyFreeCredits = 10
+            }
+            save()
+        }
     }
     @Published var notificationsEnabled: Bool {
         didSet { save() }
@@ -388,7 +395,8 @@ class UserSettings: ObservableObject {
     }
     
     // Use a credit for playing a minigame (+3 health)
-    func useGameCredit() -> Bool {
+    // Pass the game type to automatically track for achievements
+    func useGameCredit(for gameType: MinigameType? = nil) -> Bool {
         guard totalCredits > 0 else { return false }
         
         // Use daily free credits first, then purchased
@@ -401,6 +409,12 @@ class UserSettings: ObservableObject {
         todayPlayHealthBoost += 3
         lastPlayBoostDate = Date()
         pet.health = min(100, pet.health + 3)
+        
+        // Automatically record the minigame play for achievements
+        if let gameType = gameType {
+            recordMinigamePlayed(type: gameType)
+        }
+        
         save()
         
         // Notify that health boost changed so widget can sync
@@ -409,7 +423,8 @@ class UserSettings: ObservableObject {
     }
     
     // Use a credit for pet activity (+5 health)
-    func useActivityCredit() -> Bool {
+    // Pass the activity type to automatically track for achievements
+    func useActivityCredit(for activityType: PetActivityType? = nil) -> Bool {
         guard totalCredits > 0 else { return false }
         
         // Use daily free credits first, then purchased
@@ -422,6 +437,12 @@ class UserSettings: ObservableObject {
         todayPlayHealthBoost += 5
         lastPlayBoostDate = Date()
         pet.health = min(100, pet.health + 5)
+        
+        // Automatically record the pet activity for achievements
+        if let activityType = activityType {
+            recordPetActivity(type: activityType)
+        }
+        
         save()
         
         // Notify that health boost changed so widget can sync
@@ -555,6 +576,8 @@ class UserSettings: ObservableObject {
         case memoryMatch = "memory_match"
         case skyFall = "sky_fall"
         case patternMatch = "pattern_match"
+        case bubblePop = "bubble_pop"
+        case skyDash = "sky_dash"
     }
     
     enum PetActivityType: String {
@@ -577,6 +600,12 @@ class UserSettings: ObservableObject {
             skyFallPlayed += 1
         case .patternMatch:
             patternMatchPlayed += 1
+        case .bubblePop:
+            // Bubble Pop counts toward total minigames but doesn't have its own achievement counter
+            break
+        case .skyDash:
+            // Sky Dash counts toward total minigames but doesn't have its own achievement counter
+            break
         }
         
         // Track consecutive game days
@@ -679,23 +708,26 @@ class UserSettings: ObservableObject {
             isNewDay = true
         }
         
-        // Only update daily tracking once per day
+        // Only update daily tracking once per day (on the FIRST check of the new day)
         if isNewDay {
-            // Check if we had full health yesterday
+            // Use previousHealthForAchievement which stores the PEAK health from yesterday
+            // This ensures we track the best health achieved, not the 0% at start of day
+            
+            // Check if we had full health yesterday (peak)
             if previousHealthForAchievement == 100 {
                 consecutiveFullHealthDays += 1
             } else {
                 consecutiveFullHealthDays = 0
             }
             
-            // Check if we had healthy (60%+) status yesterday
+            // Check if we had healthy (60%+) status yesterday (peak)
             if previousHealthForAchievement >= 60 {
                 consecutiveHealthyDays += 1
             } else {
                 consecutiveHealthyDays = 0
             }
             
-            // Check if we were NOT sick (>20%) yesterday
+            // Check if we were NOT sick (>20%) yesterday (peak)
             if previousHealthForAchievement > 20 {
                 consecutiveNoSickDays += 1
             } else {
@@ -703,6 +735,10 @@ class UserSettings: ObservableObject {
             }
             
             lastHealthCheckDate = Date()
+            
+            // Reset previousHealthForAchievement to 0 for the new day
+            // It will be updated as the user walks and health increases
+            previousHealthForAchievement = 0
         }
         
         // Track rescue count - recovered from sick to healthy
@@ -710,8 +746,11 @@ class UserSettings: ObservableObject {
             rescueCount += 1
         }
         
-        // Update previous health for next check
-        previousHealthForAchievement = newHealth
+        // Update previous health ONLY if new health is HIGHER (track peak health for the day)
+        // This ensures we track the best health achieved, not a lower value
+        if newHealth > previousHealthForAchievement {
+            previousHealthForAchievement = newHealth
+        }
     }
     
     var greeting: String {
