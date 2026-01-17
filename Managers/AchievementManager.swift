@@ -439,6 +439,16 @@ class AchievementManager: ObservableObject {
         updateProgress(achievementId: "premium_supporter", progress: 1)
     }
     
+    // MARK: - Unlock Credit Buyer
+    func unlockCreditBuyer() {
+        updateProgress(achievementId: "credit_buyer", progress: 1)
+    }
+    
+    // MARK: - Unlock App Rater
+    func unlockAppRater() {
+        updateProgress(achievementId: "app_rater", progress: 1)
+    }
+    
     // MARK: - Check Combined Activity + Goal Achievements
     func checkCombinedAchievements(didPetActivityToday: Bool, didMinigameToday: Bool, didAchieveGoalToday: Bool) {
         // Active companion - do a pet activity and hit goal on same day for 7 days

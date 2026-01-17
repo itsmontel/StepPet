@@ -465,10 +465,30 @@ struct SettingsView: View {
                     iconColor: .yellow,
                     iconBackground: Color.yellow.opacity(0.15),
                     title: "Rate VirtuPet",
-                    subtitle: "Share your feedback",
-                    showChevron: true,
+                    subtitle: userSettings.hasRatedApp ? "Thanks for rating!" : "Rate us & get 10 free credits!",
+                    showChevron: !userSettings.hasRatedApp,
                     action: {
+                        let shouldAwardCredits = !userSettings.hasRatedApp
+                        
+                        // Show the review prompt first
                         requestReview()
+                        
+                        // Award credits after a delay (once user has interacted with the popup)
+                        // Apple's requestReview() doesn't provide a callback, so we use a delay
+                        if shouldAwardCredits {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                // Give 10 bonus credits for rating
+                                userSettings.playCredits += 10
+                                userSettings.hasRatedApp = true
+                                
+                                // Post notification to unlock achievement
+                                NotificationCenter.default.post(name: .userRatedApp, object: nil)
+                                print("🎉 User rated app! 10 credits awarded, achievement notification posted.")
+                                
+                                // Trigger haptic feedback
+                                HapticFeedback.success.trigger()
+                            }
+                        }
                     }
                 )
             }

@@ -19,6 +19,12 @@ struct ContentView: View {
     // Listen for premium upgrade to trigger achievement
     private let userBecamePremiumNotification = NotificationCenter.default.publisher(for: .userBecamePremium)
     
+    // Listen for credit purchase to trigger achievement
+    private let userPurchasedCreditsNotification = NotificationCenter.default.publisher(for: .userPurchasedCredits)
+    
+    // Listen for app rating to trigger achievement
+    private let userRatedAppNotification = NotificationCenter.default.publisher(for: .userRatedApp)
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             // Background
@@ -64,6 +70,14 @@ struct ContentView: View {
         .onReceive(userBecamePremiumNotification) { _ in
             // Unlock premium supporter achievement
             achievementManager.unlockPremiumSupporter()
+        }
+        .onReceive(userPurchasedCreditsNotification) { _ in
+            // Unlock credit buyer achievement
+            achievementManager.unlockCreditBuyer()
+        }
+        .onReceive(userRatedAppNotification) { _ in
+            // Unlock app rater achievement
+            achievementManager.unlockAppRater()
         }
         .overlay {
             if achievementManager.showUnlockAnimation, let achievement = achievementManager.recentlyUnlocked {

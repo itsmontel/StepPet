@@ -167,6 +167,8 @@ struct Achievement: Identifiable, Codable {
         Achievement(id: "overachiever", title: "Overachiever", description: "Exceed your weekly goal by 25%", category: .special, rarity: .uncommon, icon: "arrow.up.right.circle.fill", targetProgress: 1),
         Achievement(id: "pet_lover", title: "Pet Lover", description: "Try all 5 different pets", category: .special, rarity: .rare, icon: "pawprint.fill", targetProgress: 5),
         Achievement(id: "premium_supporter", title: "Premium Supporter", description: "Upgrade to VirtuPet Premium", category: .special, rarity: .epic, icon: "crown.fill", targetProgress: 1),
+        Achievement(id: "credit_buyer", title: "Credit Buyer", description: "Purchase a credit package", category: .special, rarity: .uncommon, icon: "cart.fill", targetProgress: 1),
+        Achievement(id: "app_rater", title: "Feedback Hero", description: "Rate VirtuPet on the App Store", category: .special, rarity: .uncommon, icon: "star.bubble.fill", targetProgress: 1),
         
         // MARK: - Games & Activities Achievements (26 achievements)
         // Mini-game achievements

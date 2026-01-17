@@ -198,6 +198,14 @@ class UserSettings: ObservableObject {
         didSet { save() }
     }
     
+    // Rating and credit purchase tracking (for achievements)
+    @Published var hasRatedApp: Bool {
+        didSet { save() }
+    }
+    @Published var hasPurchasedCredits: Bool {
+        didSet { save() }
+    }
+    
     private let userDefaultsKey = "StepPetUserSettings"
     
     init() {
@@ -270,6 +278,10 @@ class UserSettings: ObservableObject {
             // Paywall analytics
             self.paywallSkipCount = savedSettings.paywallSkipCount ?? 0
             self.paywallViewCount = savedSettings.paywallViewCount ?? 0
+            
+            // Rating and credit purchase tracking
+            self.hasRatedApp = savedSettings.hasRatedApp ?? false
+            self.hasPurchasedCredits = savedSettings.hasPurchasedCredits ?? false
             
             // Apply pending goal if it's a new day since it was set
             if let pendingGoal = self.pendingStepGoal,
@@ -383,6 +395,10 @@ class UserSettings: ObservableObject {
             // Paywall analytics - defaults
             self.paywallSkipCount = 0
             self.paywallViewCount = 0
+            
+            // Rating and credit purchase tracking - defaults
+            self.hasRatedApp = false
+            self.hasPurchasedCredits = false
         }
         
         // Sync haptics setting with global HapticFeedback
@@ -535,7 +551,9 @@ class UserSettings: ObservableObject {
             pendingStepGoal: pendingStepGoal,
             pendingStepGoalDate: pendingStepGoalDate,
             paywallSkipCount: paywallSkipCount,
-            paywallViewCount: paywallViewCount
+            paywallViewCount: paywallViewCount,
+            hasRatedApp: hasRatedApp,
+            hasPurchasedCredits: hasPurchasedCredits
         )
         
         if let data = try? JSONEncoder().encode(settings) {
@@ -846,6 +864,10 @@ struct SavedUserSettings: Codable {
     // Paywall analytics
     var paywallSkipCount: Int?
     var paywallViewCount: Int?
+    
+    // Rating and credit purchase tracking
+    var hasRatedApp: Bool?
+    var hasPurchasedCredits: Bool?
 }
 
 // MARK: - Activity Level

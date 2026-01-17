@@ -13,6 +13,8 @@ import RevenueCatUI
 // MARK: - Notification Names
 extension Notification.Name {
     static let userBecamePremium = Notification.Name("userBecamePremium")
+    static let userPurchasedCredits = Notification.Name("userPurchasedCredits")
+    static let userRatedApp = Notification.Name("userRatedApp")
 }
 
 // MARK: - Entitlement Identifier
@@ -231,6 +233,14 @@ class PurchaseManager: NSObject, ObservableObject {
                 if creditsToAdd > 0 {
                     userSettings.playCredits += creditsToAdd
                     print("✅ Added \(creditsToAdd) credits. Total: \(userSettings.playCredits)")
+                    
+                    // Track credit purchase for achievement (only first purchase matters)
+                    if !userSettings.hasPurchasedCredits {
+                        userSettings.hasPurchasedCredits = true
+                        // Post notification to unlock achievement
+                        NotificationCenter.default.post(name: .userPurchasedCredits, object: nil)
+                        print("🎉 First credit purchase! Achievement notification posted.")
+                    }
                 }
                 
                 isLoading = false
