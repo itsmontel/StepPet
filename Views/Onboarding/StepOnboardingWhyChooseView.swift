@@ -104,7 +104,7 @@ struct StepOnboardingWhyChooseView: View {
                         OnboardingFeatureCard(
                             icon: "trophy.fill",
                             gradient: [Color.yellow, Color.orange],
-                            title: "50+ Achievements",
+                            title: "100 Achievements",
                             description: "Unlock achievements as you progress. From first steps to marathon walker status.",
                             delay: 0.5
                         )
